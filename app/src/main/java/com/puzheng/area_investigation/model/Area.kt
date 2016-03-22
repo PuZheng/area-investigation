@@ -1,4 +1,4 @@
-package com.puzheng.areainvetigation.model
+package com.puzheng.area_investigation.model
 
 import java.util.*
 

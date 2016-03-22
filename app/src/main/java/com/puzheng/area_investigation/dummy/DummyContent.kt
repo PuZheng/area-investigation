@@ -1,4 +1,4 @@
-package com.puzheng.areainvetigation.dummy
+package com.puzheng.area_investigation.dummy
 
 import java.util.ArrayList
 import java.util.HashMap

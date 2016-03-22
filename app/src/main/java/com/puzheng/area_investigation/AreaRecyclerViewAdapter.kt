@@ -1,4 +1,4 @@
-package com.puzheng.areainvetigation
+package com.puzheng.area_investigation
 
 import android.content.Context
 import android.support.v7.widget.GridLayoutManager
@@ -11,9 +11,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import com.orhanobut.logger.Logger
 
-import com.puzheng.areainvetigation.AreaListFragment.OnListFragmentInteractionListener
-import com.puzheng.areainvetigation.dummy.DummyContent.DummyItem
-import com.puzheng.areainvetigation.model.Area
+import com.puzheng.area_investigation.AreaListFragment.OnListFragmentInteractionListener
+import com.puzheng.area_investigation.dummy.DummyContent.DummyItem
+import com.puzheng.area_investigation.model.Area
 import java.text.SimpleDateFormat
 import java.util.*
 

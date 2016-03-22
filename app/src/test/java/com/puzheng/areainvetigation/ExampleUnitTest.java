@@ -1,4 +1,4 @@
-package com.puzheng.areainvetigation;
+package com.puzheng.area_investigation;
 
 import org.junit.Test;
 
