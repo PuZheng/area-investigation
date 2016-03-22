@@ -9,9 +9,15 @@ import android.view.View
 import android.view.Menu
 import android.view.MenuItem
 import com.orhanobut.logger.Logger
+import com.puzheng.areainvetigation.dummy.DummyContent
+import com.puzheng.areainvetigation.model.Area
 import kotlinx.android.synthetic.main.activity_area_list.*
 
-class AreaListActivity : AppCompatActivity() {
+class AreaListActivity : AppCompatActivity(),
+        AreaListFragment.OnListFragmentInteractionListener {
+    override fun onListFragmentInteraction(area: Area) {
+        throw UnsupportedOperationException()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
