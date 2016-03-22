@@ -6,6 +6,10 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
+    dataBinding {
+        enabled = true
+    }
+
     defaultConfig {
         applicationId "com.puzheng.areainvetigation"
         minSdkVersion 15
@@ -37,6 +41,7 @@ dependencies {
 // Because RxAndroid releases are few and far between, it is recommended you also
 // explicitly depend on RxJava's latest version for bug fixes and new features.
     compile 'io.reactivex:rxjava:1.1.2'
+    kapt 'com.android.databinding:compiler:1.0-rc4'
 }
 
 buildscript {
@@ -53,4 +58,8 @@ buildscript {
 repositories {
     maven { url 'http://maven.oschina.net/content/groups/public/' }
     maven { url "https://jitpack.io" }
+}
+
+kapt {
+    generateStubs = true
 }

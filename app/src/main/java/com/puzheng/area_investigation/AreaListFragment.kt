@@ -1,13 +1,16 @@
-package com.puzheng.areainvetigation
+package com.puzheng.area_investigation
 
 import android.content.Context
+import android.databinding.DataBindingUtil
+import android.databinding.ObservableField
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.puzheng.areainvetigation.model.Area
-import com.puzheng.areainvetigation.store.areas
+import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
+import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.store.areas
 import kotlinx.android.synthetic.main.fragment_area_list.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
@@ -29,7 +32,10 @@ class AreaListFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val view = inflater!!.inflate(R.layout.fragment_area_list, container, false)
+        val binding: FragmentAreaListBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_area_list,
+                container, false)
+        binding.args = Args(ObservableField(true), ObservableField(0))
+
 
         areas.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
 
@@ -37,18 +43,20 @@ class AreaListFragment : Fragment() {
             }
 
             override fun onCompleted() {
-                progressBar.visibility = View.GONE
-                list.visibility = View.VISIBLE
+                (binding.args as Args).loading.set(false)
             }
 
             override fun onNext(areas: List<Area>?) {
-                list.adapter = AreaRecyclerViewAdapter(areas, mListener)
-                list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
+                if (areas != null) {
+                    (binding.args as Args).itemNo.set(areas.size)
+                    list.adapter = AreaRecyclerViewAdapter(areas, mListener)
+                    list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
+                }
             }
 
         })
 
-        return view
+        return binding.root
     }
 
     override fun onAttach(context: Context?) {
@@ -94,8 +102,6 @@ class AreaListFragment : Fragment() {
             return fragment
         }
     }
+
+    data class Args(val loading: ObservableField<Boolean>, val itemNo: ObservableField<Int>)
 }
-/**
- * Mandatory empty constructor for the fragment manager to instantiate the
- * fragment (e.g. upon screen orientation changes).
- */
