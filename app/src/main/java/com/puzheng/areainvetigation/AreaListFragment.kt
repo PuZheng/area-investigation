@@ -3,16 +3,15 @@ package com.puzheng.areainvetigation
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.puzheng.areainvetigation.model.Area
 import com.puzheng.areainvetigation.store.areas
+import kotlinx.android.synthetic.main.fragment_area_list.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
-import java.text.SimpleDateFormat
+import rx.schedulers.Schedulers
 
 /**
  * A fragment representing a list of Items.
@@ -32,23 +31,23 @@ class AreaListFragment : Fragment() {
                               savedInstanceState: Bundle?): View? {
         val view = inflater!!.inflate(R.layout.fragment_area_list, container, false)
 
-        // Set the adapter
-        if (view is RecyclerView) {
-            areas.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
-                override fun onError(e: Throwable?) {
-                }
+        areas.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
 
-                override fun onCompleted() {
-                }
+            override fun onError(e: Throwable?) {
+            }
 
-                override fun onNext(areas: List<Area>?) {
-                    view.adapter = AreaRecyclerViewAdapter(areas, mListener)
-                    view.layoutManager = (view.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
-                }
+            override fun onCompleted() {
+                progressBar.visibility = View.GONE
+                list.visibility = View.VISIBLE
+            }
 
-            })
+            override fun onNext(areas: List<Area>?) {
+                list.adapter = AreaRecyclerViewAdapter(areas, mListener)
+                list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
+            }
 
-        }
+        })
+
         return view
     }
 

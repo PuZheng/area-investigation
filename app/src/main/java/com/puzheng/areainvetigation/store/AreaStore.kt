@@ -11,7 +11,7 @@ val areas: Observable<List<Area>>
     get()  {
         val format = SimpleDateFormat("yyyy-MM-dd")
         return Observable.create<List<Area>> { t ->
-            Thread.sleep(1000)
+            Thread.sleep(2000)
             t!!.onNext(listOf(
                     Area(1, "area1", format.parse("2015-12-01")),
                     Area(2, "area2", format.parse("2015-12-01")),
@@ -20,6 +20,7 @@ val areas: Observable<List<Area>>
                     Area(5, "area5", format.parse("2015-09-01")),
                     Area(6, "area6", format.parse("2015-02-01"))
             ))
+            t!!.onCompleted()
         }
 
     }
