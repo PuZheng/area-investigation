@@ -1,27 +1,69 @@
 package com.puzheng.area_investigation.store
 
+import android.content.Context
+import android.database.Cursor
+import android.provider.BaseColumns
+import com.puzheng.area_investigation.DBHelpler
 import com.puzheng.area_investigation.model.Area
 import rx.Observable
-import rx.Subscriber
+import rx.schedulers.Schedulers
 import java.text.SimpleDateFormat
 
+private fun Cursor.getRow() = Area(getLong(BaseColumns._ID)!!, getString(Area.Model.COL_NAME)!!,
+        getDate(Area.Model.COL_CREATED)!!, getDate(Area.Model.COL_UPDATED))
 
-// a list of areas ordered by `created` in descending order
-val areas: Observable<List<Area>>
-    get()  {
-        val format = SimpleDateFormat("yyyy-MM-dd")
-        return Observable.create<List<Area>> { t ->
-            Thread.sleep(2000)
-            t!!.onNext(null)
-//            t!!.onNext(listOf(
-//                    Area(1, "area1", format.parse("2015-12-01")),
-//                    Area(2, "area2", format.parse("2015-12-01")),
-//                    Area(3, "area3", format.parse("2015-09-01")),
-//                    Area(4, "area4", format.parse("2015-09-01")),
-//                    Area(5, "area5", format.parse("2015-09-01")),
-//                    Area(6, "area6", format.parse("2015-02-01"))
-//            ))
-            t!!.onCompleted()
-        }
+class AreaStore private constructor(val context: Context) {
 
+    companion object {
+        fun with(context: Context) = AreaStore(context)
     }
+
+    // a list of areas ordered by `created` in descending order
+    val areas: Observable<List<Area>>
+        get() = Observable.create<List<Area>> {
+            val db = DBHelpler(context).readableDatabase
+            val cursor = db.query(Area.Model.TABLE_NAME, null, null, null, null, null,
+                    "${Area.Model.COL_CREATED} DESC")
+            try {
+                var rows: List<Area>? = null
+                if (cursor.moveToFirst()) {
+                    rows = mutableListOf()
+                    do {
+                        rows.add(cursor.getRow())
+                    } while (cursor.moveToNext())
+                }
+                it!!.onNext(rows)
+                it!!.onCompleted()
+            } finally {
+                cursor.close()
+                db.close()
+            }
+        }.subscribeOn(Schedulers.computation())
+
+    fun fakeAreas() = Observable.create<Void> {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val db = DBHelpler(context).writableDatabase
+        fun fakeArea(id: Long, created: String, updated: String? = null) = Area(id, "area$id",
+                format.parse(created),
+                if (updated == null) format.parse(created) else format.parse(updated))
+        for (area in listOf(
+                fakeArea(1L, "2016-03-08 10:30:31"),
+                fakeArea(2L, "2016-03-08 14:32:31", "2016-03-10 12:12:31"),
+                fakeArea(3L, "2016-03-08 17:32:31"),
+                fakeArea(4L, "2016-03-01 17:32:31"),
+                fakeArea(5L, "2016-03-01 17:32:31"),
+                fakeArea(6L, "2016-01-01 17:32:31", "2016-03-14 14:32:31"),
+                fakeArea(7L, "2015-09-08 17:32:31"),
+                fakeArea(8L, "2015-09-08 17:32:31"),
+                fakeArea(9L, "2015-03-02 17:32:31"),
+                fakeArea(10L, "2016-03-02 17:32:31"),
+                fakeArea(11L, "2016-03-02 17:32:31"),
+                fakeArea(12L, "2016-03-02 17:32:31"),
+                fakeArea(13L, "2016-03-02 17:32:31")
+        )) {
+            db.insert(Area.Model.TABLE_NAME, null, Area.Model.makeValues(area))
+        }
+        db.close()
+        it!!.onCompleted()
+    }.subscribeOn(Schedulers.computation())
+}
