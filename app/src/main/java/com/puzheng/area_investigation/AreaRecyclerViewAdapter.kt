@@ -8,12 +8,17 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import com.orhanobut.logger.Logger
 
 import com.puzheng.area_investigation.AreaListFragment.OnListFragmentInteractionListener
 import com.puzheng.area_investigation.dummy.DummyContent.DummyItem
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.store.AreaStore
+import com.squareup.picasso.Picasso
+import kotlinx.android.synthetic.main.fragment_area.view.*
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -68,7 +73,9 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
             (holder as HeaderViewHolder).textView.text = format.format(items[position + 1]!!.created)
         } else {
             (holder as AreaViewHolder).item = items[position]
-            holder.contentView.text = area.name
+            holder.textView.text = area.name
+            val context = holder.textView.context
+            Picasso.with(context).load(AreaStore.with(context).getCoverImageFile(area)).into(holder.imageView);
             Logger.v("bind ${area.name}")
             holder.view.setOnClickListener {
                 listener?.onListFragmentInteraction(holder.item!!)
@@ -95,15 +102,17 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
 }
 
 private class AreaViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-    val contentView: TextView
+    val textView: TextView
+    val imageView: ImageView
     var item: Area? = null
 
     init {
-        contentView = view.findViewById(R.id.content) as TextView
+        textView = view.findViewById(R.id.content) as TextView
+        imageView = view.findViewById(R.id.imageView) as ImageView
     }
 
     override fun toString(): String {
-        return super.toString() + " '" + contentView.text + "'"
+        return super.toString() + " '" + textView.text + "'"
     }
 }
 
