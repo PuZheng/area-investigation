@@ -8,6 +8,7 @@ import java.util.*
 
 data class Area(val id: Long, val name: String, val created: Date, val updated: Date?) {
 
+
     class Model : BaseColumns {
 
         companion object {

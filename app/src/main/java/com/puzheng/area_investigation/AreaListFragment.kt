@@ -48,6 +48,7 @@ class AreaListFragment : Fragment() {
         store.areas.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
 
             override fun onError(e: Throwable?) {
+                throw e!!
             }
 
             override fun onCompleted() {
@@ -69,7 +70,7 @@ class AreaListFragment : Fragment() {
                     }.subscribe(object : Observer<Void> {
 
                         override fun onError(e: Throwable?) {
-
+                            throw e!!
                         }
 
                         override fun onNext(t: Void?) {
