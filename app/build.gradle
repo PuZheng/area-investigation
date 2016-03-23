@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.puzheng.areainvetigation"
+        applicationId "com.puzheng.area_investigation"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
@@ -41,6 +41,7 @@ dependencies {
 // Because RxAndroid releases are few and far between, it is recommended you also
 // explicitly depend on RxJava's latest version for bug fixes and new features.
     compile 'io.reactivex:rxjava:1.1.2'
+    // must use annotation processing when use data binding
     kapt 'com.android.databinding:compiler:1.0-rc4'
 }
 

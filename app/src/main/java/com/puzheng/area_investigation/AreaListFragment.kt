@@ -1,5 +1,6 @@
 package com.puzheng.area_investigation
 
+import android.app.ProgressDialog
 import android.content.Context
 import android.databinding.DataBindingUtil
 import android.databinding.ObservableField
@@ -8,9 +9,10 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.areas
+import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.fragment_area_list.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
@@ -30,14 +32,20 @@ class AreaListFragment : Fragment() {
         super.onCreate(savedInstanceState)
     }
 
+    lateinit private var binding: FragmentAreaListBinding
+
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val binding: FragmentAreaListBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_area_list,
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_area_list,
                 container, false)
         binding.args = Args(ObservableField(true), ObservableField(0))
+        fetchAreas()
+        return binding.root
+    }
 
-
-        areas.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
+    private fun fetchAreas() {
+        val store = AreaStore.with(activity)
+        store.areas.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
 
             override fun onError(e: Throwable?) {
             }
@@ -47,16 +55,35 @@ class AreaListFragment : Fragment() {
             }
 
             override fun onNext(areas: List<Area>?) {
-                if (areas != null) {
+                if (areas != null && areas.isNotEmpty()) {
                     (binding.args as Args).itemNo.set(areas.size)
                     list.adapter = AreaRecyclerViewAdapter(areas, mListener)
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
+                } else if (BuildConfig.DEBUG) {
+                    var pb: ProgressDialog? = null
+                    store.fakeAreas().observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
+                        pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
+                    }).doOnCompleted {
+                        pb?.dismiss()
+                        Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
+                    }.subscribe(object : Observer<Void> {
+
+                        override fun onError(e: Throwable?) {
+
+                        }
+
+                        override fun onNext(t: Void?) {
+
+                        }
+
+                        override fun onCompleted() {
+                            fetchAreas()
+                        }
+                    })
                 }
             }
 
         })
-
-        return binding.root
     }
 
     override fun onAttach(context: Context?) {
