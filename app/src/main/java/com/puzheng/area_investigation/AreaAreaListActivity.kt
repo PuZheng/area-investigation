@@ -1,7 +1,10 @@
 package com.puzheng.area_investigation
 
+import android.app.Dialog
 import android.os.Bundle
 import android.support.design.widget.Snackbar
+import android.support.v4.app.DialogFragment
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
 import android.view.Menu
@@ -29,7 +32,10 @@ class AreaAreaListActivity : AppCompatActivity(),
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-                return true
+                when (item?.itemId) {
+                    R.id.action_trash -> TrashAlertDialogFragment().show(supportFragmentManager, "")
+                }
+                return false
             }
 
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
@@ -85,5 +91,19 @@ class AreaAreaListActivity : AppCompatActivity(),
         }
 
         return super.onOptionsItemSelected(item)
+    }
+}
+
+private class TrashAlertDialogFragment : DialogFragment() {
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val builder = AlertDialog.Builder(activity);
+        builder.setTitle(R.string.warning).setMessage("您确认要删除这些区域信息?\n(数据不可恢复)")
+                .setPositiveButton(R.string.confirm, {
+                    dialog, v ->
+
+                }).setNegativeButton(R.string.cancel, null)
+        // Create the AlertDialog object and return it
+        return builder.create();
     }
 }
