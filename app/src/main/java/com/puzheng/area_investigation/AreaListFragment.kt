@@ -46,6 +46,8 @@ class AreaListFragment : Fragment() {
         return binding.root
     }
 
+    fun update() = fetchAreas()
+
     private fun fetchAreas() {
         val store = AreaStore.with(activity)
         store.areas.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {

@@ -1,5 +1,6 @@
 package com.puzheng.area_investigation
 
+import android.app.Activity
 import android.app.Dialog
 import android.os.Bundle
 import android.support.design.widget.Snackbar
@@ -98,10 +99,10 @@ private class TrashAlertDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(activity);
-        builder.setTitle(R.string.warning).setMessage("您确认要删除这些区域信息?\n(数据不可恢复)")
+        builder.setTitle(R.string.warning).setMessage(R.string.trash_confirm_msg)
                 .setPositiveButton(R.string.confirm, {
                     dialog, v ->
-
+                    ((activity as AreaAreaListActivity).fragmentAreaList as AreaListFragment).update()
                 }).setNegativeButton(R.string.cancel, null)
         // Create the AlertDialog object and return it
         return builder.create();
