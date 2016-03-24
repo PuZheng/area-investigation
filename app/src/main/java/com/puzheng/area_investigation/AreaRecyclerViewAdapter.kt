@@ -11,6 +11,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.bignerdranch.android.multiselector.MultiSelector
+import com.bignerdranch.android.multiselector.SwappingHolder
 import com.orhanobut.logger.Logger
 
 import com.puzheng.area_investigation.AreaListFragment.OnAreaListFragmentInteractionListener
@@ -32,9 +34,9 @@ private val AREA_TYPE = 2
  * TODO: Replace the implementation with code for your data type.
  */
 class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
-                              private val listener: OnAreaListFragmentInteractionListener) :
+                              private val listener: OnAreaListFragmentInteractionListener,
+                              private val multiSelector: MultiSelector) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
 
     val items = mutableListOf<Area?>()
 
@@ -63,7 +65,7 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
         return if (viewType == HEADER_TYPE) {
             HeaderViewHolder(inflate(R.layout.fragment_area_header))
         } else {
-            AreaViewHolder(inflate(R.layout.fragment_area))
+            AreaViewHolder(inflate(R.layout.fragment_area), multiSelector, listener)
         }
     }
 
@@ -78,13 +80,7 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
             val context = holder.textView.context
             Picasso.with(context).load(AreaStore.with(context).getCoverImageFile(area)).into(holder.imageView);
             Logger.v("bind ${area.name}")
-            holder.view.setOnClickListener {
-                listener.onClickItem(holder.item!!)
-            }
-            holder.view.setOnLongClickListener {
-                listener.onLongClickItem(holder.item!!)
-                true
-            }
+
         }
     }
 
@@ -106,7 +102,8 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
 
 }
 
-private class AreaViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+private class AreaViewHolder(val view: View, val multiSelector: MultiSelector, val listener: OnAreaListFragmentInteractionListener) :
+        SwappingHolder(view, multiSelector) {
     val textView: TextView
     val imageView: ImageView
     var item: Area? = null
@@ -114,6 +111,16 @@ private class AreaViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
     init {
         textView = view.findViewById(R.id.content) as TextView
         imageView = view.findViewById(R.id.imageView) as ImageView
+        view.setOnClickListener {
+            if (!multiSelector.tapSelection(this)) {
+                listener.onClickItem(item!!)
+            }
+        }
+        view.setOnLongClickListener {
+            listener.onLongClickItem(item!!)
+            multiSelector.setSelected(this, true)
+            true
+        }
     }
 
     override fun toString(): String {

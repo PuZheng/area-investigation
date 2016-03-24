@@ -6,12 +6,16 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import kotlinx.android.synthetic.main.activity_area_list.*
+import kotlinx.android.synthetic.main.content_area_list.*
 
 class AreaAreaListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
+
 
 
     private var actionMode: ActionMode? = null
@@ -21,8 +25,7 @@ class AreaAreaListActivity : AppCompatActivity(),
             return false;
         }
 
-        // Start the CAB using the ActionMode.Callback defined above
-        actionMode = startSupportActionMode(object : ActionMode.Callback {
+        actionMode = startSupportActionMode(object : ModalMultiSelectorCallback((fragmentAreaList as AreaListFragment).multiSelector) {
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
@@ -30,11 +33,15 @@ class AreaAreaListActivity : AppCompatActivity(),
             }
 
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                super.onCreateActionMode(mode, menu)
                 mode?.menuInflater?.inflate(R.menu.context_menu_area_list, menu);
+                fab.visibility = View.GONE
                 return true
             }
 
             override fun onDestroyActionMode(mode: ActionMode?) {
+                multiSelector.clearSelections()
+                fab.visibility = View.VISIBLE
                 actionMode = null;
             }
 

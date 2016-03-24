@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import com.bignerdranch.android.multiselector.MultiSelector
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -27,6 +28,8 @@ import rx.schedulers.Schedulers
  */
 class AreaListFragment : Fragment() {
     private var listener: OnAreaListFragmentInteractionListener? = null
+
+    val multiSelector = MultiSelector()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +61,7 @@ class AreaListFragment : Fragment() {
             override fun onNext(areas: List<Area>?) {
                 if (areas != null && areas.isNotEmpty()) {
                     (binding.args as Args).itemNo.set(areas.size)
-                    list.adapter = AreaRecyclerViewAdapter(areas, listener!!)
+                    list.adapter = AreaRecyclerViewAdapter(areas, listener!!, multiSelector)
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
                 } else if (BuildConfig.DEBUG) {
                     var pb: ProgressDialog? = null
