@@ -3,15 +3,46 @@ package com.puzheng.area_investigation
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import kotlinx.android.synthetic.main.activity_area_list.*
 
-class AreaListActivity : AppCompatActivity(),
-        AreaListFragment.OnListFragmentInteractionListener {
-    override fun onListFragmentInteraction(area: Area) {
+class AreaAreaListActivity : AppCompatActivity(),
+        AreaListFragment.OnAreaListFragmentInteractionListener {
+
+
+    private var actionMode: ActionMode? = null
+
+    override fun onLongClickItem(area: Area): Boolean {
+        if (actionMode != null) {
+            return false;
+        }
+
+        // Start the CAB using the ActionMode.Callback defined above
+        actionMode = startSupportActionMode(object : ActionMode.Callback {
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
+
+            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
+                return true
+            }
+
+            override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                mode?.menuInflater?.inflate(R.menu.context_menu_area_list, menu);
+                return true
+            }
+
+            override fun onDestroyActionMode(mode: ActionMode?) {
+                actionMode = null;
+            }
+
+        });
+        return true;
+    }
+
+    override fun onClickItem(area: Area) {
         throw UnsupportedOperationException()
     }
 

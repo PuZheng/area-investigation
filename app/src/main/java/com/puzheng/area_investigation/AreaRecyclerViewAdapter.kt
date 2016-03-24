@@ -1,6 +1,7 @@
 package com.puzheng.area_investigation
 
 import android.content.Context
+import android.support.v4.view.ViewCompat
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.text.format.DateUtils
@@ -12,7 +13,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.orhanobut.logger.Logger
 
-import com.puzheng.area_investigation.AreaListFragment.OnListFragmentInteractionListener
+import com.puzheng.area_investigation.AreaListFragment.OnAreaListFragmentInteractionListener
 import com.puzheng.area_investigation.dummy.DummyContent.DummyItem
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -27,11 +28,11 @@ private val AREA_TYPE = 2
 
 /**
  * [RecyclerView.Adapter] that can display a [DummyItem] and makes a call to the
- * specified [OnListFragmentInteractionListener].
+ * specified [OnAreaListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
 class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
-                              private val listener: OnListFragmentInteractionListener?) :
+                              private val listener: OnAreaListFragmentInteractionListener) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
 
@@ -78,7 +79,11 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
             Picasso.with(context).load(AreaStore.with(context).getCoverImageFile(area)).into(holder.imageView);
             Logger.v("bind ${area.name}")
             holder.view.setOnClickListener {
-                listener?.onListFragmentInteraction(holder.item!!)
+                listener.onClickItem(holder.item!!)
+            }
+            holder.view.setOnLongClickListener {
+                listener.onLongClickItem(holder.item!!)
+                true
             }
         }
     }

@@ -2,14 +2,9 @@ package com.puzheng.area_investigation.store
 
 import android.content.Context
 import android.database.Cursor
-import android.os.Environment
 import android.provider.BaseColumns
-import android.util.Log
-import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.DBHelpler
 import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.model.isExternalStorageReadable
-import com.puzheng.area_investigation.model.isExternalStorageWritable
 import rx.Observable
 import rx.schedulers.Schedulers
 import java.io.File
@@ -27,11 +22,7 @@ class AreaStore private constructor(val context: Context) {
 
     }
 
-    fun getCoverImageFile(area: Area): File = if (isExternalStorageReadable) {
-        File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath + "/areas", "${area.id}.png")
-    } else {
-        File(context.filesDir.absolutePath + "/areas", "${area.id}.png")
-    }
+    fun getCoverImageFile(area: Area): File = context.openReadableFile("/areas", "${area.id}.png")
 
     // a list of areas ordered by `created` in descending order
     val areas: Observable<List<Area>>
@@ -64,28 +55,9 @@ class AreaStore private constructor(val context: Context) {
                 if (updated == null) format.parse(created) else format.parse(updated))
 
         fun fakeAreaImage(id: Long) {
-            val filename = "$id.png"
-            val outputStream: FileOutputStream = FileOutputStream(
-                    if (isExternalStorageWritable) {
-                        File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath + "/areas", filename)
-                    } else {
-                        val dir = File(context.filesDir.absolutePath + "/areas")
-                        if (!dir.isDirectory) {
-                            dir.mkdirs()
-                        }
-                        File(context.filesDir.absolutePath + "/areas", filename)
-                    }
-            )
+            val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/areas", "$id.png"))
             val inputStream = context.assets.open("default_area.png")
-            var len = 1024
-            val buf = ByteArray(len)
-            while (true) {
-                len = inputStream.read(buf)
-                if (len <= 0) {
-                    break
-                }
-                outputStream.write(buf, 0, len)
-            }
+            inputStream.transferTo(outputStream)
             outputStream.close()
             inputStream.close()
         }

@@ -22,11 +22,11 @@ import rx.schedulers.Schedulers
  * A fragment representing a list of Items.
  *
  *
- * Activities containing this fragment MUST implement the [OnListFragmentInteractionListener]
+ * Activities containing this fragment MUST implement the [OnAreaListFragmentInteractionListener]
  * interface.
  */
 class AreaListFragment : Fragment() {
-    private var mListener: OnListFragmentInteractionListener? = null
+    private var listener: OnAreaListFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +58,7 @@ class AreaListFragment : Fragment() {
             override fun onNext(areas: List<Area>?) {
                 if (areas != null && areas.isNotEmpty()) {
                     (binding.args as Args).itemNo.set(areas.size)
-                    list.adapter = AreaRecyclerViewAdapter(areas, mListener)
+                    list.adapter = AreaRecyclerViewAdapter(areas, listener!!)
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
                 } else if (BuildConfig.DEBUG) {
                     var pb: ProgressDialog? = null
@@ -89,8 +89,8 @@ class AreaListFragment : Fragment() {
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
-        if (context is OnListFragmentInteractionListener) {
-            mListener = context as OnListFragmentInteractionListener?
+        if (context is OnAreaListFragmentInteractionListener) {
+            listener = context as OnAreaListFragmentInteractionListener?
         } else {
             throw RuntimeException(context!!.toString() + " must implement OnListFragmentInteractionListener")
         }
@@ -98,7 +98,7 @@ class AreaListFragment : Fragment() {
 
     override fun onDetach() {
         super.onDetach()
-        mListener = null
+        listener = null
     }
 
     /**
@@ -110,9 +110,9 @@ class AreaListFragment : Fragment() {
      *
      * See the Android Training lesson [Communicating with Other Fragments](http://developer.android.com/training/basics/fragments/communicating.html) for more information.
      */
-    interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        fun onListFragmentInteraction(area: Area)
+    interface OnAreaListFragmentInteractionListener {
+        fun onClickItem(area: Area)
+        fun onLongClickItem(area: Area): Boolean
     }
 
     companion object {
