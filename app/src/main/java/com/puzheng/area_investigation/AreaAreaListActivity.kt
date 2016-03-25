@@ -2,6 +2,7 @@ package com.puzheng.area_investigation
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.DialogFragment
@@ -70,7 +71,10 @@ class AreaAreaListActivity : AppCompatActivity(),
         setContentView(R.layout.activity_area_list)
         setSupportActionBar(toolbar)
 
-        fab.setOnClickListener({ view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show() })
+        fab.setOnClickListener({
+            val intent = Intent(this, CreateAreaActivity::class.java)
+            startActivity(intent)
+        })
 
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
