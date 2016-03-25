@@ -14,8 +14,10 @@ import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
+import kotlinx.android.synthetic.main.fragment_area_list.*
 
 class AreaAreaListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
@@ -34,7 +36,8 @@ class AreaAreaListActivity : AppCompatActivity(),
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                 when (item?.itemId) {
-                    R.id.action_trash -> TrashAlertDialogFragment().show(supportFragmentManager, "")
+                    R.id.action_trash ->
+                        TrashAlertDialogFragment().show(supportFragmentManager, "")
                 }
                 return false
             }
@@ -98,11 +101,14 @@ class AreaAreaListActivity : AppCompatActivity(),
 private class TrashAlertDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(activity);
+        val builder = AlertDialog.Builder(activity)
+
         builder.setTitle(R.string.warning).setMessage(R.string.trash_confirm_msg)
                 .setPositiveButton(R.string.confirm, {
                     dialog, v ->
-                    ((activity as AreaAreaListActivity).fragmentAreaList as AreaListFragment).update()
+                    val fragment = (activity as AreaAreaListActivity).fragmentAreaList as AreaListFragment
+                    fragment.removeSelectedAreas()
+                    fragment.multiSelector.clearSelections()
                 }).setNegativeButton(R.string.cancel, null)
         // Create the AlertDialog object and return it
         return builder.create();

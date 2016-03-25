@@ -22,7 +22,7 @@ class AreaStore private constructor(val context: Context) {
 
     }
 
-    fun getCoverImageFile(area: Area): File = context.openReadableFile("/areas", "${area.id}.png")
+    fun getCoverImageFile(area: Area): File? = context.openReadableFile("/areas", "${area.id}.png")
 
     // a list of areas ordered by `created` in descending order
     val areas: Observable<List<Area>>
@@ -63,24 +63,38 @@ class AreaStore private constructor(val context: Context) {
         }
 
         for (area in listOf(
-                fakeArea(1L, "2016-03-08 10:30:31"),
+                fakeArea(1L, "2016-03-08 17:30:31"),
                 fakeArea(2L, "2016-03-08 14:32:31", "2016-03-10 12:12:31"),
-                fakeArea(3L, "2016-03-08 17:32:31"),
+                fakeArea(3L, "2016-03-08 10:32:31"),
                 fakeArea(4L, "2016-03-01 17:32:31"),
-                fakeArea(5L, "2016-03-01 17:32:31"),
-                fakeArea(6L, "2016-01-01 17:32:31", "2016-03-14 14:32:31"),
+                fakeArea(5L, "2016-03-01 12:32:31"),
+                fakeArea(6L, "2016-01-01 7:32:31", "2016-03-14 14:32:31"),
                 fakeArea(7L, "2015-09-08 17:32:31"),
-                fakeArea(8L, "2015-09-08 17:32:31"),
-                fakeArea(9L, "2015-03-02 17:32:31"),
+                fakeArea(8L, "2015-09-08 10:32:31"),
+                fakeArea(9L, "2015-03-02 9:32:31"),
                 fakeArea(10L, "2016-03-02 17:32:31"),
-                fakeArea(11L, "2016-03-02 17:32:31"),
-                fakeArea(12L, "2016-03-02 17:32:31"),
-                fakeArea(13L, "2016-03-02 17:32:31")
+                fakeArea(11L, "2016-03-02 12:32:31"),
+                fakeArea(12L, "2016-03-02 10:32:31"),
+                fakeArea(13L, "2016-03-02 8:32:31")
         )) {
             val id = db.insert(Area.Model.TABLE_NAME, null, Area.Model.makeValues(area))
             fakeAreaImage(id)
         }
         db.close()
+        it!!.onCompleted()
+    }.subscribeOn(Schedulers.computation())
+
+    fun removeAreas(areas: List<Area>) = Observable.create<Void> {
+        val db = DBHelpler(context).writableDatabase
+        try {
+            db.delete(Area.Model.TABLE_NAME, """${BaseColumns._ID} IN (${areas.map { it.id.toString() }.joinToString(",")})""", null)
+
+        } finally {
+            db.close()
+        }
+        areas.forEach {
+            AreaStore.with(context).getCoverImageFile(it)?.delete()
+        }
         it!!.onCompleted()
     }.subscribeOn(Schedulers.computation())
 }

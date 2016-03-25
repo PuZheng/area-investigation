@@ -21,6 +21,7 @@ import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_area.view.*
+import kotlinx.android.synthetic.main.fragment_area_list.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -33,7 +34,7 @@ private val AREA_TYPE = 2
  * specified [OnAreaListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
-class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
+class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
                               private val listener: OnAreaListFragmentInteractionListener,
                               private val multiSelector: MultiSelector) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -41,16 +42,26 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
     val items = mutableListOf<Area?>()
 
     init {
+        setupItems()
+    }
+
+    private fun setupItems() {
         if (areas != null) {
-            for ((idx, area) in areas.withIndex()) {
+            items.clear()
+            for ((idx, area) in areas!!.withIndex()) {
                 // 按天分组，如果不是同一天的，插入null，代表一个seperator
-                if (idx == 0 || !area!!.created.ofSameDay(areas[idx - 1]!!.created)) {
+                if (idx == 0 || !area!!.created.ofSameDay(areas!![idx - 1]!!.created)) {
                     items.add(null)
                 }
                 items.add(area)
             }
         }
+    }
 
+    override fun getItemId(position: Int): Long = if (getItemViewType(position) == HEADER_TYPE) {
+        super.getItemId(position)
+    } else {
+        items[position]!!.id
     }
 
     override fun getItemViewType(position: Int): Int = if (items[position] == null) {
@@ -100,6 +111,22 @@ class AreaRecyclerViewAdapter(private val areas: List<Area?>?,
         }
     }
 
+    val selectedAreas: List<Area>
+        get() = (0..items.size - 1).filter {
+            multiSelector.isSelected(it, 0)
+        }.map {
+            items[it]!!
+        }
+
+    fun removeSelectedAreas() {
+        Logger.v("""selected areas: ${selectedAreas.map { it.name }.joinToString(",")}""")
+        areas = areas?.filter { it?.id !in selectedAreas.map { it.id } }
+        Logger.v("""remained areas: ${areas?.map { it?.name }?.joinToString(",")}""")
+        setupItems()
+        notifyDataSetChanged()
+    }
+
+
 }
 
 private class AreaViewHolder(val view: View, val multiSelector: MultiSelector, val listener: OnAreaListFragmentInteractionListener) :
@@ -126,6 +153,8 @@ private class AreaViewHolder(val view: View, val multiSelector: MultiSelector, v
     override fun toString(): String {
         return super.toString() + " '" + textView.text + "'"
     }
+
+
 }
 
 private class HeaderViewHolder(val view: View) : RecyclerView.ViewHolder(view) {

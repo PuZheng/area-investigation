@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.bignerdranch.android.multiselector.MultiSelector
+import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -36,6 +37,8 @@ class AreaListFragment : Fragment() {
     }
 
     lateinit private var binding: FragmentAreaListBinding
+    lateinit private var areas: List<Area>
+
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -45,8 +48,6 @@ class AreaListFragment : Fragment() {
         fetchAreas()
         return binding.root
     }
-
-    fun update() = fetchAreas()
 
     private fun fetchAreas() {
         val store = AreaStore.with(activity)
@@ -60,8 +61,10 @@ class AreaListFragment : Fragment() {
                 (binding.args as Args).loading.set(false)
             }
 
+
             override fun onNext(areas: List<Area>?) {
                 if (areas != null && areas.isNotEmpty()) {
+                    this@AreaListFragment.areas = areas
                     (binding.args as Args).itemNo.set(areas.size)
                     list.adapter = AreaRecyclerViewAdapter(areas, listener!!, multiSelector)
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
@@ -120,21 +123,27 @@ class AreaListFragment : Fragment() {
         fun onLongClickItem(area: Area): Boolean
     }
 
-    companion object {
-
-        // TODO: Customize parameter argument names
-        private val ARG_COLUMN_COUNT = "column-count"
-
-        // TODO: Customize parameter initialization
-        @SuppressWarnings("unused")
-        fun newInstance(columnCount: Int): AreaListFragment {
-            val fragment = AreaListFragment()
-            val args = Bundle()
-            args.putInt(ARG_COLUMN_COUNT, columnCount)
-            fragment.arguments = args
-            return fragment
-        }
-    }
 
     data class Args(val loading: ObservableField<Boolean>, val itemNo: ObservableField<Int>)
+
+    fun removeSelectedAreas() {
+        val adapter = (list.adapter as AreaRecyclerViewAdapter)
+        val selectedAreas = adapter.selectedAreas
+        adapter.removeSelectedAreas()
+        AreaStore.with(activity).removeAreas(selectedAreas).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void?> {
+
+            override fun onNext(t: Void?) {
+            }
+
+            override fun onError(e: Throwable?) {
+                // TODO more polite
+                throw UnsupportedOperationException()
+            }
+
+            override fun onCompleted() {
+                Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
 }
