@@ -7,6 +7,8 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.amap.api.maps2d.MapView
+import kotlinx.android.synthetic.main.fragment_create_area_step2.*
 
 
 /**
@@ -30,7 +32,30 @@ class CreateAreaStep2Fragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        return inflater!!.inflate(R.layout.fragment_create_area_step2, container, false)
+        val view = inflater!!.inflate(R.layout.fragment_create_area_step2, container, false)
+
+//        val aMap = map.getMap();
+//        aMap.setLocationSource(new LocationSource() {
+//
+//            @Override
+//            public void activate(OnLocationChangedListener onLocationChangedListener) {
+//                AMapFragment.this.onLocationChangedListener = onLocationChangedListener;
+//                centerAt(((NearbyActivity) getActivity()).getLnglat());
+//            }
+//
+//            @Override
+//            public void deactivate() {
+//                AMapFragment.this.onLocationChangedListener = null;
+//            }
+//        });
+//        aMap.setMyLocationEnabled(true);
+
+        return view;
+    }
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        map.onCreate(savedInstanceState)
     }
 
     // TODO: Rename method, update argument and hook method into UI event
