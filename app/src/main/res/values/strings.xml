@@ -7,4 +7,12 @@
     <string name="cancel">取消</string>
     <string name="warning">警告</string>
     <string name="trash_confirm_msg">"您确认要删除这些区域信息?\n(数据不可恢复)"</string>
+    <string name="prev">上一步</string>
+    <string name="next">下一步</string>
+    <string name="finish">完成</string>
+    <string name="trash_cancel_create_area">您确认要取消创建重点区域?</string>
+    <string name="title_create_area">创建重点区域</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="prompt_area_name">输入重点区域名称</string>
 </resources>
