@@ -10,6 +10,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import com.bignerdranch.android.multiselector.MultiSelector
+import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -22,17 +24,21 @@ import rx.schedulers.Schedulers
  * A fragment representing a list of Items.
  *
  *
- * Activities containing this fragment MUST implement the [OnListFragmentInteractionListener]
+ * Activities containing this fragment MUST implement the [OnAreaListFragmentInteractionListener]
  * interface.
  */
 class AreaListFragment : Fragment() {
-    private var mListener: OnListFragmentInteractionListener? = null
+    private var listener: OnAreaListFragmentInteractionListener? = null
+
+    val multiSelector = MultiSelector()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
 
     lateinit private var binding: FragmentAreaListBinding
+    lateinit private var areas: List<Area>
+
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -55,10 +61,12 @@ class AreaListFragment : Fragment() {
                 (binding.args as Args).loading.set(false)
             }
 
+
             override fun onNext(areas: List<Area>?) {
                 if (areas != null && areas.isNotEmpty()) {
+                    this@AreaListFragment.areas = areas
                     (binding.args as Args).itemNo.set(areas.size)
-                    list.adapter = AreaRecyclerViewAdapter(areas, mListener)
+                    list.adapter = AreaRecyclerViewAdapter(areas, listener!!, multiSelector)
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
                 } else if (BuildConfig.DEBUG) {
                     var pb: ProgressDialog? = null
@@ -89,8 +97,8 @@ class AreaListFragment : Fragment() {
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
-        if (context is OnListFragmentInteractionListener) {
-            mListener = context as OnListFragmentInteractionListener?
+        if (context is OnAreaListFragmentInteractionListener) {
+            listener = context as OnAreaListFragmentInteractionListener?
         } else {
             throw RuntimeException(context!!.toString() + " must implement OnListFragmentInteractionListener")
         }
@@ -98,7 +106,7 @@ class AreaListFragment : Fragment() {
 
     override fun onDetach() {
         super.onDetach()
-        mListener = null
+        listener = null
     }
 
     /**
@@ -110,26 +118,32 @@ class AreaListFragment : Fragment() {
      *
      * See the Android Training lesson [Communicating with Other Fragments](http://developer.android.com/training/basics/fragments/communicating.html) for more information.
      */
-    interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        fun onListFragmentInteraction(area: Area)
+    interface OnAreaListFragmentInteractionListener {
+        fun onClickItem(area: Area)
+        fun onLongClickItem(area: Area): Boolean
     }
 
-    companion object {
-
-        // TODO: Customize parameter argument names
-        private val ARG_COLUMN_COUNT = "column-count"
-
-        // TODO: Customize parameter initialization
-        @SuppressWarnings("unused")
-        fun newInstance(columnCount: Int): AreaListFragment {
-            val fragment = AreaListFragment()
-            val args = Bundle()
-            args.putInt(ARG_COLUMN_COUNT, columnCount)
-            fragment.arguments = args
-            return fragment
-        }
-    }
 
     data class Args(val loading: ObservableField<Boolean>, val itemNo: ObservableField<Int>)
+
+    fun removeSelectedAreas() {
+        val adapter = (list.adapter as AreaRecyclerViewAdapter)
+        val selectedAreas = adapter.selectedAreas
+        adapter.removeSelectedAreas()
+        AreaStore.with(activity).removeAreas(selectedAreas).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void?> {
+
+            override fun onNext(t: Void?) {
+            }
+
+            override fun onError(e: Throwable?) {
+                // TODO more polite
+                throw UnsupportedOperationException()
+            }
+
+            override fun onCompleted() {
+                Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
 }

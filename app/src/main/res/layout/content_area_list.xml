@@ -5,13 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.puzheng.area_investigation.AreaListActivity"
+    tools:context="com.puzheng.area_investigation.AreaAreaListActivity"
     tools:showIn="@layout/activity_area_list">
 
 
     <fragment
         android:name="com.puzheng.area_investigation.AreaListFragment"
-        android:id="@+id/fragmenAreaList"
+        android:id="@+id/fragmentAreaList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"></fragment>
 
