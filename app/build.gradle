@@ -54,6 +54,8 @@ dependencies {
     compile 'io.reactivex:rxjava:1.1.2'
     compile 'com.bignerdranch.android:recyclerview-multiselect:+'
     compile files('libs/AMap_2DMap_V2.8.1_20160202.jar')
+    compile files('libs/AMap_2DMap_V2.8.0_20151231.jar')
+    compile files('libs/AMap_Location_V2.4.0_20160308.jar')
 }
 
 buildscript {

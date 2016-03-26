@@ -1,6 +1,7 @@
 package com.puzheng.area_investigation
 
 import android.content.Context
+import android.inputmethodservice.Keyboard
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -9,6 +10,8 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import kotlinx.android.synthetic.main.fragment_create_area_step1.*
 
 
@@ -28,7 +31,6 @@ class CreateAreaStep1Fragment : Fragment() {
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         name.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 mListener?.afterTextChanged(s)
@@ -41,6 +43,8 @@ class CreateAreaStep1Fragment : Fragment() {
             }
         })
         mListener?.afterTextChanged(name.editableText)
+
+
     }
 
     private var mListener: CreateAreaStep1Fragment.OnFragmentInteractionListener? = null

@@ -1,10 +1,8 @@
 package com.puzheng.area_investigation
 
-import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -15,14 +13,11 @@ import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
-import kotlinx.android.synthetic.main.fragment_area_list.*
 
 class AreaAreaListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
-
 
 
     private var actionMode: ActionMode? = null

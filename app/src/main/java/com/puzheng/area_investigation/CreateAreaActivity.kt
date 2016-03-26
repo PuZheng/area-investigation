@@ -1,6 +1,7 @@
 package com.puzheng.area_investigation
 
 import android.app.Dialog
+import android.content.Context
 import android.databinding.DataBindingUtil
 import android.databinding.ObservableField
 import android.net.Uri
@@ -8,10 +9,13 @@ import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentStatePagerAdapter
+import android.support.v4.view.ViewPager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.view.MenuItem
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import com.puzheng.area_investigation.databinding.ActivityCreateAreaBinding
 import kotlinx.android.synthetic.main.activity_create_area.*
 
@@ -23,7 +27,8 @@ class CreateAreaActivity : AppCompatActivity(),
         next.isEnabled = s.toString().isNotBlank()
     }
 
-    override fun onFragmentInteraction(uri: Uri) {
+    override fun onMapLongClick() {
+        // TODO into action mode
     }
 
     lateinit private var binding: ActivityCreateAreaBinding
@@ -43,7 +48,20 @@ class CreateAreaActivity : AppCompatActivity(),
             override fun getItem(position: Int): Fragment? = fragments[position]
 
             override fun getCount(): Int = 2
+
         }
+        pager.addOnPageChangeListener(object: ViewPager.SimpleOnPageChangeListener() {
+            override fun onPageSelected(position: Int) {
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                // 填写名称时要求展示输入法, 勾勒轮廓时隐藏输入法
+                when (position) {
+                    0 ->
+                        imm.showSoftInput(currentFocus, 0)
+                    1 ->
+                        imm.hideSoftInputFromWindow(currentFocus.windowToken, 0);
+                }
+            }
+        })
         binding.args = Args(ObservableField(false), ObservableField(true))
 
         supportActionBar?.title = getString(R.string.title_create_area)
