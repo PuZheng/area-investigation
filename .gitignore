@@ -39,3 +39,4 @@ proguard/
 *.log
 
 gradle.properties
+config.json
