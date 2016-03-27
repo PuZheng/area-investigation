@@ -4,12 +4,12 @@
              android:layout_height="match_parent"
              tools:context="com.puzheng.area_investigation.CreateAreaStep2Fragment">
 
+
     <!-- TODO: Update blank fragment layout -->
     <com.amap.api.maps2d.MapView
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/map"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
-
 
 </FrameLayout>
