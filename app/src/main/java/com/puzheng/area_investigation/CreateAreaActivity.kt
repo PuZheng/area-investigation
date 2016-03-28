@@ -20,13 +20,16 @@ import com.amap.api.maps2d.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.ActivityCreateAreaBinding
 import kotlinx.android.synthetic.main.activity_create_area.*
+import kotlinx.android.synthetic.main.fragment_create_area_step1.*
+
 
 class CreateAreaActivity : AppCompatActivity(),
         CreateAreaStep1Fragment.OnFragmentInteractionListener,
         CreateAreaStep2Fragment.OnFragmentInteractionListener {
 
-    override fun onDrawDone() {
+    override fun onDrawDone(latLngList: List<LatLng>) {
         drawingActionMode?.finish()
+        ConfirmCreateAreaDialog(createAreaStep1Fragment.name.text.toString(), latLngList).show(supportFragmentManager, "")
     }
 
     override fun afterTextChanged(s: Editable?) {
@@ -58,6 +61,13 @@ class CreateAreaActivity : AppCompatActivity(),
 
     lateinit private var binding: ActivityCreateAreaBinding
 
+    private val createAreaStep1Fragment: CreateAreaStep1Fragment by lazy {
+        CreateAreaStep1Fragment.newInstance()
+    }
+    private val createAreaStep2Fragment: CreateAreaStep2Fragment by lazy {
+        CreateAreaStep2Fragment.newInstance()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.init("CreateAreaActivitiy")
@@ -67,8 +77,8 @@ class CreateAreaActivity : AppCompatActivity(),
             private var fragments: MutableList<Fragment> = mutableListOf()
 
             init {
-                fragments.add(CreateAreaStep1Fragment.newInstance())
-                fragments.add(CreateAreaStep2Fragment.newInstance())
+                fragments.add(createAreaStep1Fragment)
+                fragments.add(createAreaStep2Fragment)
             }
 
             override fun getItem(position: Int): Fragment? = fragments[position]
@@ -88,21 +98,22 @@ class CreateAreaActivity : AppCompatActivity(),
                 }
             }
         })
-        binding.args = Args(ObservableField(false), ObservableField(true))
 
         supportActionBar?.title = getString(R.string.title_create_area)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        prev.setOnClickListener({
+        prev.setOnClickListener {
             pager.currentItem -= 1
             binding.args.hasPrevious.set(pager.currentItem > 0)
             binding.args.hasNext.set(pager.currentItem < pager.adapter.count - 1)
-        })
-        next.setOnClickListener({
+        }
+
+        next.setOnClickListener {
             pager.currentItem += 1
             binding.args.hasPrevious.set(pager.currentItem > 0)
             binding.args.hasNext.set(pager.currentItem < pager.adapter.count - 1)
-        })
+        }
+        binding.args = Args(ObservableField(false), ObservableField(true))
     }
 
     class Args(val hasPrevious: ObservableField<Boolean>, val hasNext: ObservableField<Boolean>)
@@ -123,17 +134,13 @@ class CreateAreaActivity : AppCompatActivity(),
 }
 
 private class AffirmBackDialogFragment(val after: () -> Unit) : DialogFragment() {
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(activity)
-
-        builder.setTitle(R.string.warning).setMessage(R.string.trash_cancel_create_area)
-                .setPositiveButton(R.string.confirm, {
-                    dialog, v ->
-                    after()
-                }).setNegativeButton(R.string.cancel, null)
-        // Create the AlertDialog object and return it
-        return builder.create();
-    }
+    override fun onCreateDialog(savedInstanceState: Bundle?) =
+            AlertDialog.Builder(activity).setTitle(R.string.warning)
+                    .setMessage(R.string.trash_cancel_create_area)
+                    .setPositiveButton(R.string.confirm, {
+                        dialog, v ->
+                        after()
+                    }).setNegativeButton(R.string.cancel, null).create()
 }
 
 private class CancelDrawingDialogFragment(val after: () -> Unit) : DialogFragment() {
@@ -145,8 +152,11 @@ private class CancelDrawingDialogFragment(val after: () -> Unit) : DialogFragmen
                     dialog, v ->
                     after()
                 }).setNegativeButton(R.string.cancel, null)
-        // Create the AlertDialog object and return it
         return builder.create();
     }
 }
+
+
+
+
 

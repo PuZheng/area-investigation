@@ -73,7 +73,8 @@
                 android:paddingStart="5sp"
                 android:text="@{args.hasNext? @string/next: @string/finish}"
                 android:textColor="@android:color/secondary_text_light"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:enabled="@{args.hasNext}"/>
 
         </RelativeLayout>
 

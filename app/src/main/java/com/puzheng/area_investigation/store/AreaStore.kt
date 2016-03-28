@@ -2,11 +2,14 @@ package com.puzheng.area_investigation.store
 
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.provider.BaseColumns
 import com.puzheng.area_investigation.DBHelpler
 import com.puzheng.area_investigation.model.Area
 import rx.Observable
 import rx.schedulers.Schedulers
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -96,5 +99,26 @@ class AreaStore private constructor(val context: Context) {
             AreaStore.with(context).getCoverImageFile(it)?.delete()
         }
         it!!.onCompleted()
+    }.subscribeOn(Schedulers.computation())
+
+
+    fun createArea(area: Area, bitmap: Bitmap? = null) = Observable.create<Long> {
+        val db = DBHelpler(context).writableDatabase
+        try {
+            val id = db.insert(Area.Model.TABLE_NAME, null, Area.Model.makeValues(area))
+            if (bitmap != null) {
+                val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/areas", "$id.png"))
+                val stream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                val inputStream = ByteArrayInputStream(stream.toByteArray())
+                inputStream.transferTo(outputStream)
+                outputStream.close()
+                inputStream.close()
+            }
+            it!!.onNext(id)
+            it!!.onCompleted()
+        } finally {
+            db.close()
+        }
     }.subscribeOn(Schedulers.computation())
 }
