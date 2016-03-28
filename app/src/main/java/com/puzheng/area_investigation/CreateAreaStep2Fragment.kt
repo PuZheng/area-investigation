@@ -35,45 +35,31 @@ import kotlinx.android.synthetic.main.fragment_create_area_step2.*
  */
 class CreateAreaStep2Fragment : Fragment() {
 
-    // TODO: Rename and change types of parameters
-
     private var listener: OnFragmentInteractionListener? = null
 
     private val closeToLimit: Int by lazy {
-        val metrics = resources.displayMetrics
-        32 * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
+        (32 * pixelsPerDp).toInt()
     }
 
     private val horizontalBoundaryLimit: Int by lazy {
-        val metrics = resources.displayMetrics
-        40 * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
+        (40 * pixelsPerDp).toInt()
     }
 
     private val verticalBoundaryLimit: Int by lazy {
-        val metrics = resources.displayMetrics
-        40 * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
+        (40 * pixelsPerDp).toInt()
     }
 
     // 地图清除所有覆盖物时，会回收所有关联的Bitmap
     private val touchingMarkerBitmap: Bitmap? = null
-        get() = if (field == null || field.isRecycled) makeBitmap(R.drawable.touching_marker) else field
+        get() = if (field == null || field.isRecycled) activity.loadBitmap(R.drawable.touching_marker) else field
 
     private val closingMarkerBitmap: Bitmap? = null
-        get() = if (field == null || field.isRecycled) makeBitmap(R.drawable.closing_marker) else field
+        get() = if (field == null || field.isRecycled) activity.loadBitmap(R.drawable.closing_marker) else field
 
     private val markerBitmap: Bitmap? = null
-        get() = if (field == null || field.isRecycled) makeBitmap(R.drawable.marker) else field
+        get() = if (field == null || field.isRecycled) activity.loadBitmap(R.drawable.marker) else field
 
-    private fun makeBitmap(resId: Int): Bitmap {
-        val canvas = Canvas()
-        val drawable = ContextCompat.getDrawable(activity, resId)
-        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight,
-                Bitmap.Config.ARGB_8888)
-        canvas.setBitmap(bitmap)
-        drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-        drawable.draw(canvas)
-        return bitmap
-    }
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,8 +77,6 @@ class CreateAreaStep2Fragment : Fragment() {
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
 
         map.onCreate(savedInstanceState)
         map.map.setLocationSource(object : LocationSource {
@@ -120,9 +104,10 @@ class CreateAreaStep2Fragment : Fragment() {
                         activePolyline.color = ContextCompat.getColor(activity, R.color.colorAccent)
                         startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
                         if (isAreaClosed) {
-                            Toast.makeText(activity, "区域勾勒成功", Toast.LENGTH_SHORT).show()
+                            listener?.onDrawDone(markers.map {
+                                it.position
+                            })
                             stopDraw()
-                            listener?.onDrawDone()
                         }
                     }
                     MotionEvent.ACTION_DOWN -> {
@@ -144,7 +129,7 @@ class CreateAreaStep2Fragment : Fragment() {
                         val (scrollX, scrollY) = violationToBoundary(it.screenLocation)
                         Logger.v("$scrollX $scrollY")
                         map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
-                        activePolyline?.points = listOf(activeMarker?.position, markers[markers.lastIndex - 1].position)
+                        activePolyline.points = listOf(activeMarker?.position, markers[markers.lastIndex - 1].position)
                         lastScreenLocation = it.screenLocation
                     }
                 }
@@ -259,7 +244,7 @@ class CreateAreaStep2Fragment : Fragment() {
         // TODO: Update argument type and name
         fun onMapLongClick(fragment: CreateAreaStep2Fragment, lnglat: LatLng)
 
-        fun onDrawDone()
+        fun onDrawDone(latLngList: List<LatLng>)
     }
 
     companion object {

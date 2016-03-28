@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-data class Area(val id: Long, val name: String, val created: Date, val updated: Date?) {
+data class Area(val id: Long?, val name: String, val created: Date, val updated: Date? = null) {
 
 
     class Model : BaseColumns {
@@ -32,7 +32,7 @@ data class Area(val id: Long, val name: String, val created: Date, val updated: 
                 val contentValues = ContentValues()
                 contentValues.put(COL_NAME, area.name)
                 contentValues.put(COL_CREATED, format.format(area.created))
-                contentValues.put(COL_UPDATED, if (area.updated != null) format.format(area.updated) else "")
+                contentValues.put(COL_UPDATED, if (area.updated != null) format.format(area.updated) else null)
                 return contentValues
             }
         }

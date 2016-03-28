@@ -16,4 +16,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="prompt_area_name">输入重点区域名称</string>
+    <string name="confirm_create_area">确认创建该重点区域?</string>
+    <string name="back_to_area_list">返回重点区域列表</string>
+    <string name="create_area_successfully">重点区域创建成功</string>
 </resources>

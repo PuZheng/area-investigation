@@ -49,7 +49,7 @@ class AreaListFragment : Fragment() {
         return binding.root
     }
 
-    private fun fetchAreas() {
+    fun fetchAreas() {
         val store = AreaStore.with(activity)
         store.areas.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
 

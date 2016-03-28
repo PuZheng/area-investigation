@@ -61,7 +61,7 @@ class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
     override fun getItemId(position: Int): Long = if (getItemViewType(position) == HEADER_TYPE) {
         super.getItemId(position)
     } else {
-        items[position]!!.id
+        items[position]!!.id!!
     }
 
     override fun getItemViewType(position: Int): Int = if (items[position] == null) {

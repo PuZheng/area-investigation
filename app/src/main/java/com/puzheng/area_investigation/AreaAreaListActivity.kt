@@ -10,6 +10,7 @@ import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
@@ -21,6 +22,16 @@ class AreaAreaListActivity : AppCompatActivity(),
 
 
     private var actionMode: ActionMode? = null
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        // Check which request we're responding to
+        if (requestCode == CREATE_AREA) {
+            // Make sure the request was successful
+            if (resultCode == RESULT_OK) {
+                (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
+            }
+        }
+    }
 
     override fun onLongClickItem(area: Area): Boolean {
         if (actionMode != null) {
@@ -56,7 +67,7 @@ class AreaAreaListActivity : AppCompatActivity(),
     }
 
     override fun onClickItem(area: Area) {
-        throw UnsupportedOperationException()
+        Toast.makeText(this, "not implemented yet", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,7 +79,7 @@ class AreaAreaListActivity : AppCompatActivity(),
 
         fab.setOnClickListener({
             val intent = Intent(this, CreateAreaActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, CREATE_AREA)
         })
 
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
@@ -94,6 +105,10 @@ class AreaAreaListActivity : AppCompatActivity(),
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    companion object {
+        private val CREATE_AREA = 100
     }
 }
 
