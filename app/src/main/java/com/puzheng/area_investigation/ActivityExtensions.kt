@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.support.v4.content.ContextCompat
 import android.util.DisplayMetrics
+import android.widget.Toast
 
 val Activity.pixelsPerDp: Double
     get() = resources.displayMetrics.densityDpi.toDouble() / DisplayMetrics.DENSITY_DEFAULT
@@ -20,3 +21,10 @@ fun Activity.loadBitmap(resId: Int): Bitmap {
     return bitmap
 }
 
+fun Activity.toast(text: CharSequence, duration: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(this, text, duration).show()
+}
+
+fun Activity.toast(resId: Int, duration: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(this, resId, duration).show()
+}

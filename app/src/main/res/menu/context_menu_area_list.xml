@@ -1,18 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.puzheng.area_investigation.AreaAreaListActivity">
+    tools:context="com.puzheng.area_investigation.AreaListActivity">
     <item
         android:id="@+id/action_trash"
         android:orderInCategory="100"
         android:title="@string/action_trash"
-        android:icon="@drawable/ic_delete_white_18dp"
+        android:icon="@drawable/ic_delete_white_24dp"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_refresh"
         android:orderInCategory="100"
         android:title="@string/action_sync"
-        android:icon="@drawable/ic_sync_white_18dp"
+        android:icon="@drawable/ic_cloud_upload_white_24dp"
         app:showAsAction="never" />
 </menu>

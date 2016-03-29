@@ -19,4 +19,8 @@
     <string name="confirm_create_area">确认创建该重点区域?</string>
     <string name="back_to_area_list">返回重点区域列表</string>
     <string name="create_area_successfully">重点区域创建成功</string>
+    <string name="title_activity_edit_area">EditAreaActivity</string>
+    <string name="action_edit_name">修改名称</string>
+    <string name="action_ok">OK</string>
+    <string name="edit_area_name_success">修改名称成功</string>
 </resources>
