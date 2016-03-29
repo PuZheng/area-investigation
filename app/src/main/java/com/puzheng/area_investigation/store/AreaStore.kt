@@ -1,5 +1,6 @@
 package com.puzheng.area_investigation.store
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.graphics.Bitmap
@@ -116,6 +117,17 @@ class AreaStore private constructor(val context: Context) {
                 inputStream.close()
             }
             it!!.onNext(id)
+            it!!.onCompleted()
+        } finally {
+            db.close()
+        }
+    }.subscribeOn(Schedulers.computation())
+
+    fun updateAreaName(id: Long, name: String) = Observable.create<Void> {
+        val db = DBHelpler(context).writableDatabase
+        try {
+            db.update(Area.Model.TABLE_NAME, ContentValues().apply { put(Area.Model.COL_NAME, name) },
+                    "${BaseColumns._ID}=$id", null)
             it!!.onCompleted()
         } finally {
             db.close()
