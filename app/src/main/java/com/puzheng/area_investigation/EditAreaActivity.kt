@@ -7,7 +7,9 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.InputMethodManager
+import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -16,7 +18,42 @@ import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
 
-class EditAreaActivity : AppCompatActivity() {
+class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
+
+    private var selectedVertex: LatLng? = null
+
+    override fun onMarkerSelected(position: LatLng) {
+        selectedVertex = position
+        editOutlineActionMode?.menu?.findItem(R.id.action_delete)?.isVisible = selectedVertex != null
+    }
+
+    private var editOutlineActionMode: ActionMode? = null
+
+    override fun onMapLongClick() {
+        if (editOutlineActionMode != null) {
+            return
+        }
+
+        editOutlineActionMode = startSupportActionMode(object: ActionMode.Callback {
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
+
+            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?) = false
+
+            override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu);
+                fab?.hide()
+                return true
+            }
+
+            override fun onDestroyActionMode(mode: ActionMode?) {
+                editOutlineActionMode = null
+                (supportFragmentManager.findFragmentById(R.id.fragment_edit_area) as EditAreaActivityFragment).onEditOutlineDone()
+                fab?.show()
+            }
+        })
+
+        (supportFragmentManager.findFragmentById(R.id.fragment_edit_area) as EditAreaActivityFragment).startEditOutline()
+    }
 
     lateinit private var area: Area
 

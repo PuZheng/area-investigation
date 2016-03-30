@@ -17,7 +17,7 @@ fun decodeOutline(s: String) = s.split(":").map {
 fun encodeOutline(outline: List<LatLng>) =
         outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
 
-data class Area(val id: Long?, var name: String, val outline: List<LatLng>, val created: Date, var updated: Date? = null) : Parcelable {
+data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date, var updated: Date? = null) : Parcelable {
     class Model : BaseColumns {
 
         companion object {

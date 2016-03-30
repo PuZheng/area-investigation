@@ -58,6 +58,7 @@ class AreaListActivity : AppCompatActivity(),
 
             override fun onDestroyActionMode(mode: ActionMode?) {
                 multiSelector.clearSelections()
+                multiSelector.isSelectable = false
                 fab.visibility = View.VISIBLE
                 actionMode = null;
             }

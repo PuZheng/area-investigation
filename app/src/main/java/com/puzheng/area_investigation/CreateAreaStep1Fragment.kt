@@ -58,6 +58,11 @@ class CreateAreaStep1Fragment : Fragment() {
         }
     }
 
+    override fun onDetach() {
+        super.onDetach()
+        mListener = null
+    }
+
     companion object {
         /**
          * Use this factory method to create a new instance of

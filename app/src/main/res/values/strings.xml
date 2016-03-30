@@ -23,4 +23,5 @@
     <string name="action_edit_name">修改名称</string>
     <string name="action_ok">OK</string>
     <string name="edit_area_name_success">修改名称成功</string>
+    <string name="action_delete">删除</string>
 </resources>

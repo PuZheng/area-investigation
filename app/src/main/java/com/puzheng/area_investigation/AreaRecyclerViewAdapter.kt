@@ -145,6 +145,7 @@ private class AreaViewHolder(val view: View, val multiSelector: MultiSelector, v
         }
         view.setOnLongClickListener {
             listener.onLongClickItem(item!!)
+            multiSelector.isSelectable = true
             multiSelector.setSelected(this, true)
             true
         }
