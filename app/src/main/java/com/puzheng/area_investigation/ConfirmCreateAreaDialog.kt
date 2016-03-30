@@ -18,7 +18,7 @@ import kotlinx.android.synthetic.main.dialog_create_area_successfully.view.*
 import rx.android.schedulers.AndroidSchedulers
 import java.util.*
 
-class ConfirmCreateAreaDialog(val name: String, val latLatList: List<LatLng>) : DialogFragment() {
+class ConfirmCreateAreaDialog(val name: String, val latLngList: List<LatLng>) : DialogFragment() {
     private val markerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
                 activity.loadBitmap(R.drawable.marker),
@@ -34,7 +34,7 @@ class ConfirmCreateAreaDialog(val name: String, val latLatList: List<LatLng>) : 
             map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
                     Logger.v("${it.width}, ${it.height}")
-                    AreaStore.with(context).createArea(Area(null, name, Date()), p0)
+                    AreaStore.with(context).createArea(Area(null, name, latLngList, Date()), p0)
                             .observeOn(AndroidSchedulers.mainThread()).subscribe {
                         Toast.makeText(context, R.string.create_area_successfully, Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
@@ -62,14 +62,14 @@ class ConfirmCreateAreaDialog(val name: String, val latLatList: List<LatLng>) : 
                 moveCamera(
                         CameraUpdateFactory.newLatLngBounds(
                                 LatLngBounds.Builder().apply {
-                                    latLatList.forEach { include(it) }
+                                    latLngList.forEach { include(it) }
                                 }.build(), (8 * pixelsPerDp).toInt()))
                 addPolygon(PolygonOptions()
-                        .add(*latLatList.toTypedArray())
+                        .add(*latLngList.toTypedArray())
                         .fillColor(ContextCompat.getColor(activity, R.color.colorAccentLighter))
                         .strokeWidth((1 * pixelsPerDp).toFloat())
                         .strokeColor(ContextCompat.getColor(activity, R.color.colorAccent)))
-                latLatList.forEach {
+                latLngList.forEach {
                     addMarker(MarkerOptions()
                             .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
                             .position(it)

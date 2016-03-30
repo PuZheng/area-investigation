@@ -5,8 +5,10 @@ import android.content.Context
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.BaseColumns
+import com.amap.api.maps.model.LatLng
 import com.puzheng.area_investigation.DBHelpler
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.decodeOutline
 import rx.Observable
 import rx.schedulers.Schedulers
 import java.io.ByteArrayInputStream
@@ -16,6 +18,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 
 private fun Cursor.getRow() = Area(getLong(BaseColumns._ID)!!, getString(Area.Model.COL_NAME)!!,
+        decodeOutline(getString(Area.Model.COL_OUTLINE)!!),
         getDate(Area.Model.COL_CREATED)!!, getDate(Area.Model.COL_UPDATED))
 
 class AreaStore private constructor(val context: Context) {
@@ -55,6 +58,8 @@ class AreaStore private constructor(val context: Context) {
         val db = DBHelpler(context).writableDatabase
 
         fun fakeArea(id: Long, created: String, updated: String? = null) = Area(id, "area$id",
+                // 任何三个点总能组成一个三角形
+                listOf(randomHZLatLng, randomHZLatLng, randomHZLatLng),
                 format.parse(created),
                 if (updated == null) format.parse(created) else format.parse(updated))
 
