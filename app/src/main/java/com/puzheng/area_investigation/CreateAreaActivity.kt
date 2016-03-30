@@ -16,7 +16,7 @@ import android.text.Editable
 import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
-import com.amap.api.maps2d.model.LatLng
+import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.ActivityCreateAreaBinding
 import kotlinx.android.synthetic.main.activity_create_area.*

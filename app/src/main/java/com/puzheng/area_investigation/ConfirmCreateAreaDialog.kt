@@ -7,9 +7,10 @@ import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.widget.Toast
-import com.amap.api.maps2d.CameraUpdateFactory
-import com.amap.api.maps2d.MapView
-import com.amap.api.maps2d.model.*
+import com.amap.api.maps.AMap
+import com.amap.api.maps.CameraUpdateFactory
+import com.amap.api.maps.MapView
+import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -30,16 +31,21 @@ class ConfirmCreateAreaDialog(val name: String, val latLatList: List<LatLng>) : 
     override fun onStart() {
         super.onStart()
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener({
-            map.map.getMapScreenShot {
-                Logger.v("${it.width}, ${it.height}")
-                AreaStore.with(context).createArea(Area(null, name, Date()), it)
-                        .observeOn(AndroidSchedulers.mainThread()).subscribe {
-                    Toast.makeText(context, R.string.create_area_successfully, Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                    activity.setResult(Activity.RESULT_OK)
-                    activity.finish()
+            map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
+                override fun onMapScreenShot(p0: Bitmap?) {
+                    Logger.v("${it.width}, ${it.height}")
+                    AreaStore.with(context).createArea(Area(null, name, Date()), p0)
+                            .observeOn(AndroidSchedulers.mainThread()).subscribe {
+                        Toast.makeText(context, R.string.create_area_successfully, Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        activity.setResult(Activity.RESULT_OK)
+                        activity.finish()
+                    }
                 }
-            }
+
+                override fun onMapScreenShot(p0: Bitmap?, p1: Int) {
+                }
+            })
         })
     }
 

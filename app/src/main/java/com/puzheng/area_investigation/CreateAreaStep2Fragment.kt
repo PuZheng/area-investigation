@@ -4,24 +4,21 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Point
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.MotionEventCompat
-import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
-import com.amap.api.maps2d.CameraUpdateFactory
-import com.amap.api.maps2d.LocationSource
-import com.amap.api.maps2d.model.*
+import com.amap.api.maps.CameraUpdateFactory
+import com.amap.api.maps.LocationSource
+import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
 
@@ -111,11 +108,11 @@ class CreateAreaStep2Fragment : Fragment() {
                         }
                     }
                     MotionEvent.ACTION_DOWN -> {
-                        addMarker(it.latlng)
+                        addMarker(it.latLng)
                         lastScreenLocation = it.screenLocation
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        activeMarker?.position = it.latlng
+                        activeMarker?.position = it.latLng
                         // 一定要构成多边形
                         if (markers.size > 2) {
                             if (isCloseToStartMarker(it.screenLocation, lastScreenLocation)) {
@@ -283,14 +280,14 @@ class CreateAreaStep2Fragment : Fragment() {
 
     lateinit private var activePolyline: Polyline
 
-    fun addMarker(latlng: LatLng) {
+    fun addMarker(latLng: LatLng) {
         markers.add(map.map.addMarker(
                 MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
-                        .position(latlng).anchor(0.5F, 0.5F)))
+                        .position(latLng).anchor(0.5F, 0.5F)))
         if (markers.size > 1) {
             activePolyline = map.map.addPolyline(
                     PolylineOptions().add(activeMarker?.position, markers[markers.lastIndex - 1].position)
-                            .width(4.0F).color(ContextCompat.getColor(activity, R.color.colorAccentLighter)))
+                            .width(pixelsPerDp.toFloat()).color(ContextCompat.getColor(activity, R.color.colorAccentLighter)))
         } else {
             activeMarker?.zIndex = 1000.0F // 出发点要在所有点的上面
         }
@@ -303,7 +300,7 @@ class CreateAreaStep2Fragment : Fragment() {
     private val MotionEvent.screenLocation: Point
         get() = Point(x.toInt(), y.toInt())
 
-    private val MotionEvent.latlng: LatLng
+    private val MotionEvent.latLng: LatLng
         get() = map.map.projection.fromScreenLocation(screenLocation)
 
     private fun Point.distanceTo(point: Point) = Math.sqrt(
