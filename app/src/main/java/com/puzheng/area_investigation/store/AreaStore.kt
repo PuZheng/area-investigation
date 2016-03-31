@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.BaseColumns
+import com.amap.api.maps.model.LatLng
 import com.puzheng.area_investigation.DBHelpler
 import com.puzheng.area_investigation.model.Area
 import rx.Observable
@@ -16,6 +17,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 
 private fun Cursor.getRow() = Area(getLong(BaseColumns._ID)!!, getString(Area.Model.COL_NAME)!!,
+        Area.decodeOutline(getString(Area.Model.COL_OUTLINE)!!),
         getDate(Area.Model.COL_CREATED)!!, getDate(Area.Model.COL_UPDATED))
 
 class AreaStore private constructor(val context: Context) {
@@ -55,6 +57,8 @@ class AreaStore private constructor(val context: Context) {
         val db = DBHelpler(context).writableDatabase
 
         fun fakeArea(id: Long, created: String, updated: String? = null) = Area(id, "area$id",
+                // 任何三个点总能组成一个三角形
+                listOf(randomHZLatLng, randomHZLatLng, randomHZLatLng),
                 format.parse(created),
                 if (updated == null) format.parse(created) else format.parse(updated))
 
@@ -108,6 +112,7 @@ class AreaStore private constructor(val context: Context) {
         try {
             val id = db.insert(Area.Model.TABLE_NAME, null, Area.Model.makeValues(area))
             if (bitmap != null) {
+
                 val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/areas", "$id.png"))
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
@@ -117,7 +122,6 @@ class AreaStore private constructor(val context: Context) {
                 inputStream.close()
             }
             it!!.onNext(id)
-            it!!.onCompleted()
         } finally {
             db.close()
         }
@@ -128,7 +132,30 @@ class AreaStore private constructor(val context: Context) {
         try {
             db.update(Area.Model.TABLE_NAME, ContentValues().apply { put(Area.Model.COL_NAME, name) },
                     "${BaseColumns._ID}=$id", null)
-            it!!.onCompleted()
+            it!!.onNext(null)
+        } finally {
+            db.close()
+        }
+    }.subscribeOn(Schedulers.computation())
+
+    fun updateAreaOutline(id: Long, outline: List<LatLng>, bitmap: Bitmap? = null) = Observable.create<Void> {
+        val db = DBHelpler(context).writableDatabase
+        try {
+            db.update(Area.Model.TABLE_NAME, ContentValues().apply { put(Area.Model.COL_OUTLINE, Area.encodeOutline(outline)) },
+                    "${BaseColumns._ID}=$id", null)
+            if (bitmap != null) {
+                val destFile = context.openWritableFile("/areas", "$id.png")
+                destFile.delete()
+                val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/areas", "$id.png"))
+                val stream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                val inputStream = ByteArrayInputStream(stream.toByteArray())
+                inputStream.transferTo(outputStream)
+                outputStream.flush()
+                outputStream.close()
+                inputStream.close()
+            }
+            it!!.onNext(null)
         } finally {
             db.close()
         }

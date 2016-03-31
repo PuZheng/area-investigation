@@ -23,4 +23,8 @@
     <string name="action_edit_name">修改名称</string>
     <string name="action_ok">OK</string>
     <string name="edit_area_name_success">修改名称成功</string>
+    <string name="action_delete">删除</string>
+    <string name="outline_needs_3_points">区域边界至少需要三个顶点</string>
+    <string name="update_outline_success">区域边界已修改</string>
+    <string name="confirm_save_area_outline">您确认要保存新的区域边界?</string>
 </resources>

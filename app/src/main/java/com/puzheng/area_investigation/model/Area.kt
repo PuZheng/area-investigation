@@ -5,16 +5,18 @@ import android.os.Parcelable
 
 import android.content.ContentValues
 import android.provider.BaseColumns
+import com.amap.api.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-data class Area(val id: Long?, var name: String, val created: Date, var updated: Date? = null) : Parcelable {
+data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date, var updated: Date? = null) : Parcelable {
     class Model : BaseColumns {
 
         companion object {
             val TABLE_NAME = "area"
             val COL_NAME = "name"
+            val COL_OUTLINE = "outline"
             val COL_CREATED = "created"
             val COL_UPDATED = "updated"
 
@@ -23,6 +25,7 @@ data class Area(val id: Long?, var name: String, val created: Date, var updated:
                     CREATE TABLE $TABLE_NAME (
                         ${BaseColumns._ID}  INTEGER PRIMARY KEY AUTOINCREMENT,
                         $COL_NAME TEXT NOT NULL,
+                        $COL_OUTLINE TEXT NOT NULL,
                         $COL_CREATED TEXT NOT NULL,
                         $COL_UPDATED TEXT
                     )
@@ -32,6 +35,7 @@ data class Area(val id: Long?, var name: String, val created: Date, var updated:
                 val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
                 val contentValues = ContentValues()
                 contentValues.put(COL_NAME, area.name)
+                contentValues.put(COL_OUTLINE, encodeOutline(area.outline))
                 contentValues.put(COL_CREATED, format.format(area.created))
                 contentValues.put(COL_UPDATED, if (area.updated != null) format.format(area.updated) else null)
                 return contentValues
@@ -40,7 +44,13 @@ data class Area(val id: Long?, var name: String, val created: Date, var updated:
 
     }
 
-    constructor(source: Parcel): this(source.readSerializable() as Long?, source.readString(), source.readSerializable() as Date, source.readSerializable() as Date?)
+    constructor(source: Parcel): this(
+            source.readSerializable() as Long?,
+            source.readString(),
+            decodeOutline(source.readString()),
+            source.readSerializable() as Date,
+            source.readSerializable() as Date?)
+
 
     override fun describeContents(): Int {
         return 0
@@ -49,6 +59,7 @@ data class Area(val id: Long?, var name: String, val created: Date, var updated:
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeSerializable(id)
         dest?.writeString(name)
+        dest?.writeString(encodeOutline(outline))
         dest?.writeSerializable(created)
         dest?.writeSerializable(updated)
     }
@@ -63,6 +74,15 @@ data class Area(val id: Long?, var name: String, val created: Date, var updated:
                 return arrayOfNulls(size)
             }
         }
+
+
+        fun decodeOutline(s: String) = s.split(":").map {
+            val (lat, lng) = it.split(",").map { it.toDouble() }
+            LatLng(lat, lng)
+        }
+
+        fun encodeOutline(outline: List<LatLng>) =
+                outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
     }
 }
 
