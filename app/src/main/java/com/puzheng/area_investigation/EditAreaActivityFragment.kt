@@ -3,21 +3,20 @@ package com.puzheng.area_investigation
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
-import android.support.v4.app.Fragment
 import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
-import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.amap.api.maps.AMap
-import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
-import java.util.*
+import rx.android.schedulers.AndroidSchedulers
 
 /**
  * A placeholder fragment containing a simple view.
@@ -28,7 +27,11 @@ class EditAreaActivityFragment : Fragment() {
                               savedInstanceState: Bundle?) =
             inflater!!.inflate(R.layout.fragment_edit_area, container, false)
 
-    lateinit private var area: Area
+    // 这里使用常量，避免修改初始区域数据
+    lateinit private var originArea: Area
+
+    lateinit private var hotCopyArea: Area // 用于保存编辑状态下的区域信息
+
 
     private val markerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
@@ -68,89 +71,43 @@ class EditAreaActivityFragment : Fragment() {
 
     private var markers: List<Marker>? = null
 
-    private fun AMap.addPolygon(outline: Array<LatLng>) =
-            addPolygon(PolygonOptions()
-                    .add(*outline)
-                    .fillColor(ContextCompat.getColor(activity, R.color.colorAccentLighter))
-                    .strokeColor(ContextCompat.getColor(activity, android.R.color.transparent)))
-
-    private fun AMap.addMarker(latLng: LatLng) =
-            addMarker(MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromBitmap(if (editMode) markerEditModeBitmap else markerBitmap))
-                    .position(latLng)
-                    .anchor(0.5F, 0.5F).draggable(editMode))
-
     private var polylines: List<Polyline>? = null
 
     private var selectedMarker: Marker? = null
 
-    private var Marker.selected: Boolean
-        get() = selectedMarker?.id == id
-        set(b: Boolean) {
-            markers?.forEach {
-                it.setIcon(
-                        BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap)
-                )
-            }
-            if (b) {
-                selectedMarker = this
-                setIcon(BitmapDescriptorFactory.fromBitmap(selectedMarkerBitmap))
-            }
-        }
-
-    private fun AMap.setupOverlays() {
-        polygon?.remove()
-        polygon = addPolygon(area.outline.toTypedArray())
-        markers?.forEach { it.remove() }
-        markers = area.outline.map {
-            addMarker(it)
-        }
-        polylines?.forEach { it.remove() }
-        polylines = area.outline.withIndex().map {
-            val (idx, latLng) = it
-            addPolyline(PolylineOptions().add(area.outline[(idx - 1 + area.outline.size) % area.outline.size],
-                    latLng).width((2 * pixelsPerDp).toFloat())
-                    .color(ContextCompat.getColor(activity, R.color.colorAccent)))
-        }
-        setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
-
-            override fun onMarkerDragEnd(p0: Marker?) {
-                // 如果点在附近两个顶点形成的线段之上， 删除
-                p0?.setIcon(BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap))
-                area.outline = markers!!.map { it.position }
-                setupOverlays()
-            }
-
-            override fun onMarkerDragStart(p0: Marker?) {
-                p0?.setIcon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
-            }
-
-            override fun onMarkerDrag(p0: Marker?) {
-
-            }
-        })
-        setOnMarkerClickListener {
-            if (editMode) {
-                it.selected = true
-                listener?.onMarkerSelected(it.position)
-            }
-            true
-        }
-    }
-
     private var polygon: Polygon? = null
+
+    private val POLYLINE_CLOSE_LIMIT: Double by lazy { 8 * pixelsPerDp }
+
+    var editMode: Boolean = false
+        set(b) {
+            field = b
+            if (b) {
+                markers?.forEach {
+                    it.setIcon(BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap))
+                    it.isDraggable = true
+                }
+                hotCopyArea = originArea.copy()
+            } else {
+                // 恢复为初始数据
+                hotCopyArea = originArea.copy()
+                map.map.setupOverlays()
+            }
+        }
+
+
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         map.onCreate(savedInstanceState)
-        area = activity.intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
+        originArea = activity.intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
         // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
         map.map.setOnMapLoadedListener {
             map.map.apply {
                 moveCamera(
                         CameraUpdateFactory.newLatLngBounds(
                                 LatLngBounds.Builder().apply {
-                                    area.outline.forEach { include(it) }
+                                    originArea.outline.forEach { include(it) }
                                 }.build(), (8 * pixelsPerDp).toInt()))
                 setupOverlays()
                 setOnMapLongClickListener {
@@ -158,8 +115,8 @@ class EditAreaActivityFragment : Fragment() {
                     if (editMode) {
                         val polyline = findPolylineCloseTo(it)
                         if (polyline != null) {
-                            val index = area.outline.indexOf(polyline.points[0])
-                            area.outline = area.outline.toMutableList().apply { add(index + 1, it) }
+                            val index = hotCopyArea.outline.indexOf(polyline.points[0])
+                            hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
                             setupOverlays()
                         }
                     }
@@ -167,9 +124,6 @@ class EditAreaActivityFragment : Fragment() {
             }
         }
     }
-
-    private val POLYLINE_CLOSE_LIMIT: Double by lazy { 8 * pixelsPerDp }
-
 
     // thanks to http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
     private fun nearestPoint2SegDistance(p: Point, seg: Pair<Point, Point>): Double {
@@ -218,21 +172,92 @@ class EditAreaActivityFragment : Fragment() {
         fun onMarkerSelected(position: LatLng)
     }
 
-    fun onEditOutlineDone() {
-        markers?.forEach {
-            it.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
-            it.isDraggable = false
+    fun deleteVertex(vertex: LatLng) {
+        if (!editMode) {
+            return
         }
-        editMode = false
+        if (hotCopyArea.outline.size <= 3) {
+            activity.toast(R.string.outline_needs_3_points)
+            return
+        }
+        hotCopyArea.outline = hotCopyArea.outline.filter {
+            it != vertex
+        }
+        map.map.setupOverlays()
     }
 
-    private var editMode: Boolean = false
+    // MR extensions
+    private fun AMap.addPolygon(outline: Array<LatLng>) =
+            addPolygon(PolygonOptions()
+                    .add(*outline)
+                    .fillColor(ContextCompat.getColor(activity, R.color.colorAccentLighter))
+                    .strokeColor(ContextCompat.getColor(activity, android.R.color.transparent)))
 
-    fun startEditOutline() {
-        markers?.forEach {
-            it.setIcon(BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap))
-            it.isDraggable = true
+    private fun AMap.addMarker(latLng: LatLng) =
+            addMarker(MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromBitmap(if (editMode) markerEditModeBitmap else markerBitmap))
+                    .position(latLng)
+                    .anchor(0.5F, 0.5F).draggable(editMode))
+
+    private var Marker.selected: Boolean
+        get() = selectedMarker?.id == id
+        set(b: Boolean) {
+            markers?.forEach {
+                it.setIcon(
+                        BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap)
+                )
+            }
+            if (b) {
+                selectedMarker = this
+                setIcon(BitmapDescriptorFactory.fromBitmap(selectedMarkerBitmap))
+            }
         }
-        editMode = true
+
+    private fun AMap.setupOverlays() {
+        val area = if (editMode) hotCopyArea else originArea
+        polygon?.remove()
+        polygon = addPolygon(area.outline.toTypedArray())
+        markers?.forEach { it.remove() }
+        markers = area.outline.map {
+            addMarker(it)
+        }
+        polylines?.forEach { it.remove() }
+        polylines = area.outline.withIndex().map {
+            val (idx, latLng) = it
+            addPolyline(PolylineOptions().add(area.outline[(idx - 1 + area.outline.size) % area.outline.size],
+                    latLng).width((2 * pixelsPerDp).toFloat())
+                    .color(ContextCompat.getColor(activity, R.color.colorAccent)))
+        }
+        setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
+
+            override fun onMarkerDragEnd(p0: Marker?) {
+                p0?.setIcon(BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap))
+                hotCopyArea.outline = markers!!.map { it.position }
+                setupOverlays()
+            }
+
+            override fun onMarkerDragStart(p0: Marker?) {
+                p0?.setIcon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
+            }
+
+            override fun onMarkerDrag(p0: Marker?) {
+
+            }
+        })
+        setOnMarkerClickListener {
+            if (editMode) {
+                it.selected = true
+                listener?.onMarkerSelected(it.position)
+            }
+            true
+        }
     }
+
+    fun saveOutline(afterSaving: () -> Unit) {
+        ConfirmSaveAreaOutlineDialog(hotCopyArea, {
+            originArea = hotCopyArea
+            afterSaving()
+        }).show(activity.supportFragmentManager, "")
+    }
+
 }

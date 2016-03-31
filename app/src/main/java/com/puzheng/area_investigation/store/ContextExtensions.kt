@@ -19,5 +19,6 @@ fun Context.openWritableFile(dir: String, filename: String): File {
             if (!absoluteDir.isDirectory) {
                 absoluteDir.mkdirs()
             }
+
     return File(absoluteDirPath, filename)
 }

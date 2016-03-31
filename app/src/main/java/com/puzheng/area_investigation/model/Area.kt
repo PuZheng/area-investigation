@@ -9,13 +9,6 @@ import com.amap.api.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun decodeOutline(s: String) = s.split(":").map {
-    val (lat, lng) = it.split(",").map { it.toDouble() }
-    LatLng(lat, lng)
-}
-
-fun encodeOutline(outline: List<LatLng>) =
-        outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
 
 data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date, var updated: Date? = null) : Parcelable {
     class Model : BaseColumns {
@@ -81,6 +74,15 @@ data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val 
                 return arrayOfNulls(size)
             }
         }
+
+
+        fun decodeOutline(s: String) = s.split(":").map {
+            val (lat, lng) = it.split(",").map { it.toDouble() }
+            LatLng(lat, lng)
+        }
+
+        fun encodeOutline(outline: List<LatLng>) =
+                outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
     }
 }
 

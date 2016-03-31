@@ -122,7 +122,6 @@ class CreateAreaActivity : AppCompatActivity(),
         AffirmBackDialogFragment({ super.onBackPressed() }).show(supportFragmentManager, "")
     }
 
-
     override fun onOptionsItemSelected(item: MenuItem?): Boolean = when (item?.itemId) {
         android.R.id.home -> {
             onBackPressed()

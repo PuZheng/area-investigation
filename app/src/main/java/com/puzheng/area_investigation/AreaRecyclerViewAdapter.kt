@@ -89,9 +89,9 @@ class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
             (holder as AreaViewHolder).item = items[position]
             holder.textView.text = area.name
             val context = holder.textView.context
-            Picasso.with(context).load(AreaStore.with(context).getCoverImageFile(area)).into(holder.imageView);
+            val coverFile = AreaStore.with(context).getCoverImageFile(area)
+            Picasso.with(context).load(coverFile).into(holder.imageView);
             Logger.v("bind ${area.name}")
-
         }
     }
 
