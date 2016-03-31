@@ -6,7 +6,7 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
-import com.puzheng.area_investigation.DBHelpler
+import com.puzheng.area_investigation.*
 import com.puzheng.area_investigation.model.Area
 import rx.Observable
 import rx.schedulers.Schedulers
@@ -28,6 +28,7 @@ class AreaStore private constructor(val context: Context) {
 
     }
 
+    fun getCoverImageFile(areaId: Long): File? = context.openReadableFile("/areas", "$areaId.png")
     fun getCoverImageFile(area: Area): File? = context.openReadableFile("/areas", "${area.id}.png")
 
     // a list of areas ordered by `created` in descending order

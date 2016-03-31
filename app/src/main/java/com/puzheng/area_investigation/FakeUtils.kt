@@ -1,4 +1,4 @@
-package com.puzheng.area_investigation.store
+package com.puzheng.area_investigation
 
 import com.amap.api.maps.model.LatLng
 import java.util.*

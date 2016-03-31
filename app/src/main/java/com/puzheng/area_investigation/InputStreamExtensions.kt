@@ -1,4 +1,4 @@
-package com.puzheng.area_investigation.store
+package com.puzheng.area_investigation
 
 import java.io.InputStream
 import java.io.OutputStream

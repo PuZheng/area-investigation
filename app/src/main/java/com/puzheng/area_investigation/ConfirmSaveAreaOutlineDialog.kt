@@ -2,19 +2,22 @@ package com.puzheng.area_investigation
 
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
+import android.support.v7.app.AppCompatDialogFragment
 import com.amap.api.maps.AMap
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.MapView
-import com.amap.api.maps.model.*
+import com.amap.api.maps.model.BitmapDescriptorFactory
+import com.amap.api.maps.model.LatLngBounds
+import com.amap.api.maps.model.MarkerOptions
+import com.amap.api.maps.model.PolygonOptions
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.dialog_confirm_save_area_outline.view.*
 import rx.android.schedulers.AndroidSchedulers
 
-class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) : DialogFragment() {
+class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) : AppCompatDialogFragment() {
     private val markerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
                 activity.loadBitmap(R.drawable.marker),

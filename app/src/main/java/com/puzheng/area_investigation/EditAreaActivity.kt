@@ -1,20 +1,27 @@
 package com.puzheng.area_investigation
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.Snackbar
+import android.os.Environment
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.AreaStore
-import com.squareup.picasso.Picasso
+import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.activity_edit_area.*
 import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
@@ -51,8 +58,6 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 R.id.action_submit -> {
                     (fragment_edit_area as EditAreaActivityFragment).saveOutline({
                         editOutlineActionMode?.finish()
-                        // 注意， 一定要告诉Picasso清除图片缓存
-                        Picasso.with(this@EditAreaActivity).invalidate(AreaStore.with(this@EditAreaActivity).getCoverImageFile(area))
                     })
                     dataChanged = true
                     true
@@ -79,12 +84,45 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     lateinit private var area: Area
 
+    private fun fetchPOITypes(after: (List<POIType>) -> Unit) {
+        POITypeStore.with(this).list.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<POIType>?> {
+            override fun onError(e: Throwable?) {
+                if (e != null) throw e
+            }
+
+            override fun onNext(poiTypes: List<POIType>?) {
+                if (poiTypes != null && poiTypes.isNotEmpty()) {
+                    after(poiTypes)
+                } else if (BuildConfig.DEBUG) {
+                    POITypeStore.with(this@EditAreaActivity).fakeData().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                        fetchPOITypes({
+                            after(it)
+                        })
+                    }
+                } else {
+                    this@EditAreaActivity.toast(R.string.no_poi_types)
+                }
+            }
+
+            override fun onCompleted() {
+            }
+        })
+        // TODO it should be polite to show a progressbar
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_area)
         setSupportActionBar(toolbar)
+        toast(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES).absolutePath)
+        fab.setOnClickListener {
+            fetchPOITypes {
+                POITypeChooseDialog(it).show(supportFragmentManager, "")
+            }
 
-        fab.setOnClickListener({ view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show() })
+        }
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
         Logger.init("EditAreaActivity")
@@ -155,7 +193,30 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
     }
 
     override fun onBackPressed() {
-        if (dataChanged) setResult(Activity.RESULT_OK)
+        // must assert that area.id is not null, note Long? is not Long
+        if (dataChanged) setResult(Activity.RESULT_OK, Intent().apply { putExtra(TAG_AREA_ID, area.id!!) })
         super.onBackPressed()
     }
+
+    companion object {
+        val TAG_AREA_ID = "AREA_ID"
+    }
 }
+
+private class POITypeChooseDialog(val poiTypes: List<POIType>) : AppCompatDialogFragment() {
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+            AlertDialog.Builder(context).setTitle(R.string.pick_poi_type)
+                    .setAdapter(object : ArrayAdapter<POIType>(context, R.layout.item_poi_type, poiTypes.toTypedArray()) {
+                        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View? {
+                            return super.getView(position, convertView, parent)
+                        }
+                    }, { dialog, which ->
+
+                    }).create()
+}
+
+
+
+
+

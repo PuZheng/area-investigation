@@ -14,6 +14,8 @@ import android.widget.Toast
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.store.AreaStore
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
 
@@ -28,6 +30,11 @@ class AreaListActivity : AppCompatActivity(),
         if (requestCode == CREATE_AREA || requestCode == EDIT_AREA) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
+                val areaId = data?.getLongExtra(EditAreaActivity.TAG_AREA_ID, -1L)
+                if (areaId != null && areaId != -1L) {
+                    // 注意， 一定要告诉Picasso清除图片缓存
+                    Picasso.with(this).invalidate(AreaStore.with(this).getCoverImageFile(areaId))
+                }
                 (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
             }
         }
