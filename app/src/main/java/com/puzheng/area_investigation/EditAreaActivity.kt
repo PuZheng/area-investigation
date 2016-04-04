@@ -105,11 +105,6 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                     toast("没有信息点类型信息, 请将信息点配置文件拷贝到${store.dir.absolutePath}")
                     permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
                         mkPOITypeDir()
-                        if (BuildConfig.DEBUG) {
-                            fakeData().subscribe {
-                                fetchPOITypes(after)
-                            }
-                        }
                     }
                     assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             REQUEST_WRITE_EXTERNAL_STORAGE).subscribe {
@@ -133,8 +128,6 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             }
         }
     }
-
-    private fun fakeData() = POITypeStore.with(this).fakeData().observeOn(AndroidSchedulers.mainThread())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -237,12 +230,13 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 val poi = POI(
                         null,
                         poiType.uuid,
+                        area.id!!,
                         LatLng(it.latitude, it.longitude),
                         Date())
                 Logger.v(poi.toString())
                 POIStore.with(this).create(poi).observeOn(AndroidSchedulers.mainThread()).subscribe {
                     toast(R.string.poi_created)
-                    (fragment_edit_area as EditAreaActivityFragment).addPOI(poi.copy(id = it), getIconBitmap(poiType))
+                    (fragment_edit_area as EditAreaActivityFragment).addPOI(poi.copy(id = it))
                 }
             }
         }
@@ -251,25 +245,6 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
         }
 
-    }
-
-    private val poiTypeStore: POITypeStore by lazy {
-        POITypeStore.with(this)
-    }
-
-    private val poiTypeIconMap: MutableMap<String, Bitmap> = mutableMapOf()
-
-
-    private fun getIconBitmap(poiType: POIType): Bitmap {
-        if (!poiTypeIconMap.containsKey(poiType.uuid)) {
-            poiTypeIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
-                    loadBitmap(poiTypeStore.getPOITypeIcon(poiType)),
-                    (32 * pixelsPerDp).toInt(),
-                    (32 * pixelsPerDp).toInt(),
-                    false
-            )
-        }
-        return poiTypeIconMap[poiType.uuid]!!
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

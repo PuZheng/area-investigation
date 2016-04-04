@@ -15,7 +15,11 @@ import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.model.POI
+import com.puzheng.area_investigation.model.POIType
+import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
+import rx.android.schedulers.AndroidSchedulers
 
 /**
  * A placeholder fragment containing a simple view.
@@ -95,6 +99,9 @@ class EditAreaActivityFragment : Fragment() {
         }
 
 
+    lateinit private var pois: MutableList<POI>
+
+    lateinit private var poiTypeMap: Map<String, POIType>
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -102,33 +109,47 @@ class EditAreaActivityFragment : Fragment() {
         originArea = activity.intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
         // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
         map.map.setOnMapLoadedListener {
-            map.map.apply {
-                moveCamera(
-                        CameraUpdateFactory.newLatLngBounds(
-                                LatLngBounds.Builder().apply {
-                                    originArea.outline.forEach { include(it) }
-                                }.build(), (8 * pixelsPerDp).toInt()))
-                setupOutline()
-                setOnMapLongClickListener {
-                    listener?.onMapLongClick()
-                    if (editMode) {
-                        val polyline = findPolylineCloseTo(it)
-                        if (polyline != null) {
-                            val index = hotCopyArea.outline.indexOf(polyline.points[0])
-                            hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
-                            setupOutline()
+            AreaStore.with(activity).getPOIList(originArea).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                pois = it.toMutableList()
+                poiTypeStore.list.observeOn(AndroidSchedulers.mainThread()).subscribe {
+                    poiTypeMap = mapOf(*it.map {
+                        it.uuid to it
+                    }.toTypedArray())
+                    map.map.apply {
+                        moveCamera(
+                                CameraUpdateFactory.newLatLngBounds(
+                                        LatLngBounds.Builder().apply {
+                                            originArea.outline.forEach { include(it) }
+                                            pois.forEach { include(it.latLng) }
+                                        }.build(), (8 * pixelsPerDp).toInt()))
+                        setupOutline()
+                        setupPOIs()
+                        setOnMapLongClickListener {
+                            listener?.onMapLongClick()
+                            if (editMode) {
+                                val polyline = findPolylineCloseTo(it)
+                                if (polyline != null) {
+                                    val index = hotCopyArea.outline.indexOf(polyline.points[0])
+                                    hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
+                                    setupOutline()
+                                }
+                            }
                         }
                     }
+
                 }
             }
+
         }
     }
+
 
     // thanks to http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
     private fun nearestPoint2SegDistance(p: Point, seg: Pair<Point, Point>): Double {
         Logger.v(p.toString() + "-" + seg.toString())
         fun squaredDistance(p0: Point, p1: Point) = Math.pow((p0.x - p1.x).toDouble(), 2.0) +
                 Math.pow((p0.y - p1.y).toDouble(), 2.0)
+
         fun distance(p0: Point, p1: Point) = Math.sqrt(squaredDistance(p0, p1))
 
         val l2 = squaredDistance(seg.first, seg.second)  // i.e. |w-v|^2 -  avoid a sqrt
@@ -212,6 +233,12 @@ class EditAreaActivityFragment : Fragment() {
             }
         }
 
+    private fun AMap.setupPOIs() {
+        pois.forEach {
+            addMarker(makeMarkerOption(it)).`object` = it
+        }
+    }
+
     private fun AMap.setupOutline() {
         val area = if (editMode) hotCopyArea else originArea
         polygon?.remove()
@@ -251,6 +278,7 @@ class EditAreaActivityFragment : Fragment() {
             true
         }
     }
+
     fun saveOutline(afterSaving: () -> Unit) {
         ConfirmSaveAreaOutlineDialog(hotCopyArea, {
             originArea = hotCopyArea
@@ -258,17 +286,40 @@ class EditAreaActivityFragment : Fragment() {
         }).show(activity.supportFragmentManager, "")
     }
 
-    private val poiMap: MutableMap<Long, POI> = mutableMapOf()
+    private val poiTypeIconMap: MutableMap<String, Bitmap> = mutableMapOf()
 
-    fun addPOI(poi: POI, iconBitmap: Bitmap) {
-        map.map.addMarker(MarkerOptions().anchor(0.5f, 0.5f).position(poi.latLng)
-                .icon(BitmapDescriptorFactory.fromBitmap(iconBitmap)).draggable(false))
-        poiMap[poi.id!!] = poi
+    private val poiTypeStore: POITypeStore by lazy {
+        POITypeStore.with(activity)
+    }
+
+    private fun getIconBitmap(poiType: POIType): Bitmap {
+        if (!poiTypeIconMap.containsKey(poiType.uuid)) {
+            poiTypeIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
+                    activity.loadBitmap(poiTypeStore.getPOITypeIcon(poiType)),
+                    (32 * pixelsPerDp).toInt(),
+                    (32 * pixelsPerDp).toInt(),
+                    false
+            )
+        }
+        return poiTypeIconMap[poiType.uuid]!!
+    }
+
+    private fun makeMarkerOption(poi: POI) = if (poiTypeMap[poi.poiTypeUUID] != null) {
+        MarkerOptions().anchor(0.5f, 0.5f).position(poi.latLng)
+                .icon(BitmapDescriptorFactory.fromBitmap(getIconBitmap(poiTypeMap[poi.poiTypeUUID]!!))).draggable(false)
+    } else {
+        null
+    }
+
+
+    fun addPOI(poi: POI) {
+        map.map.addMarker(makeMarkerOption(poi)!!).`object` = poi
+        pois.add(poi)
         map.map.moveCamera(
                 CameraUpdateFactory.newLatLngBounds(
                         LatLngBounds.Builder().apply {
                             originArea.outline.forEach { include(it) }
-                            poiMap.entries.forEach { include(it.value.latLng) }
+                            pois.forEach { include(it.latLng) }
                         }.build(), (8 * pixelsPerDp).toInt()))
     }
 

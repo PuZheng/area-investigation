@@ -1,11 +1,14 @@
 package com.puzheng.area_investigation.model
 
+import android.content.ContentValues
+import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-
-import android.content.ContentValues
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
+import com.puzheng.area_investigation.DBHelpler
+import rx.Observable
+import rx.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -62,6 +65,8 @@ data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val 
         dest?.writeSerializable(updated)
     }
 
+
+
     companion object {
         @JvmField final val CREATOR: Parcelable.Creator<Area> = object : Parcelable.Creator<Area> {
             override fun createFromParcel(source: Parcel): Area {
@@ -83,4 +88,3 @@ data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val 
                 outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
     }
 }
-
