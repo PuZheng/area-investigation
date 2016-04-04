@@ -1,25 +1,37 @@
 package com.puzheng.area_investigation
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.location.Location
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.view.inputmethod.InputMethodManager
+import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.POI
+import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.AreaStore
-import com.squareup.picasso.Picasso
+import com.puzheng.area_investigation.store.POIStore
+import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.activity_edit_area.*
 import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
+import kotlinx.android.synthetic.main.fragment_edit_area.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
+import java.util.*
+
+private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
+private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
 class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
 
@@ -51,8 +63,6 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 R.id.action_submit -> {
                     (fragment_edit_area as EditAreaActivityFragment).saveOutline({
                         editOutlineActionMode?.finish()
-                        // 注意， 一定要告诉Picasso清除图片缓存
-                        Picasso.with(this@EditAreaActivity).invalidate(AreaStore.with(this@EditAreaActivity).getCoverImageFile(area))
                     })
                     dataChanged = true
                     true
@@ -79,13 +89,66 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     lateinit private var area: Area
 
+    private val permissionRequestHandlerMap: MutableMap<String, () -> Unit> = mutableMapOf()
+
+    private fun fetchPOITypes(after: (List<POIType>) -> Unit) {
+        POITypeStore.with(this).list.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<POIType>?> {
+            override fun onError(e: Throwable?) {
+                if (e != null) throw e
+            }
+
+            override fun onNext(poiTypes: List<POIType>?) {
+                if (poiTypes != null && poiTypes.isNotEmpty()) {
+                    after(poiTypes)
+                } else {
+                    val store = POITypeStore.with(this@EditAreaActivity)
+                    toast("没有信息点类型信息, 请将信息点配置文件拷贝到${store.dir.absolutePath}")
+                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
+                        mkPOITypeDir()
+                        if (BuildConfig.DEBUG) {
+                            fakeData().subscribe {
+                                fetchPOITypes(after)
+                            }
+                        }
+                    }
+                    assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            REQUEST_WRITE_EXTERNAL_STORAGE).subscribe {
+                        permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
+                    }
+                }
+            }
+
+            override fun onCompleted() {
+            }
+        })
+        // TODO it should be polite to show a progressbar
+
+    }
+
+    private fun mkPOITypeDir() {
+        POITypeStore.with(this).dir.apply {
+            Logger.v("poi type dir is $absolutePath")
+            if (mkdirs()) {
+                Logger.e("can't mkdir $absolutePath")
+            }
+        }
+    }
+
+    private fun fakeData() = POITypeStore.with(this).fakeData().observeOn(AndroidSchedulers.mainThread())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_area)
         setSupportActionBar(toolbar)
+        fab.setOnClickListener {
+            fetchPOITypes {
+                POITypeChooseDialog(it, center, REQUEST_ACCESS_FINE_LOCATION, { addPOI(it) })
+                        .show(supportFragmentManager, "")
+            }
 
-        fab.setOnClickListener({ view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show() })
+        }
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+
 
         Logger.init("EditAreaActivity")
         area = intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
@@ -155,7 +218,82 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
     }
 
     override fun onBackPressed() {
-        if (dataChanged) setResult(Activity.RESULT_OK)
+        // must assert that area.id is not null, note Long? is not Long
+        if (dataChanged) setResult(Activity.RESULT_OK, Intent().apply { putExtra(TAG_AREA_ID, area.id!!) })
         super.onBackPressed()
     }
+
+    companion object {
+        val TAG_AREA_ID = "AREA_ID"
+
+    }
+
+    fun addPOI(poiType: POIType) {
+        permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION] = {
+            getLocation(AMapLocation(Location("").apply {
+                latitude = center.latitude
+                longitude = center.longitude
+            })).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                val poi = POI(
+                        null,
+                        poiType.uuid,
+                        LatLng(it.latitude, it.longitude),
+                        Date())
+                Logger.v(poi.toString())
+                POIStore.with(this).create(poi).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                    toast(R.string.poi_created)
+                    (fragment_edit_area as EditAreaActivityFragment).addPOI(poi.copy(id = it), getIconBitmap(poiType))
+                }
+            }
+        }
+        assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
+                .observeOn(AndroidSchedulers.mainThread()).subscribe {
+            permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+        }
+
+    }
+
+    private val poiTypeStore: POITypeStore by lazy {
+        POITypeStore.with(this)
+    }
+
+    private val poiTypeIconMap: MutableMap<String, Bitmap> = mutableMapOf()
+
+
+    private fun getIconBitmap(poiType: POIType): Bitmap {
+        if (!poiTypeIconMap.containsKey(poiType.uuid)) {
+            poiTypeIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
+                    loadBitmap(poiTypeStore.getPOITypeIcon(poiType)),
+                    (32 * pixelsPerDp).toInt(),
+                    (32 * pixelsPerDp).toInt(),
+                    false
+            )
+        }
+        return poiTypeIconMap[poiType.uuid]!!
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            REQUEST_WRITE_EXTERNAL_STORAGE ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
+                } else {
+                    toast("why not fake some poi types?")
+                }
+            REQUEST_ACCESS_FINE_LOCATION ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+                }
+        }
+    }
+
+    val center: LatLng
+        get() = fragment_edit_area.map.map.cameraPosition.target
 }
+
+
+
+
+

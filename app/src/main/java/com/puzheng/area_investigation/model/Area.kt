@@ -31,14 +31,12 @@ data class Area(val id: Long?, var name: String, var outline: List<LatLng>, val 
                     )
                 """
 
-            fun makeValues(area: Area): ContentValues {
+            fun makeValues(area: Area) = ContentValues().apply {
                 val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                val contentValues = ContentValues()
-                contentValues.put(COL_NAME, area.name)
-                contentValues.put(COL_OUTLINE, encodeOutline(area.outline))
-                contentValues.put(COL_CREATED, format.format(area.created))
-                contentValues.put(COL_UPDATED, if (area.updated != null) format.format(area.updated) else null)
-                return contentValues
+                put(COL_NAME, area.name)
+                put(COL_OUTLINE, encodeOutline(area.outline))
+                put(COL_CREATED, format.format(area.created))
+                put(COL_UPDATED, if (area.updated != null) format.format(area.updated) else null)
             }
         }
 

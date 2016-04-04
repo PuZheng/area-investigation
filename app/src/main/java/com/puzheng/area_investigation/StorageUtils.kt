@@ -1,4 +1,4 @@
-package com.puzheng.area_investigation.model
+package com.puzheng.area_investigation
 
 import android.os.Environment
 

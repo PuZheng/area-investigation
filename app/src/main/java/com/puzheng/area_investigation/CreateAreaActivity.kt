@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentStatePagerAdapter
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
 import android.text.Editable
 import android.view.Menu
@@ -132,7 +133,7 @@ class CreateAreaActivity : AppCompatActivity(),
     }
 }
 
-private class AffirmBackDialogFragment(val after: () -> Unit) : DialogFragment() {
+private class AffirmBackDialogFragment(val after: () -> Unit) : AppCompatDialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?) =
             AlertDialog.Builder(activity).setTitle(R.string.warning)
                     .setMessage(R.string.trash_cancel_create_area)
@@ -140,19 +141,6 @@ private class AffirmBackDialogFragment(val after: () -> Unit) : DialogFragment()
                         dialog, v ->
                         after()
                     }).setNegativeButton(R.string.cancel, null).create()
-}
-
-private class CancelDrawingDialogFragment(val after: () -> Unit) : DialogFragment() {
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(activity)
-
-        builder.setTitle(R.string.warning).setMessage(R.string.cancel_drawing)
-                .setPositiveButton(R.string.confirm, {
-                    dialog, v ->
-                    after()
-                }).setNegativeButton(R.string.cancel, null)
-        return builder.create();
-    }
 }
 
 

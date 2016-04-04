@@ -3,9 +3,9 @@ package com.puzheng.area_investigation
 import android.app.Activity
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
+import android.support.v7.app.AppCompatDialogFragment
 import android.widget.Toast
 import com.amap.api.maps.AMap
 import com.amap.api.maps.CameraUpdateFactory
@@ -18,7 +18,7 @@ import kotlinx.android.synthetic.main.dialog_create_area_successfully.view.*
 import rx.android.schedulers.AndroidSchedulers
 import java.util.*
 
-class ConfirmCreateAreaDialog(val name: String, val latLngList: List<LatLng>) : DialogFragment() {
+class ConfirmCreateAreaDialog(val name: String, val latLngList: List<LatLng>) : AppCompatDialogFragment() {
     private val markerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
                 activity.loadBitmap(R.drawable.marker),

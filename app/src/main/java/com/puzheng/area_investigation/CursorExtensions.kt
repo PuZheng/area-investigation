@@ -1,4 +1,4 @@
-package com.puzheng.area_investigation.store
+package com.puzheng.area_investigation
 
 import android.database.Cursor
 import java.text.SimpleDateFormat

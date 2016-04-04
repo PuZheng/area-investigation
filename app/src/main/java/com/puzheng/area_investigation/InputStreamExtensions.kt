@@ -1,5 +1,7 @@
-package com.puzheng.area_investigation.store
+package com.puzheng.area_investigation
 
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -13,4 +15,11 @@ fun InputStream.transferTo(outputStream: OutputStream) {
         }
         outputStream.write(buf, 0, len)
     }
+}
+
+fun InputStream.copyTo(file: File) {
+    val outputStream = FileOutputStream(file)
+    transferTo(outputStream)
+    outputStream.close()
+    close()
 }
