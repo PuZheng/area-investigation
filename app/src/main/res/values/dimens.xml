@@ -6,4 +6,6 @@
     <dimen name="text_margin">16dp</dimen>
     <dimen name="area_header_font_size">12sp</dimen>
     <dimen name="empty_image_view_margin">96dp</dimen>
+    <dimen name="list_item_horizontal_margin">16dp</dimen>
+    <dimen name="list_item_vertical_margin">8dp</dimen>
 </resources>

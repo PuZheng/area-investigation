@@ -5,4 +5,8 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorAccentLighter">#F8BBD0</color>
     <color name="colorAccentLighterAlpha">#88F8BBD0</color>
+    <color name="colorOutlinePolygon">#aa9FA8DA</color>
+    <color name="colorOutlinePolyline">#1565C0</color>
+    <color name="colorOutlineMarker">#1565C0</color>
+    <color name="colorOutlineMarkerLighter">#1E88E5</color>
 </resources>

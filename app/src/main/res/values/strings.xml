@@ -29,4 +29,5 @@
     <string name="confirm_save_area_outline">您确认要保存新的区域边界?</string>
     <string name="pick_poi_type">请选择信息点类型</string>
     <string name="no_poi_types">没有可用的信息点类型信息</string>
+    <string name="poi_created">信息点创建成功</string>
 </resources>

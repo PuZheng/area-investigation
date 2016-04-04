@@ -14,9 +14,8 @@ import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.model.POI
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
-import rx.android.schedulers.AndroidSchedulers
 
 /**
  * A placeholder fragment containing a simple view.
@@ -91,7 +90,7 @@ class EditAreaActivityFragment : Fragment() {
             } else {
                 // 恢复为初始数据
                 hotCopyArea = originArea.copy()
-                map.map.setupOverlays()
+                map.map.setupOutline()
             }
         }
 
@@ -109,7 +108,7 @@ class EditAreaActivityFragment : Fragment() {
                                 LatLngBounds.Builder().apply {
                                     originArea.outline.forEach { include(it) }
                                 }.build(), (8 * pixelsPerDp).toInt()))
-                setupOverlays()
+                setupOutline()
                 setOnMapLongClickListener {
                     listener?.onMapLongClick()
                     if (editMode) {
@@ -117,7 +116,7 @@ class EditAreaActivityFragment : Fragment() {
                         if (polyline != null) {
                             val index = hotCopyArea.outline.indexOf(polyline.points[0])
                             hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
-                            setupOverlays()
+                            setupOutline()
                         }
                     }
                 }
@@ -183,14 +182,14 @@ class EditAreaActivityFragment : Fragment() {
         hotCopyArea.outline = hotCopyArea.outline.filter {
             it != vertex
         }
-        map.map.setupOverlays()
+        map.map.setupOutline()
     }
 
     // MR extensions
     private fun AMap.addPolygon(outline: Array<LatLng>) =
             addPolygon(PolygonOptions()
                     .add(*outline)
-                    .fillColor(ContextCompat.getColor(activity, R.color.colorAccentLighter))
+                    .fillColor(ContextCompat.getColor(activity, R.color.colorOutlinePolygon))
                     .strokeColor(ContextCompat.getColor(activity, android.R.color.transparent)))
 
     private fun AMap.addMarker(latLng: LatLng) =
@@ -213,7 +212,7 @@ class EditAreaActivityFragment : Fragment() {
             }
         }
 
-    private fun AMap.setupOverlays() {
+    private fun AMap.setupOutline() {
         val area = if (editMode) hotCopyArea else originArea
         polygon?.remove()
         polygon = addPolygon(area.outline.toTypedArray())
@@ -226,14 +225,14 @@ class EditAreaActivityFragment : Fragment() {
             val (idx, latLng) = it
             addPolyline(PolylineOptions().add(area.outline[(idx - 1 + area.outline.size) % area.outline.size],
                     latLng).width((2 * pixelsPerDp).toFloat())
-                    .color(ContextCompat.getColor(activity, R.color.colorAccent)))
+                    .color(ContextCompat.getColor(activity, R.color.colorOutlinePolyline)))
         }
         setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
 
             override fun onMarkerDragEnd(p0: Marker?) {
                 p0?.setIcon(BitmapDescriptorFactory.fromBitmap(markerEditModeBitmap))
                 hotCopyArea.outline = markers!!.map { it.position }
-                setupOverlays()
+                setupOutline()
             }
 
             override fun onMarkerDragStart(p0: Marker?) {
@@ -252,12 +251,25 @@ class EditAreaActivityFragment : Fragment() {
             true
         }
     }
-
     fun saveOutline(afterSaving: () -> Unit) {
         ConfirmSaveAreaOutlineDialog(hotCopyArea, {
             originArea = hotCopyArea
             afterSaving()
         }).show(activity.supportFragmentManager, "")
+    }
+
+    private val poiMap: MutableMap<Long, POI> = mutableMapOf()
+
+    fun addPOI(poi: POI, iconBitmap: Bitmap) {
+        map.map.addMarker(MarkerOptions().anchor(0.5f, 0.5f).position(poi.latLng)
+                .icon(BitmapDescriptorFactory.fromBitmap(iconBitmap)).draggable(false))
+        poiMap[poi.id!!] = poi
+        map.map.moveCamera(
+                CameraUpdateFactory.newLatLngBounds(
+                        LatLngBounds.Builder().apply {
+                            originArea.outline.forEach { include(it) }
+                            poiMap.entries.forEach { include(it.value.latLng) }
+                        }.build(), (8 * pixelsPerDp).toInt()))
     }
 
 }

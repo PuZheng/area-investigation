@@ -1,32 +1,37 @@
 package com.puzheng.area_investigation
 
+import android.Manifest
 import android.app.Activity
-import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.location.Location
 import android.os.Bundle
-import android.os.Environment
-import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.ArrayAdapter
+import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.POI
 import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.store.POIStore
 import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.activity_edit_area.*
 import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
+import kotlinx.android.synthetic.main.fragment_edit_area.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
+import java.util.*
+
+private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
+private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
 class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
 
@@ -84,6 +89,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     lateinit private var area: Area
 
+    private val permissionRequestHandlerMap: MutableMap<String, () -> Unit> = mutableMapOf()
+
     private fun fetchPOITypes(after: (List<POIType>) -> Unit) {
         POITypeStore.with(this).list.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<POIType>?> {
             override fun onError(e: Throwable?) {
@@ -93,14 +100,21 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             override fun onNext(poiTypes: List<POIType>?) {
                 if (poiTypes != null && poiTypes.isNotEmpty()) {
                     after(poiTypes)
-                } else if (BuildConfig.DEBUG) {
-                    POITypeStore.with(this@EditAreaActivity).fakeData().observeOn(AndroidSchedulers.mainThread()).subscribe {
-                        fetchPOITypes({
-                            after(it)
-                        })
-                    }
                 } else {
-                    this@EditAreaActivity.toast(R.string.no_poi_types)
+                    val store = POITypeStore.with(this@EditAreaActivity)
+                    toast("没有信息点类型信息, 请将信息点配置文件拷贝到${store.dir.absolutePath}")
+                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
+                        mkPOITypeDir()
+                        if (BuildConfig.DEBUG) {
+                            fakeData().subscribe {
+                                fetchPOITypes(after)
+                            }
+                        }
+                    }
+                    assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            REQUEST_WRITE_EXTERNAL_STORAGE).subscribe {
+                        permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
+                    }
                 }
             }
 
@@ -111,19 +125,30 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     }
 
+    private fun mkPOITypeDir() {
+        POITypeStore.with(this).dir.apply {
+            Logger.v("poi type dir is $absolutePath")
+            if (mkdirs()) {
+                Logger.e("can't mkdir $absolutePath")
+            }
+        }
+    }
+
+    private fun fakeData() = POITypeStore.with(this).fakeData().observeOn(AndroidSchedulers.mainThread())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_area)
         setSupportActionBar(toolbar)
-        toast(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES).absolutePath)
         fab.setOnClickListener {
             fetchPOITypes {
-                POITypeChooseDialog(it).show(supportFragmentManager, "")
+                POITypeChooseDialog(it, center, REQUEST_ACCESS_FINE_LOCATION, { addPOI(it) })
+                        .show(supportFragmentManager, "")
             }
 
         }
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+
 
         Logger.init("EditAreaActivity")
         area = intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
@@ -200,20 +225,72 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     companion object {
         val TAG_AREA_ID = "AREA_ID"
+
     }
-}
 
-private class POITypeChooseDialog(val poiTypes: List<POIType>) : AppCompatDialogFragment() {
+    fun addPOI(poiType: POIType) {
+        permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION] = {
+            getLocation(AMapLocation(Location("").apply {
+                latitude = center.latitude
+                longitude = center.longitude
+            })).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                val poi = POI(
+                        null,
+                        poiType.uuid,
+                        LatLng(it.latitude, it.longitude),
+                        Date())
+                Logger.v(poi.toString())
+                POIStore.with(this).create(poi).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                    toast(R.string.poi_created)
+                    (fragment_edit_area as EditAreaActivityFragment).addPOI(poi.copy(id = it), getIconBitmap(poiType))
+                }
+            }
+        }
+        assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
+                .observeOn(AndroidSchedulers.mainThread()).subscribe {
+            permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+        }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-            AlertDialog.Builder(context).setTitle(R.string.pick_poi_type)
-                    .setAdapter(object : ArrayAdapter<POIType>(context, R.layout.item_poi_type, poiTypes.toTypedArray()) {
-                        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View? {
-                            return super.getView(position, convertView, parent)
-                        }
-                    }, { dialog, which ->
+    }
 
-                    }).create()
+    private val poiTypeStore: POITypeStore by lazy {
+        POITypeStore.with(this)
+    }
+
+    private val poiTypeIconMap: MutableMap<String, Bitmap> = mutableMapOf()
+
+
+    private fun getIconBitmap(poiType: POIType): Bitmap {
+        if (!poiTypeIconMap.containsKey(poiType.uuid)) {
+            poiTypeIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
+                    loadBitmap(poiTypeStore.getPOITypeIcon(poiType)),
+                    (32 * pixelsPerDp).toInt(),
+                    (32 * pixelsPerDp).toInt(),
+                    false
+            )
+        }
+        return poiTypeIconMap[poiType.uuid]!!
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            REQUEST_WRITE_EXTERNAL_STORAGE ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
+                } else {
+                    toast("why not fake some poi types?")
+                }
+            REQUEST_ACCESS_FINE_LOCATION ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+                }
+        }
+    }
+
+    val center: LatLng
+        get() = fragment_edit_area.map.map.cameraPosition.target
 }
 
 

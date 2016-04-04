@@ -76,6 +76,7 @@ class CreateAreaStep2Fragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         map.onCreate(savedInstanceState)
+        // 不要被SET迷惑，这里实际的意义是GET
         map.map.setLocationSource(object : LocationSource {
             override fun deactivate() {
                 onLocationChangeListener = null
@@ -124,7 +125,6 @@ class CreateAreaStep2Fragment : Fragment() {
                             }
                         }
                         val (scrollX, scrollY) = violationToBoundary(it.screenLocation)
-                        Logger.v("$scrollX $scrollY")
                         map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
                         activePolyline.points = listOf(activeMarker?.position, markers[markers.lastIndex - 1].position)
                         lastScreenLocation = it.screenLocation
@@ -145,7 +145,7 @@ class CreateAreaStep2Fragment : Fragment() {
                 // sees the explanation, try again to request the permission.
 
             } else {
-                ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                         PERSISSION_TO_ACCESS_FINE_LOCATION)
             }
         }

@@ -2,36 +2,48 @@ package com.puzheng.area_investigation.store
 
 import android.content.Context
 import android.os.Environment
-import com.puzheng.area_investigation.BuildConfig
+import com.orhanobut.logger.Logger
+import com.puzheng.area_investigation.copyTo
 import com.puzheng.area_investigation.model.POIType
-import com.puzheng.area_investigation.openReadableFile
 import org.json.JSONException
 import org.json.JSONObject
 import rx.Observable
 import rx.schedulers.Schedulers
 import java.io.File
+import java.util.*
 
 class POITypeStore private constructor(val context: Context) {
 
     companion object {
         fun with(context: Context) = POITypeStore(context)
+
     }
 
-    private val dir: File by lazy {
-        File(Environment.getExternalStoragePublicDirectory(null), "/poi_types").apply {
-            if (!exists()) {
-                mkdirs()
-            }
-        }
+    val dir: File by lazy {
+        File(Environment.getExternalStoragePublicDirectory(context.packageName), "poi_types")
     }
+
+    private fun getPOITypeDir(poiType: POIType) = File(dir, poiType.path)
+
+    fun getPOITypeIcon(poiType: POIType) = File(getPOITypeDir(poiType), "ic.png")
+
+    fun getPOITypeActiveIcon(poiType: POIType) = File(getPOITypeDir(poiType), "ic_active.png")
 
     fun fakeData() = Observable.create<Void> {
-        listOf("bus" to "公交站", "exit" to "出入口", "emergency_station" to "急救站").forEach {
+        listOf("bus" to "公交站", "exit" to "出入口", "emergency" to "急救站").forEach {
             File(dir, it.first).apply {
                 mkdirs()
-                File(this, "config.json").writeText(JSONObject().apply {
-                    put("name", it.second)
-                }.toString())
+                File(this, "config.json").apply {
+                    if (!exists()) {
+                        createNewFile()
+                    }
+                    writeText(JSONObject().apply {
+                        put("uuid", UUID.randomUUID().toString())
+                        put("name", it.second)
+                    }.toString())
+                }
+                context.assets.open("icons/ic_${it.first}.png").copyTo(File(this, "ic.png"))
+                context.assets.open("icons/ic_${it.first}_active.png").copyTo(File(this, "ic_acitive.png"))
             }
         }
         it!!.onNext(null)
@@ -39,21 +51,22 @@ class POITypeStore private constructor(val context: Context) {
 
     val list: Observable<List<POIType>>
         get() = Observable.create<List<POIType>> {
-            val poiTypes = dir.listFiles({ file -> file.isDirectory }).map {
+            val poiTypes = dir.listFiles({ file -> file.isDirectory })?.map {
+                Logger.v("${it.path}, ${it.name}")
                 val configFile = it.listFiles { file, fname -> fname == "config.json" }.getOrNull(0)
                 if (configFile?.exists() ?: false) {
-                    val json = JSONObject(configFile!!.readText())
                     try {
-                        POIType(json.getString("name"))
+                        val json = JSONObject(configFile!!.readText())
+                        POIType(json.getString("uuid"), json.getString("name"), it.name)
                     } catch (e: JSONException) {
                         null
                     }
                 } else {
                     null
                 }
-            }.filter {
+            }?.filter {
                 it != null
-            }.map {
+            }?.map {
                 it!!
             }
             it!!.onNext(poiTypes)

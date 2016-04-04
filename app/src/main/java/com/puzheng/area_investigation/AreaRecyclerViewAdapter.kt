@@ -1,11 +1,8 @@
 package com.puzheng.area_investigation
 
 import android.content.Context
-import android.support.v4.view.ViewCompat
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.text.format.DateUtils
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,17 +11,11 @@ import android.widget.TextView
 import com.bignerdranch.android.multiselector.MultiSelector
 import com.bignerdranch.android.multiselector.SwappingHolder
 import com.orhanobut.logger.Logger
-
 import com.puzheng.area_investigation.AreaListFragment.OnAreaListFragmentInteractionListener
-import com.puzheng.area_investigation.dummy.DummyContent.DummyItem
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.fragment_area.view.*
-import kotlinx.android.synthetic.main.fragment_area_list.*
-import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
 
 private val HEADER_TYPE = 1
 private val AREA_TYPE = 2
