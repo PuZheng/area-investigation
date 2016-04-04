@@ -15,6 +15,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.fragment_area_list.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
@@ -45,13 +46,20 @@ class AreaListFragment : Fragment() {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_area_list,
                 container, false)
         binding.args = Args(ObservableField(true), ObservableField(0))
-        fetchAreas()
         return binding.root
     }
 
+    private val areaStore: AreaStore by lazy {
+        AreaStore.with(activity)
+    }
+
+    private val poiTypeStore: POITypeStore by lazy {
+        POITypeStore.with(activity)
+    }
+
+
     fun fetchAreas() {
-        val store = AreaStore.with(activity)
-        store.areas.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
+        areaStore.list.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
 
             override fun onError(e: Throwable?) {
                 throw e!!
@@ -61,7 +69,6 @@ class AreaListFragment : Fragment() {
                 (binding.args as Args).loading.set(false)
             }
 
-
             override fun onNext(areas: List<Area>?) {
                 if (areas != null && areas.isNotEmpty()) {
                     this@AreaListFragment.areas = areas
@@ -70,25 +77,17 @@ class AreaListFragment : Fragment() {
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
                 } else if (BuildConfig.DEBUG) {
                     var pb: ProgressDialog? = null
-                    store.fakeAreas().observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
-                        pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
-                    }).doOnCompleted {
-                        pb?.dismiss()
-                        Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
-                    }.subscribe(object : Observer<Void> {
-
-                        override fun onError(e: Throwable?) {
-                            throw e!!
-                        }
-
-                        override fun onNext(t: Void?) {
-
-                        }
-
-                        override fun onCompleted() {
+                    poiTypeStore.fakePoiTypes().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                        areaStore.fakeAreas()
+                                .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
+                            pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
+                        }).doOnCompleted {
+                            pb?.dismiss()
+                            Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
+                        }.subscribe {
                             fetchAreas()
                         }
-                    })
+                    }
                 }
             }
 

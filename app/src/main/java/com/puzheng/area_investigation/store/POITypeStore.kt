@@ -29,7 +29,7 @@ class POITypeStore private constructor(val context: Context) {
 
     fun getPOITypeActiveIcon(poiType: POIType) = File(getPOITypeDir(poiType), "ic_active.png")
 
-    fun fakeData() = Observable.create<Void> {
+    fun fakePoiTypes() = Observable.create<Void> {
         listOf("bus" to "公交站", "exit" to "出入口", "emergency" to "急救站").forEach {
             File(dir, it.first).apply {
                 mkdirs()
@@ -46,6 +46,7 @@ class POITypeStore private constructor(val context: Context) {
                 context.assets.open("icons/ic_${it.first}_active.png").copyTo(File(this, "ic_acitive.png"))
             }
         }
+
         it!!.onNext(null)
     }.subscribeOn(Schedulers.computation())
 
@@ -59,6 +60,7 @@ class POITypeStore private constructor(val context: Context) {
                         val json = JSONObject(configFile!!.readText())
                         POIType(json.getString("uuid"), json.getString("name"), it.name)
                     } catch (e: JSONException) {
+                        Logger.e(e.toString())
                         null
                     }
                 } else {

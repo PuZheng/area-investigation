@@ -6,13 +6,15 @@ import com.amap.api.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class POI(val id: Long?, val poiTypeUUID: String, val latLng: LatLng, val created: Date, val updated: Date? = null) {
+data class POI(val id: Long?, val poiTypeUUID: String, val areaId: Long, val latLng: LatLng, val created: Date,
+               val updated: Date? = null) {
 
     class Model {
         companion object {
 
             val TABLE_NAME = "poi"
             val COL_LAT_LNG = "lat_lng"
+            val COL_AREA_ID = "area_id"
             val COL_POI_TYPE_UUID = "poi_type_uuid"
             val COL_CREATED = "created"
             val COL_UPDATED = "updated"
@@ -20,12 +22,14 @@ data class POI(val id: Long?, val poiTypeUUID: String, val latLng: LatLng, val c
 
             val CREATE_SQL: String
                 get() = """
-                    CREATE TABLE ${Area.Model.TABLE_NAME} (
+                    CREATE TABLE $TABLE_NAME (
                         ${BaseColumns._ID}  INTEGER PRIMARY KEY AUTOINCREMENT,
-                        ${POI.Model.COL_POI_TYPE_UUID} TEXT NOT NULL,
-                        ${POI.Model.COL_LAT_LNG} TEXT NOT NULL,
-                        ${POI.Model.COL_CREATED} TEXT NOT NULL,
-                        ${POI.Model.COL_UPDATED} TEXT
+                        $COL_POI_TYPE_UUID TEXT NOT NULL,
+                        $COL_LAT_LNG TEXT NOT NULL,
+                        $COL_CREATED TEXT NOT NULL,
+                        $COL_UPDATED TEXT,
+                        $COL_AREA_ID INTEGER,
+                        FOREIGN KEY($COL_AREA_ID) REFERENCES ${Area.Model.TABLE_NAME}(${BaseColumns._ID})
                     )
                 """
 
@@ -34,11 +38,19 @@ data class POI(val id: Long?, val poiTypeUUID: String, val latLng: LatLng, val c
                 poi.latLng.let {
                     put(POI.Model.COL_LAT_LNG, "${it.latitude},${it.longitude}")
                 }
-                put(POI.Model.COL_POI_TYPE_UUID, poi.poiTypeUUID)
-                put(POI.Model.COL_CREATED, format.format(poi.created))
-                put(POI.Model.COL_UPDATED, if (poi.updated != null) format.format(poi.updated) else null)
+                put(COL_AREA_ID, poi.areaId)
+                put(COL_POI_TYPE_UUID, poi.poiTypeUUID)
+                put(COL_CREATED, format.format(poi.created))
+                put(COL_UPDATED, if (poi.updated != null) format.format(poi.updated) else null)
             }
 
+        }
+    }
+
+    companion object {
+        public fun decodeLatLng(s: String): LatLng {
+            val (lat, lng) = s.split(",").map { it.toDouble() }
+            return LatLng(lat, lng)
         }
     }
 

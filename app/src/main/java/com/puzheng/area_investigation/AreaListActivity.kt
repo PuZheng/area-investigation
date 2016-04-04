@@ -1,7 +1,9 @@
 package com.puzheng.area_investigation
 
+import android.Manifest
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
@@ -10,7 +12,6 @@ import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
@@ -18,6 +19,8 @@ import com.puzheng.area_investigation.store.AreaStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
+
+private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
 
 class AreaListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
@@ -95,6 +98,15 @@ class AreaListActivity : AppCompatActivity(),
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
+
+        if (BuildConfig.DEBUG) {
+            // request write to external storage before faking data, for android 6.0
+            assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE).subscribe {
+                (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
+            }
+        } else {
+            (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -115,6 +127,18 @@ class AreaListActivity : AppCompatActivity(),
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            REQUEST_WRITE_EXTERNAL_STORAGE ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
+                } else {
+                    toast("why not fake some poi types?")
+                }
+        }
     }
 
     companion object {
