@@ -5,16 +5,18 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
+import android.support.design.widget.BottomSheetBehavior
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
+import com.amap.api.maps.model.Marker
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.model.POI
@@ -26,6 +28,7 @@ import kotlinx.android.synthetic.main.activity_edit_area.*
 import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
 import kotlinx.android.synthetic.main.fragment_edit_area.*
+import kotlinx.android.synthetic.main.poi_bottom_sheet.*
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
 import java.util.*
@@ -35,10 +38,24 @@ private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
 class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
 
+    private val bottomSheetBehavior: BottomSheetBehavior<out View> by lazy {
+        BottomSheetBehavior.from(design_bottom_sheet)
+    }
+
+    override fun onPOIMarkerSelected(marker: Marker?) {
+        if (marker == null) {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            fab?.visibility = View.VISIBLE
+        } else {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            fab?.visibility = View.GONE
+        }
+    }
+
     private var selectedVertex: LatLng? = null
     private var dataChanged = false
 
-    override fun onMarkerSelected(position: LatLng) {
+    override fun onOutlineMarkerSelected(position: LatLng?) {
         selectedVertex = position
         editOutlineActionMode?.menu?.findItem(R.id.action_delete)?.isVisible = selectedVertex != null
     }
@@ -74,13 +91,13 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu);
                 fab?.hide()
-                (fragment_edit_area as EditAreaActivityFragment).editMode = true
+                (fragment_edit_area as EditAreaActivityFragment).editOutlineMode = true
                 return true
             }
 
             override fun onDestroyActionMode(mode: ActionMode?) {
                 editOutlineActionMode = null
-                (fragment_edit_area as EditAreaActivityFragment).editMode = false
+                (fragment_edit_area as EditAreaActivityFragment).editOutlineMode = false
                 fab?.show()
             }
         })
@@ -124,7 +141,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
         POITypeStore.with(this).dir.apply {
             Logger.v("poi type dir is $absolutePath")
             if (mkdirs()) {
-                Logger.e("can't mkdir $absolutePath")
+                Logger.e("can't make directory $absolutePath")
             }
         }
     }
@@ -148,6 +165,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
         Logger.v(area.toString())
         updateContent()
     }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_edit_area, menu)

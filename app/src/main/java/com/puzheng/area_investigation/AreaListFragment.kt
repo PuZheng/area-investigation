@@ -81,10 +81,9 @@ class AreaListFragment : Fragment() {
                         areaStore.fakeAreas()
                                 .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
                             pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
-                        }).doOnCompleted {
+                        }).subscribe {
                             pb?.dismiss()
                             Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
-                        }.subscribe {
                             fetchAreas()
                         }
                     }

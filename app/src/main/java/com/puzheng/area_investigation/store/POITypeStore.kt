@@ -43,7 +43,7 @@ class POITypeStore private constructor(val context: Context) {
                     }.toString())
                 }
                 context.assets.open("icons/ic_${it.first}.png").copyTo(File(this, "ic.png"))
-                context.assets.open("icons/ic_${it.first}_active.png").copyTo(File(this, "ic_acitive.png"))
+                context.assets.open("icons/ic_${it.first}_active.png").copyTo(File(this, "ic_active.png"))
             }
         }
 

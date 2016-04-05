@@ -62,9 +62,9 @@ class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) :
                                 }.build(), (8 * pixelsPerDp).toInt()))
                 addPolygon(PolygonOptions()
                         .add(*area.outline.toTypedArray())
-                        .fillColor(ContextCompat.getColor(activity, R.color.colorAccentLighter))
+                        .fillColor(ContextCompat.getColor(activity, R.color.colorOutlinePolygon))
                         .strokeWidth((1 * pixelsPerDp).toFloat())
-                        .strokeColor(ContextCompat.getColor(activity, R.color.colorAccent)))
+                        .strokeColor(ContextCompat.getColor(activity, R.color.colorOutlinePolyline)))
                 area.outline.forEach {
                     addMarker(MarkerOptions()
                             .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
