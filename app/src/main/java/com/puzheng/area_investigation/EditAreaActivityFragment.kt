@@ -46,7 +46,7 @@ private enum class MarkerType {
  * }
  * </pre>
  */
-class EditAreaActivityFragment : Fragment(), LocateMyself {
+class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
 
 
     lateinit private var originArea: Area
@@ -145,7 +145,7 @@ class EditAreaActivityFragment : Fragment(), LocateMyself {
                 // 实现定位
                 onLocationChangeListener = p0
                 activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION) successUi {
-                    locate()
+                    onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
                 }
             }
         })
@@ -209,7 +209,7 @@ class EditAreaActivityFragment : Fragment(), LocateMyself {
         }
     }
 
-    override fun locate() {
+    override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {
             map.postDelayed({
                 map.map.moveCamera(

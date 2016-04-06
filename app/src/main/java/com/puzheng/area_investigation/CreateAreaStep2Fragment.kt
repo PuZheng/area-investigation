@@ -2,11 +2,9 @@ package com.puzheng.area_investigation
 
 import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.MotionEventCompat
@@ -14,12 +12,9 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import com.amap.api.location.AMapLocationClient
-import com.amap.api.location.AMapLocationClientOption
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.LocationSource
 import com.amap.api.maps.model.*
-import com.orhanobut.logger.Logger
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
 
 /**
@@ -30,7 +25,7 @@ import kotlinx.android.synthetic.main.fragment_create_area_step2.*
  * Use the [CreateAreaStep2Fragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class CreateAreaStep2Fragment : Fragment(), LocateMyself {
+class CreateAreaStep2Fragment : Fragment(), OnPermissionGrantedListener {
 
     private var listener: OnFragmentInteractionListener? = null
 
@@ -134,7 +129,7 @@ class CreateAreaStep2Fragment : Fragment(), LocateMyself {
         }
 
         activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).success {
-            locate()
+            onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
         }
     }
 
@@ -169,7 +164,7 @@ class CreateAreaStep2Fragment : Fragment(), LocateMyself {
     }
 
 
-    override fun locate() {
+    override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {  }
     }
 

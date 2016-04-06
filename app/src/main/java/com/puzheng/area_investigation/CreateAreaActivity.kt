@@ -1,5 +1,6 @@
 package com.puzheng.area_investigation
 
+import android.Manifest
 import android.app.Dialog
 import android.content.Context
 import android.content.pm.PackageManager
@@ -138,7 +139,8 @@ class CreateAreaActivity : AppCompatActivity(),
         when (requestCode) {
             CreateAreaStep2Fragment.REQUEST_ACCESS_FINE_LOCATION ->
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (createAreaStep2Fragment as CreateAreaStep2Fragment).locate()
+                    createAreaStep2Fragment.onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
+                            CreateAreaStep2Fragment.REQUEST_ACCESS_FINE_LOCATION)
                 }
         }
     }

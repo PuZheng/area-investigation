@@ -282,7 +282,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             EditAreaActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (fragment_edit_area as EditAreaActivityFragment).locate()
+                    (fragment_edit_area as EditAreaActivityFragment).onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
+                            EditAreaActivityFragment.REQUEST_ACCESS_FINE_LOCATION)
                 }
         }
     }
