@@ -1,6 +1,5 @@
 package com.puzheng.area_investigation
 
-import android.Manifest
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -19,8 +18,6 @@ import com.puzheng.area_investigation.store.AreaStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
-
-private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
 
 class AreaListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
@@ -101,9 +98,7 @@ class AreaListActivity : AppCompatActivity(),
 
         if (BuildConfig.DEBUG) {
             // request write to external storage before faking data, for android 6.0
-            assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE).success {
-                (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
-            }
+            (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
         } else {
             (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
         }
@@ -131,10 +126,11 @@ class AreaListActivity : AppCompatActivity(),
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            REQUEST_WRITE_EXTERNAL_STORAGE ->
+            AreaListFragment.REQUEST_WRITE_EXTERNAL_STORAGE ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
+                    (fragmentAreaList as AreaListFragment).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            AreaListFragment.REQUEST_WRITE_EXTERNAL_STORAGE)
                 } else {
                     toast("why not fake some poi types?")
                 }

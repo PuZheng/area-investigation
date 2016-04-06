@@ -28,10 +28,29 @@ import rx.schedulers.Schedulers
  * Activities containing this fragment MUST implement the [OnAreaListFragmentInteractionListener]
  * interface.
  */
-class AreaListFragment : Fragment() {
+class AreaListFragment : Fragment(), OnPermissionGrantedListener {
+    override fun onPermissionGranted(permission: String, requestCode: Int) {
+        var pb: ProgressDialog? = null
+        poiTypeStore.fakePoiTypes().observeOn(AndroidSchedulers.mainThread()).subscribe {
+            areaStore.fakeAreas()
+                    .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
+                pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
+            }).subscribe {
+                pb?.dismiss()
+                Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
+                fetchAreas()
+            }
+        }
+
+    }
+
     private var listener: OnAreaListFragmentInteractionListener? = null
 
     val multiSelector = MultiSelector()
+
+    companion object {
+        val REQUEST_WRITE_EXTERNAL_STORAGE = 100
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,17 +95,10 @@ class AreaListFragment : Fragment() {
                     list.adapter = AreaRecyclerViewAdapter(areas, listener!!, multiSelector)
                     list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
                 } else if (BuildConfig.DEBUG) {
-                    var pb: ProgressDialog? = null
-                    poiTypeStore.fakePoiTypes().observeOn(AndroidSchedulers.mainThread()).subscribe {
-                        areaStore.fakeAreas()
-                                .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
-                            pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
-                        }).subscribe {
-                            pb?.dismiss()
-                            Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
-                            fetchAreas()
-                        }
+                    activity.assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE).success {
+                        onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE)
                     }
+
                 }
             }
 
