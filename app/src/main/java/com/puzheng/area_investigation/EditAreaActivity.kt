@@ -14,6 +14,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
 import com.amap.api.maps.model.Marker
@@ -29,6 +30,7 @@ import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
 import kotlinx.android.synthetic.main.fragment_edit_area.*
 import kotlinx.android.synthetic.main.poi_bottom_sheet.*
+import nl.komponents.kovenant.ui.successUi
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
 import java.util.*
@@ -119,12 +121,12 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                     after(poiTypes)
                 } else {
                     val store = POITypeStore.with(this@EditAreaActivity)
-                    toast("没有信息点类型信息, 请将信息点配置文件拷贝到${store.dir.absolutePath}")
+                    this@EditAreaActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath), Toast.LENGTH_LONG)
                     permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
                         mkPOITypeDir()
                     }
                     assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            REQUEST_WRITE_EXTERNAL_STORAGE).subscribe {
+                            REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
                         permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
                     }
                 }
@@ -152,7 +154,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
         setSupportActionBar(toolbar)
         fab.setOnClickListener {
             fetchPOITypes {
-                POITypeChooseDialog(it, center, REQUEST_ACCESS_FINE_LOCATION, { addPOI(it) })
+                POITypeChooseDialog(it, { addPOI(it) })
                         .show(supportFragmentManager, "")
             }
 
@@ -258,11 +260,9 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 }
             }
         }
-        assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
-                .observeOn(AndroidSchedulers.mainThread()).subscribe {
+        assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).successUi {
             permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
         }
-
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -278,6 +278,11 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+                }
+            EditAreaActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    (fragment_edit_area as EditAreaActivityFragment).locate()
                 }
         }
     }

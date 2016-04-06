@@ -2,6 +2,7 @@ package com.puzheng.area_investigation
 
 import android.app.Dialog
 import android.content.Context
+import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.databinding.ObservableField
 import android.os.Bundle
@@ -130,6 +131,16 @@ class CreateAreaActivity : AppCompatActivity(),
         }
         else ->
             super.onContextItemSelected(item)
+    }
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            CreateAreaStep2Fragment.REQUEST_ACCESS_FINE_LOCATION ->
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    (createAreaStep2Fragment as CreateAreaStep2Fragment).locate()
+                }
+        }
     }
 }
 

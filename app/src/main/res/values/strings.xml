@@ -30,4 +30,5 @@
     <string name="pick_poi_type">请选择信息点类型</string>
     <string name="no_poi_types">没有可用的信息点类型信息</string>
     <string name="poi_created">信息点创建成功</string>
+    <string name="no_poi_type_meta_info">没有信息点类型信息, 请将信息点配置文件拷贝到%s</string>
 </resources>

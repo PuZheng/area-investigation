@@ -1,6 +1,5 @@
 package com.puzheng.area_investigation
 
-import android.Manifest
 import android.app.Dialog
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
@@ -15,10 +14,8 @@ import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.POITypeStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item_poi_type.view.*
-import rx.android.schedulers.AndroidSchedulers
 
-class POITypeChooseDialog(val poiTypes: List<POIType>, val center: LatLng,
-                          val request_access_fine_location: Int, val after: (POIType) -> Unit) : AppCompatDialogFragment() {
+class POITypeChooseDialog(val poiTypes: List<POIType>, val after: (POIType) -> Unit) : AppCompatDialogFragment() {
 
 
     class ViewHolder(val textView: TextView, val imageView: ImageView)
@@ -45,10 +42,6 @@ class POITypeChooseDialog(val poiTypes: List<POIType>, val center: LatLng,
                                 }
                     }, {
                         dialog, which ->
-                        activity.assertPermission(
-                                Manifest.permission.ACCESS_FINE_LOCATION, request_access_fine_location)
-                                .observeOn(AndroidSchedulers.mainThread())?.subscribe {
-                            after(poiTypes[which])
-                        }
+                        after(poiTypes[which])
                     }).create()
 }

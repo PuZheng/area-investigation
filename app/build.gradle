@@ -55,12 +55,15 @@ dependencies {
     compile 'com.bignerdranch.android:recyclerview-multiselect:+'
     compile files('libs/AMap_Location_V2.4.0_20160308.jar')
     compile files('libs/AMap_3DMap_V3.2.1_20160225.jar')
+    compile 'nl.komponents.kovenant:kovenant:3.2.2'
+    compile 'nl.komponents.kovenant:kovenant-android:3.2.2'
 }
 
 buildscript {
     ext.kotlin_version = '1.0.1'
     repositories {
-        maven { url 'http://maven.oschina.net/content/groups/public/' }
+        jcenter()
+//        maven { url 'http://maven.oschina.net/content/groups/public/' }
         maven { url "https://jitpack.io" }
     }
     dependencies {
@@ -69,7 +72,8 @@ buildscript {
 }
 
 repositories {
-    maven { url 'http://maven.oschina.net/content/groups/public/' }
+//    maven { url 'http://maven.oschina.net/content/groups/public/' }
+    jcenter()
     maven { url "https://jitpack.io" }
 }
 
