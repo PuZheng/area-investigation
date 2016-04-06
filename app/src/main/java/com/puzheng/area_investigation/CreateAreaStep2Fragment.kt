@@ -30,7 +30,7 @@ import kotlinx.android.synthetic.main.fragment_create_area_step2.*
  * Use the [CreateAreaStep2Fragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class CreateAreaStep2Fragment : Fragment() {
+class CreateAreaStep2Fragment : Fragment(), LocateMyself {
 
     private var listener: OnFragmentInteractionListener? = null
 
@@ -133,21 +133,8 @@ class CreateAreaStep2Fragment : Fragment() {
             }
         }
 
-        val permissionCheck = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION)
-        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            startLocation()
-        } else {
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // TODO Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-                ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                        PERSISSION_TO_ACCESS_FINE_LOCATION)
-            }
+        activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).success {
+            locate()
         }
     }
 
@@ -176,41 +163,14 @@ class CreateAreaStep2Fragment : Fragment() {
             return false
         }
         val isApproaching = lastScreenLocation == null || (
-                lastScreenLocation!!.distanceTo(startMarker!!.screenLocation) >
+                lastScreenLocation.distanceTo(startMarker!!.screenLocation) >
                         screenLocation.distanceTo(startMarker!!.screenLocation))
         return isApproaching && startMarker!!.screenLocation.distanceTo(screenLocation) < closeToLimit
     }
 
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when (requestCode) {
-            PERSISSION_TO_ACCESS_FINE_LOCATION ->
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startLocation()
-                }
-        }
-    }
-
-    private fun startLocation() {
-        //初始化定位
-        val locationClient = AMapLocationClient(activity)
-        //设置定位回调监听
-        locationClient.setLocationListener({
-            if (it?.errorCode == 0) {
-                Logger.e(it.toStr())
-                onLocationChangeListener?.onLocationChanged(it)
-            } else {
-                Logger.e("定位失败, ${it.errorCode}: ${it.errorInfo}");
-            }
-        })
-        //初始化定位参数
-        val locationOption = AMapLocationClientOption()
-        //设置定位模式为高精度模式，Battery_Saving为低功耗模式，Device_Sensors是仅设备模式
-        locationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy;
-        locationOption.isOnceLocation = true // 只需要定位一次
-        locationClient.setLocationOption(locationOption);
-        //启动定位
-        locationClient.startLocation();
+    override fun locate() {
+        LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {  }
     }
 
 
@@ -253,7 +213,7 @@ class CreateAreaStep2Fragment : Fragment() {
         // TODO: Rename and change types and number of parameters
         fun newInstance() = CreateAreaStep2Fragment()
 
-        private val PERSISSION_TO_ACCESS_FINE_LOCATION: Int = 100
+        val REQUEST_ACCESS_FINE_LOCATION: Int = 100
         private val INIT_ZOOM_LEVEL: Float = 16.0F
 
     }

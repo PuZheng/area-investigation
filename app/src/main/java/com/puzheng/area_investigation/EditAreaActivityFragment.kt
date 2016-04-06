@@ -1,9 +1,11 @@
 package com.puzheng.area_investigation
 
+import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.view.LayoutInflater
@@ -11,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.amap.api.maps.AMap
 import com.amap.api.maps.CameraUpdateFactory
+import com.amap.api.maps.LocationSource
 import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
@@ -19,17 +22,32 @@ import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.AreaStore
 import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
+import nl.komponents.kovenant.ui.successUi
 import rx.android.schedulers.AndroidSchedulers
 
 private enum class MarkerType {
     POI, OUTLINE_VERTEX
 }
 
-class EditAreaActivityFragment : Fragment() {
+/**
+ * 该fragment会请求ACCESS_FINE_LOCATION权限，所以使用该fragment的activity必须支持在
+ * onRequestPermissionsResult中对此进行如下处理
+ *
+ * <pre>
+ * {@code
+ * override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+ *     when (requestCode) {
+ *     EditAreaActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
+ *          if (grantResults.isNotEmpty()
+ *              && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+ *              editAreaActivityFragment.locate()
+ *          }
+ *     }
+ * }
+ * </pre>
+ */
+class EditAreaActivityFragment : Fragment(), LocateMyself {
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
-                              savedInstanceState: Bundle?) =
-            inflater!!.inflate(R.layout.fragment_edit_area, container, false)
 
     lateinit private var originArea: Area
     lateinit private var hotCopyArea: Area // 用于保存编辑状态下的区域信息
@@ -80,6 +98,7 @@ class EditAreaActivityFragment : Fragment() {
     private val poiTypeStore: POITypeStore by lazy {
         POITypeStore.with(activity)
     }
+    private var onLocationChangeListener: LocationSource.OnLocationChangedListener? = null
 
 
     var editOutlineMode: Boolean = false
@@ -101,13 +120,41 @@ class EditAreaActivityFragment : Fragment() {
 
         }
 
+    companion object {
+        val REQUEST_ACCESS_FINE_LOCATION = 100
+    }
+
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
+                              savedInstanceState: Bundle?) =
+            inflater!!.inflate(R.layout.fragment_edit_area, container, false)
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         map.onCreate(savedInstanceState)
         originArea = activity.intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
+
+        // 不要被SET迷惑，这里实际的意义是GET到地图的onLocationChangeListener
+        map.map.setLocationSource(object : LocationSource {
+            override fun deactivate() {
+                onLocationChangeListener = null
+            }
+
+
+            override fun activate(p0: LocationSource.OnLocationChangedListener?) {
+                // 这里将获取map默认的OnLocationChangedListener, map不能直接移动中心点，要通过操作这个对象来
+                // 实现定位
+                onLocationChangeListener = p0
+                activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION) successUi {
+                    locate()
+                }
+            }
+        })
+        map.map.uiSettings.isMyLocationButtonEnabled = true
+
+
         // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
         map.map.setOnMapLoadedListener {
+            map.map.isMyLocationEnabled = true
             AreaStore.with(activity).getPOIList(originArea).observeOn(AndroidSchedulers.mainThread()).subscribe {
                 it?.forEach {
                     pois.add(it)
@@ -162,6 +209,18 @@ class EditAreaActivityFragment : Fragment() {
         }
     }
 
+    override fun locate() {
+        LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {
+            map.postDelayed({
+                map.map.moveCamera(
+                        CameraUpdateFactory.newLatLngBounds(
+                                LatLngBounds.Builder().apply {
+                                    originArea.outline.forEach { include(it) }
+                                    pois.forEach { include(it.latLng) }
+                                }.build(), (8 * pixelsPerDp).toInt()))
+            }, 1000)
+        }
+    }
 
     // thanks to http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
     private fun nearestPoint2SegDistance(p: Point, seg: Pair<Point, Point>): Double {

@@ -101,7 +101,7 @@ class AreaListActivity : AppCompatActivity(),
 
         if (BuildConfig.DEBUG) {
             // request write to external storage before faking data, for android 6.0
-            assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE).subscribe {
+            assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE).success {
                 (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
             }
         } else {
