@@ -41,7 +41,7 @@ class CreateAreaStep2Fragment : Fragment(), OnPermissionGrantedListener {
         (40 * pixelsPerDp).toInt()
     }
 
-    // 地图清除所有覆盖物时，会回收所有关联的Bitmap
+    // 地图清除所有覆盖物时，会回收所有关联的Bitmap, 所以要判断是否Recycled
     private val touchingMarkerBitmap: Bitmap? = null
         get() = if (field == null || field.isRecycled) activity.loadBitmap(R.drawable.touching_marker) else field
 

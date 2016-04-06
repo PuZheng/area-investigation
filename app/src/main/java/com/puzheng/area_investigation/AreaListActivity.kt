@@ -18,6 +18,8 @@ import com.puzheng.area_investigation.store.AreaStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
+import nl.komponents.kovenant.android.startKovenant
+import nl.komponents.kovenant.android.stopKovenant
 
 class AreaListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
@@ -35,7 +37,7 @@ class AreaListActivity : AppCompatActivity(),
                     // 注意， 一定要告诉Picasso清除图片缓存
                     Picasso.with(this).invalidate(AreaStore.with(this).getCoverImageFile(areaId))
                 }
-                (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
+                (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).setupAreas()
             }
         }
     }
@@ -85,6 +87,7 @@ class AreaListActivity : AppCompatActivity(),
         Logger.init()
 
         setContentView(R.layout.activity_area_list)
+        startKovenant()
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener({
@@ -96,12 +99,12 @@ class AreaListActivity : AppCompatActivity(),
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
 
-        if (BuildConfig.DEBUG) {
-            // request write to external storage before faking data, for android 6.0
-            (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
-        } else {
-            (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).fetchAreas()
-        }
+        (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).setupAreas()
+    }
+
+    override fun onDestroy() {
+        stopKovenant()
+        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

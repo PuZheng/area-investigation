@@ -5,10 +5,9 @@ import android.widget.Toast
 import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
-import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
-import rx.Observable
-import rx.android.schedulers.AndroidSchedulers
+import nl.komponents.kovenant.deferred
+import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
 
 fun Context.openReadableFile(dir: String, type: String? = null) = File(
@@ -39,18 +38,17 @@ fun Context.toast(resId: Int, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, resId, duration).show()
 }
 
-fun Context.getLocation(default: AMapLocation? = null) = Observable.create<AMapLocation> {
-        observable ->
-        val locationClient = AMapLocationClient(this)
+fun Context.getLocation(default: AMapLocation? = null) = deferred<AMapLocation, Exception>().apply {
+        val locationClient = AMapLocationClient(this@getLocation)
         //设置定位回调监听
         locationClient.setLocationListener({
             if (it?.errorCode == 0) {
                 Logger.e(it.toStr())
-                observable.onNext(it)
+                resolve(it)
             } else {
                 Logger.e("定位失败, ${it.errorCode}: ${it.errorInfo}");
                 if (default != null) {
-                    observable.onNext(default)
+                    resolve(default)
                 }
             }
         })
@@ -62,6 +60,6 @@ fun Context.getLocation(default: AMapLocation? = null) = Observable.create<AMapL
         locationClient.setLocationOption(locationOption);
         //启动定位
         locationClient.startLocation();
-    }.subscribeOn(AndroidSchedulers.mainThread())
+    }.promise
 
 

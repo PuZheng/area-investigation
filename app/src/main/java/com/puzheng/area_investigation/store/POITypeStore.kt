@@ -5,10 +5,10 @@ import android.os.Environment
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.copyTo
 import com.puzheng.area_investigation.model.POIType
+import nl.komponents.kovenant.Promise
+import nl.komponents.kovenant.task
 import org.json.JSONException
 import org.json.JSONObject
-import rx.Observable
-import rx.schedulers.Schedulers
 import java.io.File
 import java.util.*
 
@@ -29,7 +29,7 @@ class POITypeStore private constructor(val context: Context) {
 
     fun getPOITypeActiveIcon(poiType: POIType) = File(getPOITypeDir(poiType), "ic_active.png")
 
-    fun fakePoiTypes() = Observable.create<Void> {
+    fun fakePoiTypes() = task {
         listOf("bus" to "公交站", "exit" to "出入口", "emergency" to "急救站").forEach {
             File(dir, it.first).apply {
                 mkdirs()
@@ -46,13 +46,11 @@ class POITypeStore private constructor(val context: Context) {
                 context.assets.open("icons/ic_${it.first}_active.png").copyTo(File(this, "ic_active.png"))
             }
         }
+    }
 
-        it!!.onNext(null)
-    }.subscribeOn(Schedulers.computation())
-
-    val list: Observable<List<POIType>>
-        get() = Observable.create<List<POIType>> {
-            val poiTypes = dir.listFiles({ file -> file.isDirectory })?.map {
+    val list: Promise<List<POIType>?, Exception>
+        get() = task {
+            dir.listFiles({ file -> file.isDirectory })?.map {
                 Logger.v("${it.path}, ${it.name}")
                 val configFile = it.listFiles { file, fname -> fname == "config.json" }.getOrNull(0)
                 if (configFile?.exists() ?: false) {
@@ -71,7 +69,6 @@ class POITypeStore private constructor(val context: Context) {
             }?.map {
                 it!!
             }
-            it!!.onNext(poiTypes)
             // TODO if met a unzipped zip file (no corresponding dir or phased out), zip it
-        }.subscribeOn(Schedulers.computation())
+        }
 }

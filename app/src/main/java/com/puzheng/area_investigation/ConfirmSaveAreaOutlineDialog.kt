@@ -15,7 +15,7 @@ import com.amap.api.maps.model.PolygonOptions
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.dialog_confirm_save_area_outline.view.*
-import rx.android.schedulers.AndroidSchedulers
+import nl.komponents.kovenant.ui.successUi
 
 class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) : AppCompatDialogFragment() {
     private val markerBitmap: Bitmap by lazy {
@@ -32,8 +32,7 @@ class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) :
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener({
             map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
-                    AreaStore.with(activity).updateAreaOutline(area.id!!, area.outline, p0)
-                            .observeOn(AndroidSchedulers.mainThread()).subscribe {
+                    AreaStore.with(activity).updateAreaOutline(area.id!!, area.outline, p0) successUi {
                         afterSaved()
                         activity.toast(R.string.update_outline_success)
                         dialog.dismiss()

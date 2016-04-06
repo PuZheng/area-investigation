@@ -23,7 +23,6 @@ import com.puzheng.area_investigation.store.AreaStore
 import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
 import nl.komponents.kovenant.ui.successUi
-import rx.android.schedulers.AndroidSchedulers
 
 private enum class MarkerType {
     POI, OUTLINE_VERTEX
@@ -151,61 +150,62 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
         })
         map.map.uiSettings.isMyLocationButtonEnabled = true
 
-
+        AreaStore.with(activity).getPOIList(originArea) success  {
+            it?.forEach {
+                pois.add(it)
+            }
+        }
+        poiTypeStore.list.success {
+            it?.forEach {
+                poiTypeMap[it.uuid] = it
+            }
+        }
         // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
         map.map.setOnMapLoadedListener {
             map.map.isMyLocationEnabled = true
-            AreaStore.with(activity).getPOIList(originArea).observeOn(AndroidSchedulers.mainThread()).subscribe {
-                it?.forEach {
-                    pois.add(it)
-                }
-                poiTypeStore.list.observeOn(AndroidSchedulers.mainThread()).subscribe {
-                    it?.forEach {
-                        poiTypeMap[it.uuid] = it
+            map.map.apply {
+                moveCamera(
+                        CameraUpdateFactory.newLatLngBounds(
+                                LatLngBounds.Builder().apply {
+                                    originArea.outline.forEach { include(it) }
+                                    pois.forEach { include(it.latLng) }
+                                }.build(), (8 * pixelsPerDp).toInt()))
+                setupOutline()
+                setupPOIs()
+                setOnMapLongClickListener {
+                    listener?.onMapLongClick()
+                    if (editOutlineMode) {
+                        val polyline = findPolylineCloseTo(it)
+                        if (polyline != null) {
+                            val index = hotCopyArea.outline.indexOf(polyline.points[0])
+                            hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
+                            setupOutline()
+                        }
                     }
-                    map.map.apply {
-                        moveCamera(
-                                CameraUpdateFactory.newLatLngBounds(
-                                        LatLngBounds.Builder().apply {
-                                            originArea.outline.forEach { include(it) }
-                                            pois.forEach { include(it.latLng) }
-                                        }.build(), (8 * pixelsPerDp).toInt()))
-                        setupOutline()
-                        setupPOIs()
-                        setOnMapLongClickListener {
-                            listener?.onMapLongClick()
-                            if (editOutlineMode) {
-                                val polyline = findPolylineCloseTo(it)
-                                if (polyline != null) {
-                                    val index = hotCopyArea.outline.indexOf(polyline.points[0])
-                                    hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
-                                    setupOutline()
-                                }
-                            }
+                }
+                setOnMarkerClickListener {
+                    if (it.selectable) {
+                        it.selected = true
+                        if (editOutlineMode) {
+                            listener?.onOutlineMarkerSelected(it.position)
+                        } else {
+                            listener?.onPOIMarkerSelected(it)
                         }
-                        setOnMarkerClickListener {
-                            if (it.selectable) {
-                                it.selected = true
-                                if (editOutlineMode) {
-                                    listener?.onOutlineMarkerSelected(it.position)
-                                } else {
-                                    listener?.onPOIMarkerSelected(it)
-                                }
-                            }
-                            true
-                        }
-                        setOnMapClickListener {
-                            selectedOutlineMarker?.selected = false
-                            selectedPOIMarker?.selected = false
-                            if (editOutlineMode) {
-                                listener?.onOutlineMarkerSelected(null)
-                            } else {
-                                listener?.onPOIMarkerSelected(null)
-                            }
-                        }
+                    }
+                    true
+                }
+                setOnMapClickListener {
+                    selectedOutlineMarker?.selected = false
+                    selectedPOIMarker?.selected = false
+                    if (editOutlineMode) {
+                        listener?.onOutlineMarkerSelected(null)
+                    } else {
+                        listener?.onPOIMarkerSelected(null)
                     }
                 }
             }
+
+
         }
     }
 

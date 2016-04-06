@@ -30,9 +30,9 @@ import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
 import kotlinx.android.synthetic.main.fragment_edit_area.*
 import kotlinx.android.synthetic.main.poi_bottom_sheet.*
+import nl.komponents.kovenant.android.startKovenant
+import nl.komponents.kovenant.android.stopKovenant
 import nl.komponents.kovenant.ui.successUi
-import rx.Observer
-import rx.android.schedulers.AndroidSchedulers
 import java.util.*
 
 private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
@@ -111,30 +111,21 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
     private val permissionRequestHandlerMap: MutableMap<String, () -> Unit> = mutableMapOf()
 
     private fun fetchPOITypes(after: (List<POIType>) -> Unit) {
-        POITypeStore.with(this).list.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<POIType>?> {
-            override fun onError(e: Throwable?) {
-                if (e != null) throw e
-            }
-
-            override fun onNext(poiTypes: List<POIType>?) {
-                if (poiTypes != null && poiTypes.isNotEmpty()) {
-                    after(poiTypes)
-                } else {
-                    val store = POITypeStore.with(this@EditAreaActivity)
-                    this@EditAreaActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath), Toast.LENGTH_LONG)
-                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
-                        mkPOITypeDir()
-                    }
-                    assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
-                        permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
-                    }
+        POITypeStore.with(this).list successUi {
+            if (it != null && it.isNotEmpty()) {
+                after(it)
+            } else {
+                val store = POITypeStore.with(this@EditAreaActivity)
+                this@EditAreaActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath), Toast.LENGTH_LONG)
+                permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
+                    mkPOITypeDir()
+                }
+                assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
+                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
                 }
             }
-
-            override fun onCompleted() {
-            }
-        })
+        }
         // TODO it should be polite to show a progressbar
 
     }
@@ -151,6 +142,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_area)
+        startKovenant()
+
         setSupportActionBar(toolbar)
         fab.setOnClickListener {
             fetchPOITypes {
@@ -168,6 +161,10 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
         updateContent()
     }
 
+    override fun onDestroy() {
+        stopKovenant()
+        super.onDestroy()
+    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_edit_area, menu)
@@ -196,10 +193,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                             editNameActionMode!!.finish()
                             area.name = area_name.text.toString()
                             updateContent()
-                            AreaStore.with(this@EditAreaActivity).updateAreaName(area.id!!, area_name.text.toString())
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe {
-                                        toast(R.string.edit_area_name_success)
+                            AreaStore.with(this@EditAreaActivity).updateAreaName(area.id!!, area_name.text.toString()) successUi {
+                                toast(R.string.edit_area_name_success)
                                         dataChanged = true
                                     }
                         }
@@ -246,7 +241,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             getLocation(AMapLocation(Location("").apply {
                 latitude = center.latitude
                 longitude = center.longitude
-            })).observeOn(AndroidSchedulers.mainThread()).subscribe {
+            })).successUi {
                 val poi = POI(
                         null,
                         poiType.uuid,
@@ -254,7 +249,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                         LatLng(it.latitude, it.longitude),
                         Date())
                 Logger.v(poi.toString())
-                POIStore.with(this).create(poi).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                POIStore.with(this).create(poi) successUi {
                     toast(R.string.poi_created)
                     (fragment_edit_area as EditAreaActivityFragment).addPOI(poi.copy(id = it))
                 }
