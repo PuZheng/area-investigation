@@ -1,6 +1,5 @@
 package com.puzheng.area_investigation
 
-import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -9,10 +8,7 @@ import android.graphics.Canvas
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.DisplayMetrics
-import nl.komponents.kovenant.Deferred
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.deferred
-import rx.Observable
+import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
 
 val Activity.pixelsPerDp: Double
@@ -53,21 +49,18 @@ fun Activity.loadBitmap(file: File): Bitmap = BitmapFactory.decodeStream(file.in
 //    }
 //}
 
-fun Activity.assertPermission(permission: String, requestCode: Int) =
-        deferred<Void?, Exception>().apply {
-            if (ContextCompat.checkSelfPermission(this@assertPermission, permission) == PackageManager.PERMISSION_GRANTED) {
-                resolve(null)
-            } else {
-                // Should we show an explanation?
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this@assertPermission, permission)) {
-                    // TODO Show an expanation to the user *asynchronously* -- don't block
-                    // this thread waiting for the user's response! After the user
-                    // sees the explanation, try again to request the permission.
-
-                } else {
-                    ActivityCompat.requestPermissions(this@assertPermission, arrayOf(permission),
-                            requestCode)
-                }
-            }
-}.promise
+fun Activity.assertPermission(permission: String, requestCode: Int) = promiseOnUi {
+    if (ContextCompat.checkSelfPermission(this@assertPermission, permission) != PackageManager.PERMISSION_GRANTED) {
+        // Should we show an explanation?
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this@assertPermission, permission)) {
+            // TODO Show an expanation to the user *asynchronously* -- don't block
+            // this thread waiting for the user's response! After the user
+            // sees the explanation, try again to request the permission.
+        } else {
+            ActivityCompat.requestPermissions(this@assertPermission, arrayOf(permission),
+                    requestCode)
+        }
+        throw Exception("permission $permission need to be affirmed")
+    }
+}
 

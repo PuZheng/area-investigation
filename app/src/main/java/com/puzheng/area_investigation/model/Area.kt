@@ -1,14 +1,10 @@
 package com.puzheng.area_investigation.model
 
 import android.content.ContentValues
-import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
-import com.puzheng.area_investigation.DBHelpler
-import rx.Observable
-import rx.schedulers.Schedulers
 import java.text.SimpleDateFormat
 import java.util.*
 

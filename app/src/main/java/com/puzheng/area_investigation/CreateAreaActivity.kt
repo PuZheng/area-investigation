@@ -24,6 +24,8 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.ActivityCreateAreaBinding
 import kotlinx.android.synthetic.main.activity_create_area.*
 import kotlinx.android.synthetic.main.fragment_create_area_step1.*
+import nl.komponents.kovenant.android.startKovenant
+import nl.komponents.kovenant.android.stopKovenant
 
 
 class CreateAreaActivity : AppCompatActivity(),
@@ -74,6 +76,9 @@ class CreateAreaActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.init("CreateAreaActivitiy")
+
+        startKovenant()
+
         binding = DataBindingUtil.setContentView(this, R.layout.activity_create_area)
         pager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
 
@@ -143,6 +148,12 @@ class CreateAreaActivity : AppCompatActivity(),
                             CreateAreaStep2Fragment.REQUEST_ACCESS_FINE_LOCATION)
                 }
         }
+    }
+
+
+    override fun onDestroy() {
+        stopKovenant()
+        super.onDestroy()
     }
 }
 

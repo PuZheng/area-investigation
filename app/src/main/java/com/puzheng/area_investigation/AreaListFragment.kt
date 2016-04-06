@@ -11,15 +11,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.bignerdranch.android.multiselector.MultiSelector
-import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
 import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.fragment_area_list.*
-import rx.Observer
-import rx.android.schedulers.AndroidSchedulers
-import rx.schedulers.Schedulers
+import nl.komponents.kovenant.ui.alwaysUi
+import nl.komponents.kovenant.ui.successUi
 
 /**
  * A fragment representing a list of Items.
@@ -30,15 +28,12 @@ import rx.schedulers.Schedulers
  */
 class AreaListFragment : Fragment(), OnPermissionGrantedListener {
     override fun onPermissionGranted(permission: String, requestCode: Int) {
-        var pb: ProgressDialog? = null
-        poiTypeStore.fakePoiTypes().observeOn(AndroidSchedulers.mainThread()).subscribe {
-            areaStore.fakeAreas()
-                    .observeOn(AndroidSchedulers.mainThread()).doOnSubscribe({
-                pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
-            }).subscribe {
-                pb?.dismiss()
+        val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
+        poiTypeStore.fakePoiTypes().success {
+            areaStore.fakeAreas().successUi {
+                pb.dismiss()
                 Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
-                fetchAreas()
+                setupAreas()
             }
         }
 
@@ -77,32 +72,23 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
     }
 
 
-    fun fetchAreas() {
-        areaStore.list.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<Area>> {
-
-            override fun onError(e: Throwable?) {
-                throw e!!
-            }
-
-            override fun onCompleted() {
-                (binding.args as Args).loading.set(false)
-            }
-
-            override fun onNext(areas: List<Area>?) {
-                if (areas != null && areas.isNotEmpty()) {
-                    this@AreaListFragment.areas = areas
-                    (binding.args as Args).itemNo.set(areas.size)
-                    list.adapter = AreaRecyclerViewAdapter(areas, listener!!, multiSelector)
-                    list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
-                } else if (BuildConfig.DEBUG) {
-                    activity.assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE).success {
-                        onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE)
-                    }
-
+    fun setupAreas() {
+        areaStore.list successUi {
+            if (it != null && it.isNotEmpty()) {
+                this@AreaListFragment.areas = it
+                (binding.args as Args).itemNo.set(it.size)
+                list.adapter = AreaRecyclerViewAdapter(it, listener!!, multiSelector)
+                list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
+            } else if (BuildConfig.DEBUG) {
+                activity.assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
+                    onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            REQUEST_WRITE_EXTERNAL_STORAGE)
                 }
             }
-
-        })
+        } alwaysUi {
+            (binding.args as Args).loading.set(false)
+        }
     }
 
     override fun onAttach(context: Context?) {
@@ -140,20 +126,9 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
         val adapter = (list.adapter as AreaRecyclerViewAdapter)
         val selectedAreas = adapter.selectedAreas
         adapter.removeSelectedAreas()
-        AreaStore.with(activity).removeAreas(selectedAreas).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void?> {
-
-            override fun onNext(t: Void?) {
-            }
-
-            override fun onError(e: Throwable?) {
-                // TODO more polite
-                throw UnsupportedOperationException()
-            }
-
-            override fun onCompleted() {
-                Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
-            }
-        })
+        AreaStore.with(activity).removeAreas(selectedAreas) successUi {
+            Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
+        }
     }
 
 }
