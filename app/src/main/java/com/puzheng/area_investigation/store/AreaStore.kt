@@ -9,6 +9,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.*
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.model.POI
+import com.puzheng.area_investigation.model.POIType
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 import java.io.ByteArrayInputStream
@@ -50,7 +51,7 @@ class AreaStore private constructor(val context: Context) {
             }
         }
 
-    fun fakeAreas() = task {
+    fun fakeAreas(poiTypes: List<POIType>) = task {
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val db = DBHelpler(context).writableDatabase
 
@@ -68,7 +69,7 @@ class AreaStore private constructor(val context: Context) {
             inputStream.close()
         }
 
-        val poiTypes = POITypeStore.with(context).list.get()!!
+
         val random = Random()
         for (area in listOf(
                 fakeArea(1L, "2016-03-08 17:30:31"),

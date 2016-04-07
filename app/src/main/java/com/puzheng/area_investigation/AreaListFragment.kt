@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.bignerdranch.android.multiselector.MultiSelector
+import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
@@ -30,7 +31,8 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
         poiTypeStore.fakePoiTypes().success {
-            areaStore.fakeAreas().successUi {
+            // must "get" task in main thread
+            areaStore.fakeAreas(poiTypeStore.list.get()!!).successUi {
                 pb.dismiss()
                 Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
                 setupAreas()
