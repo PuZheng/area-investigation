@@ -9,9 +9,9 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.*
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.model.POI
-import com.puzheng.area_investigation.model.POIType
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
+import nl.komponents.kovenant.then
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -51,7 +51,8 @@ class AreaStore private constructor(val context: Context) {
             }
         }
 
-    fun fakeAreas(poiTypes: List<POIType>) = task {
+    fun fakeAreas() = POITypeStore.with(context).list then {
+        poiTypes ->
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val db = DBHelpler(context).writableDatabase
 
@@ -91,7 +92,7 @@ class AreaStore private constructor(val context: Context) {
             fakeAreaImage(areaId)
             for (i in 1..2 + Random().nextInt(20)) {
                 db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(POI(null,
-                        poiTypes[random.nextInt(poiTypes.size)].uuid, areaId, randomHZLatLng, Date())))
+                        poiTypes!![random.nextInt(poiTypes.size)].uuid, areaId, randomHZLatLng, Date())))
             }
         }
         db.close()

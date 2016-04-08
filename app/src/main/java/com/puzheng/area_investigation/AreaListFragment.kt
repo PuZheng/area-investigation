@@ -32,7 +32,7 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
         val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
         poiTypeStore.fakePoiTypes().success {
             // must "get" task in main thread
-            areaStore.fakeAreas(poiTypeStore.list.get()!!).successUi {
+            areaStore.fakeAreas().successUi {
                 pb.dismiss()
                 Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
                 setupAreas()
