@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.view.LayoutInflater
@@ -21,7 +20,10 @@ import com.puzheng.area_investigation.model.POI
 import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.AreaStore
 import com.puzheng.area_investigation.store.POITypeStore
+import kotlinx.android.synthetic.main.content_edit_area.*
 import kotlinx.android.synthetic.main.fragment_create_area_step2.*
+import nl.komponents.kovenant.task
+import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 
 private enum class MarkerType {
@@ -111,10 +113,13 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
                 hotCopyArea = originArea.copy()
                 selectedPOIMarker?.selected = false
                 listener?.onPOIMarkerSelected(null)
+                // 为了避免POI和顶点互相干扰，隐藏POI5
+                poiMarkers.forEach { it.isVisible = false }
             } else {
                 // 恢复为初始数据
                 hotCopyArea = originArea.copy()
                 map.map.setupOutline()
+                poiMarkers.forEach { it.isVisible = true }
             }
 
         }
@@ -150,12 +155,15 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
         })
         map.map.uiSettings.isMyLocationButtonEnabled = true
 
-        AreaStore.with(activity).getPOIList(originArea) success  {
+        Logger.v(originArea.toString())
+        AreaStore.with(activity).getPOIList(originArea) successUi  {
             it?.forEach {
                 pois.add(it)
             }
+        } failUi {
+            activity.toast(it.toString())
         }
-        poiTypeStore.list.success {
+        poiTypeStore.list.successUi {
             it?.forEach {
                 poiTypeMap[it.uuid] = it
             }
@@ -173,17 +181,26 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
                 setupOutline()
                 setupPOIs()
                 setOnMapLongClickListener {
+                    latLng ->
                     listener?.onMapLongClick()
                     if (editOutlineMode) {
-                        val polyline = findPolylineCloseTo(it)
+                        val polyline = findPolylineCloseTo(latLng)
                         if (polyline != null) {
                             val index = hotCopyArea.outline.indexOf(polyline.points[0])
-                            hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, it) }
+                            hotCopyArea.outline = hotCopyArea.outline.toMutableList().apply { add(index + 1, latLng) }
                             setupOutline()
+                            // select the newly created marker
+                            outlineMarkers.forEach {
+                                if (it.position == latLng) {
+                                    it.selected = true
+                                    listener?.onOutlineMarkerSelected(latLng)
+                                }
+                            }
                         }
                     }
                 }
                 setOnMarkerClickListener {
+                    Logger.v("clicked ${it.type.toString()}")
                     if (it.selectable) {
                         it.selected = true
                         if (editOutlineMode) {
@@ -203,6 +220,24 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
                         listener?.onPOIMarkerSelected(null)
                     }
                 }
+
+                // 只有轮廓顶点可以被拖动
+                setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
+
+                    override fun onMarkerDragEnd(p0: Marker?) {
+                        p0?.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
+                        hotCopyArea.outline = outlineMarkers.map { it.position }
+                        setupOutline()
+                    }
+
+                    override fun onMarkerDragStart(p0: Marker?) {
+                        p0?.setIcon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
+                    }
+
+                    override fun onMarkerDrag(p0: Marker?) {
+
+                    }
+                })
             }
 
 
@@ -211,15 +246,24 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {
-            map.postDelayed({
-                map.map.moveCamera(
-                        CameraUpdateFactory.newLatLngBounds(
-                                LatLngBounds.Builder().apply {
-                                    originArea.outline.forEach { include(it) }
-                                    pois.forEach { include(it.latLng) }
-                                }.build(), (8 * pixelsPerDp).toInt()))
+            fragment_edit_area.map.postDelayed({
+                // 注意，由于是delayed操作，activity可能为空
+                if (activity != null) {
+                    fragment_edit_area.map.map.moveCamera(
+                            CameraUpdateFactory.newLatLngBounds(
+                                    LatLngBounds.Builder().apply {
+                                        originArea.outline.forEach { include(it) }
+                                        pois.forEach { include(it.latLng) }
+                                    }.build(), (8 * pixelsPerDp).toInt()))
+                }
+
             }, 1000)
         }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        listener = null
     }
 
     // thanks to http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
@@ -427,6 +471,8 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
                 this@apply.add(this@setupOutline.addOutlineMarker(it))
             }
         }
+        selectedOutlineMarker = null
+        listener?.onOutlineMarkerSelected(null)
         outlineSegs.apply {
             forEach { it.remove() }
             clear()
@@ -439,22 +485,6 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
                 )
             }
         }
-        setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
-
-            override fun onMarkerDragEnd(p0: Marker?) {
-                p0?.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
-                hotCopyArea.outline = outlineMarkers.map { it.position }
-                setupOutline()
-            }
-
-            override fun onMarkerDragStart(p0: Marker?) {
-                p0?.setIcon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
-            }
-
-            override fun onMarkerDrag(p0: Marker?) {
-
-            }
-        })
     }
 
 }

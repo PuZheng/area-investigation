@@ -166,9 +166,10 @@ class AreaStore private constructor(val context: Context) {
 
     fun getPOIList(area: Area) = task {
         val db = DBHelpler(context).readableDatabase
-        val cursor = db.query(POI.Model.TABLE_NAME, null, "area_id=?", arrayOf(area.id.toString()), null, null,
-                "${Area.Model.COL_CREATED} DESC")
+
         try {
+            val cursor = db.query(POI.Model.TABLE_NAME, null, "area_id=?", arrayOf(area.id.toString()),
+                    null, null, null)
             var rows: List<POI>? = null
             if (cursor.moveToFirst()) {
                 rows = mutableListOf()
@@ -176,9 +177,12 @@ class AreaStore private constructor(val context: Context) {
                     rows.add(cursor.getPOIRow())
                 } while (cursor.moveToNext())
             }
-            rows
-        } finally {
             cursor.close()
+            rows
+        } catch (e: Exception) {
+            Logger.e(e.toString())
+            null
+        } finally {
             db.close()
         }
     }

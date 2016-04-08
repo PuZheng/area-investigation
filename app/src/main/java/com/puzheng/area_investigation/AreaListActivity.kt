@@ -84,10 +84,9 @@ class AreaListActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Logger.init()
-
-        setContentView(R.layout.activity_area_list)
+        Logger.init("AreaListActivity")
         startKovenant()
+        setContentView(R.layout.activity_area_list)
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener({

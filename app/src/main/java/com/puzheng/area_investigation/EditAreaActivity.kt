@@ -116,7 +116,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 after(it)
             } else {
                 val store = POITypeStore.with(this@EditAreaActivity)
-                this@EditAreaActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath), Toast.LENGTH_LONG)
+                this@EditAreaActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath),
+                        Toast.LENGTH_LONG)
                 permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
                     mkPOITypeDir()
                 }
@@ -141,8 +142,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_edit_area)
         startKovenant()
+        setContentView(R.layout.activity_edit_area)
 
         setSupportActionBar(toolbar)
         fab.setOnClickListener {
@@ -161,8 +162,9 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
         updateContent()
     }
 
+
     override fun onDestroy() {
-        stopKovenant()
+        stopKovenant(true)
         super.onDestroy()
     }
 
