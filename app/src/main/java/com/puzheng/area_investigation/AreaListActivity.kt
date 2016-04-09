@@ -27,21 +27,6 @@ class AreaListActivity : AppCompatActivity(),
 
     private var actionMode: ActionMode? = null
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        // Check which request we're responding to
-        if (requestCode == CREATE_AREA || requestCode == EDIT_AREA) {
-            // Make sure the request was successful
-            if (resultCode == RESULT_OK) {
-                val areaId = data?.getLongExtra(EditAreaActivity.TAG_AREA_ID, -1L)
-                if (areaId != null && areaId != -1L) {
-                    // 注意， 一定要告诉Picasso清除图片缓存
-                    Picasso.with(this).invalidate(AreaStore.with(this).getCoverImageFile(areaId))
-                }
-                (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).setupAreas()
-            }
-        }
-    }
-
     override fun onLongClickItem(area: Area): Boolean {
         if (actionMode != null) {
             return false;
@@ -79,7 +64,7 @@ class AreaListActivity : AppCompatActivity(),
     override fun onClickItem(area: Area) {
         val intent = Intent(this, EditAreaActivity::class.java)
         intent.putExtra(TAG_AREA, area)
-        startActivityForResult(intent, EDIT_AREA)
+        startActivity(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,14 +76,12 @@ class AreaListActivity : AppCompatActivity(),
 
         fab.setOnClickListener({
             val intent = Intent(this, CreateAreaActivity::class.java)
-            startActivityForResult(intent, CREATE_AREA)
+            startActivity(intent)
         })
 
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
-
-        (supportFragmentManager.findFragmentById(R.id.fragmentAreaList) as AreaListFragment).setupAreas()
     }
 
     override fun onDestroy() {

@@ -1,6 +1,7 @@
 package com.puzheng.area_investigation
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
@@ -15,6 +16,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Area
 import com.puzheng.area_investigation.store.AreaStore
 import kotlinx.android.synthetic.main.dialog_create_area_successfully.view.*
+import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.successUi
 import java.util.*
 
@@ -34,11 +36,17 @@ class ConfirmCreateAreaDialog(val name: String, val latLngList: List<LatLng>) : 
             map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
                     Logger.v("${it.width}, ${it.height}")
-                    AreaStore.with(context).createArea(Area(null, name, latLngList, Date()), p0) successUi {
+                    val areaStore = AreaStore.with(context)
+                    areaStore.createArea(Area(null, name, latLngList, Date()), p0) successUi {
                         Toast.makeText(context, R.string.create_area_successfully, Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
-                        activity.setResult(Activity.RESULT_OK)
-                        activity.finish()
+                    } then {
+                        areaStore.getArea(it) successUi {
+                            val intent = Intent(context, EditAreaActivity::class.java)
+                            intent.putExtra(AreaListActivity.TAG_AREA, it)
+                            startActivity(intent)
+                            activity.finish()
+                        }
                     }
                 }
 

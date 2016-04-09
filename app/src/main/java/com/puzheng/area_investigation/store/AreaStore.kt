@@ -132,6 +132,25 @@ class AreaStore private constructor(val context: Context) {
         }
     }
 
+    fun getArea(id: Long) = task {
+        val db = DBHelpler(context).readableDatabase
+        try {
+            val cursor = db.query(Area.Model.TABLE_NAME, null, "${BaseColumns._ID}=?", arrayOf(id.toString()), null,
+                    null, null)
+            if (cursor.moveToFirst()) {
+                cursor.getAreaRow()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Logger.e(e.toString())
+            null
+        } finally {
+            db.close()
+        }
+
+    }
+
     fun updateAreaName(id: Long, name: String) = task {
         val db = DBHelpler(context).writableDatabase
         try {

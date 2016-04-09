@@ -38,7 +38,11 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
                 setupAreas()
             }
         }
+    }
 
+    override fun onStart() {
+        super.onStart()
+        setupAreas()
     }
 
     private var listener: OnAreaListFragmentInteractionListener? = null
