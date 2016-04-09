@@ -25,6 +25,7 @@ import com.puzheng.area_investigation.model.POIType
 import com.puzheng.area_investigation.store.AreaStore
 import com.puzheng.area_investigation.store.POIStore
 import com.puzheng.area_investigation.store.POITypeStore
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_edit_area.*
 import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
@@ -82,6 +83,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 R.id.action_submit -> {
                     (fragment_edit_area as EditAreaActivityFragment).saveOutline({
                         editOutlineActionMode?.finish()
+                        // 注意， 一定要告诉Picasso清除图片缓存
+                        Picasso.with(this@EditAreaActivity).invalidate(AreaStore.with(this@EditAreaActivity).getCoverImageFile(area))
                     })
                     dataChanged = true
                     true
@@ -215,22 +218,12 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             })
             true
         }
-        android.R.id.home -> {
-            onBackPressed()
-            true
-        }
         else ->
             super.onOptionsItemSelected(item)
     }
 
     private fun updateContent() {
         supportActionBar!!.title = area.name
-    }
-
-    override fun onBackPressed() {
-        // must assert that area.id is not null, note Long? is not Long
-        if (dataChanged) setResult(Activity.RESULT_OK, Intent().apply { putExtra(TAG_AREA_ID, area.id!!) })
-        super.onBackPressed()
     }
 
     companion object {
