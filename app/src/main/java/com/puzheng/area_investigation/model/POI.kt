@@ -6,7 +6,7 @@ import com.amap.api.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class POI(val id: Long?, val poiTypeUUID: String, val areaId: Long, val latLng: LatLng, val created: Date,
+data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val latLng: LatLng, val created: Date,
                val updated: Date? = null) {
 
     class Model {
@@ -14,7 +14,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val areaId: Long, val lat
 
             val TABLE_NAME = "poi"
             val COL_LAT_LNG = "lat_lng"
-            val COL_AREA_ID = "area_id"
+            val COL_REGION_ID = "area_id"
             val COL_POI_TYPE_UUID = "poi_type_uuid"
             val COL_CREATED = "created"
             val COL_UPDATED = "updated"
@@ -28,8 +28,8 @@ data class POI(val id: Long?, val poiTypeUUID: String, val areaId: Long, val lat
                         $COL_LAT_LNG TEXT NOT NULL,
                         $COL_CREATED TEXT NOT NULL,
                         $COL_UPDATED TEXT,
-                        $COL_AREA_ID INTEGER,
-                        FOREIGN KEY($COL_AREA_ID) REFERENCES ${Region.Model.TABLE_NAME}(${BaseColumns._ID})
+                        $COL_REGION_ID INTEGER,
+                        FOREIGN KEY($COL_REGION_ID) REFERENCES ${Region.Model.TABLE_NAME}(${BaseColumns._ID})
                     )
                 """
 
@@ -38,7 +38,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val areaId: Long, val lat
                 poi.latLng.let {
                     put(POI.Model.COL_LAT_LNG, "${it.latitude},${it.longitude}")
                 }
-                put(COL_AREA_ID, poi.areaId)
+                put(COL_REGION_ID, poi.regionId)
                 put(COL_POI_TYPE_UUID, poi.poiTypeUUID)
                 put(COL_CREATED, format.format(poi.created))
                 put(COL_UPDATED, if (poi.updated != null) format.format(poi.updated) else null)

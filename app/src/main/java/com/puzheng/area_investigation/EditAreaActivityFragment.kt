@@ -178,12 +178,7 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
         map.map.setOnMapLoadedListener {
             map.map.isMyLocationEnabled = true
             map.map.apply {
-                moveCamera(
-                        CameraUpdateFactory.newLatLngBounds(
-                                LatLngBounds.Builder().apply {
-                                    originRegion.outline.forEach { include(it) }
-                                    pois.forEach { include(it.latLng) }
-                                }.build(), (8 * pixelsPerDp).toInt()))
+                resetCamera()
                 setupOutline()
                 setupPOIs()
                 setOnMapLongClickListener {
@@ -252,17 +247,11 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {
-            fragment_edit_area.map.postDelayed({
+            map.postDelayed({
                 // 注意，由于是delayed操作，activity可能为空
                 if (activity != null) {
-                    fragment_edit_area.map.map.moveCamera(
-                            CameraUpdateFactory.newLatLngBounds(
-                                    LatLngBounds.Builder().apply {
-                                        originRegion.outline.forEach { include(it) }
-                                        pois.forEach { include(it.latLng) }
-                                    }.build(), (8 * pixelsPerDp).toInt()))
+                    map.map.resetCamera()
                 }
-
             }, 1000)
         }
     }
@@ -379,7 +368,17 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
     fun addPOI(poi: POI) {
         map.map.addMarker(makeMarkerOption(poi)!!).`object` = poi
         pois.add(poi)
-        map.map.moveCamera(
+        map.map.resetCamera()
+    }
+
+    fun removePOI(poi: POI) {
+        pois.remove(poi)
+        map.map.setupPOIs()
+        map.map.resetCamera()
+    }
+
+    private fun AMap.resetCamera() {
+        moveCamera(
                 CameraUpdateFactory.newLatLngBounds(
                         LatLngBounds.Builder().apply {
                             originRegion.outline.forEach { include(it) }
