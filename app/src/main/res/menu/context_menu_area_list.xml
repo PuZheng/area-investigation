@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.puzheng.area_investigation.AreaListActivity">
+    tools:context="com.puzheng.area_investigation.RegionListActivity">
     <item
         android:id="@+id/action_trash"
         android:orderInCategory="100"

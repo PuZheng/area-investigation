@@ -19,10 +19,10 @@ import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
 import com.amap.api.maps.model.Marker
 import com.orhanobut.logger.Logger
-import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.model.POI
 import com.puzheng.area_investigation.model.POIType
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.store.RegionStore
 import com.puzheng.area_investigation.store.POIStore
 import com.puzheng.area_investigation.store.POITypeStore
 import com.squareup.picasso.Picasso
@@ -39,7 +39,7 @@ import java.util.*
 private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
 private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
-class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
+class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
 
     private val bottomSheetBehavior: BottomSheetBehavior<out View> by lazy {
         BottomSheetBehavior.from(design_bottom_sheet)
@@ -84,7 +84,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                     (fragment_edit_area as EditAreaActivityFragment).saveOutline({
                         editOutlineActionMode?.finish()
                         // 注意， 一定要告诉Picasso清除图片缓存
-                        Picasso.with(this@EditAreaActivity).invalidate(AreaStore.with(this@EditAreaActivity).getCoverImageFile(area))
+                        Picasso.with(this@EditRegionActivity).invalidate(RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
                     })
                     dataChanged = true
                     true
@@ -109,7 +109,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
     }
 
-    lateinit private var area: Area
+    lateinit private var region: Region
 
     private val permissionRequestHandlerMap: MutableMap<String, () -> Unit> = mutableMapOf()
 
@@ -118,8 +118,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             if (it != null && it.isNotEmpty()) {
                 after(it)
             } else {
-                val store = POITypeStore.with(this@EditAreaActivity)
-                this@EditAreaActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath),
+                val store = POITypeStore.with(this@EditRegionActivity)
+                this@EditRegionActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath),
                         Toast.LENGTH_LONG)
                 permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
                     mkPOITypeDir()
@@ -160,8 +160,8 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
 
 
         Logger.init("EditAreaActivity")
-        area = intent.getParcelableExtra<Area>(AreaListActivity.TAG_AREA)
-        Logger.v(area.toString())
+        region = intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
+        Logger.v(region.toString())
         updateContent()
     }
 
@@ -184,10 +184,10 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                     mode?.customView = layoutInflater.inflate(R.layout.app_bar_edit_area_name, null, false)
                     area_name.apply {
-                        setText(area.name)
+                        setText(region.name)
                         requestFocus()
                         (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(currentFocus, 0)
-                        setSelection(area.name.length)
+                        setSelection(region.name.length)
                     }
                     return true
                 }
@@ -196,12 +196,12 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                     when (item?.itemId) {
                         R.id.action_ok -> {
                             editNameActionMode!!.finish()
-                            area.name = area_name.text.toString()
+                            region.name = area_name.text.toString()
                             updateContent()
-                            AreaStore.with(this@EditAreaActivity).updateAreaName(area.id!!, area_name.text.toString()) successUi {
+                            RegionStore.with(this@EditRegionActivity).updateAreaName(region.id!!, area_name.text.toString()) successUi {
                                 toast(R.string.edit_area_name_success)
-                                        dataChanged = true
-                                    }
+                                dataChanged = true
+                            }
                         }
                     }
                     return true
@@ -218,12 +218,16 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
             })
             true
         }
+        R.id.action_show_stat -> {
+            RegionStatDialog(region).show(supportFragmentManager, "")
+            true
+        }
         else ->
             super.onOptionsItemSelected(item)
     }
 
     private fun updateContent() {
-        supportActionBar!!.title = area.name
+        supportActionBar!!.title = region.name
     }
 
     companion object {
@@ -240,7 +244,7 @@ class EditAreaActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmen
                 val poi = POI(
                         null,
                         poiType.uuid,
-                        area.id!!,
+                        region.id!!,
                         LatLng(it.latitude, it.longitude),
                         Date())
                 Logger.v(poi.toString())

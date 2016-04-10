@@ -3,7 +3,7 @@ package com.puzheng.area_investigation
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.model.POI
 
 val dbName = "area-investigation.db"
@@ -16,7 +16,7 @@ class DBHelpler(context: Context) : SQLiteOpenHelper(context, dbName, null, vers
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        db?.execSQL(Area.Model.CREATE_SQL)
+        db?.execSQL(Region.Model.CREATE_SQL)
         db?.execSQL(POI.Model.CREATE_SQL)
     }
 

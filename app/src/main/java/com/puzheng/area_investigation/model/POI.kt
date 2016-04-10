@@ -29,7 +29,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val areaId: Long, val lat
                         $COL_CREATED TEXT NOT NULL,
                         $COL_UPDATED TEXT,
                         $COL_AREA_ID INTEGER,
-                        FOREIGN KEY($COL_AREA_ID) REFERENCES ${Area.Model.TABLE_NAME}(${BaseColumns._ID})
+                        FOREIGN KEY($COL_AREA_ID) REFERENCES ${Region.Model.TABLE_NAME}(${BaseColumns._ID})
                     )
                 """
 

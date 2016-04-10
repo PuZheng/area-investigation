@@ -13,8 +13,8 @@ import android.widget.Toast
 import com.bignerdranch.android.multiselector.MultiSelector
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
-import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.model.Region
+import com.puzheng.area_investigation.store.RegionStore
 import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.fragment_area_list.*
 import nl.komponents.kovenant.ui.alwaysUi
@@ -32,7 +32,7 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
         val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
         poiTypeStore.fakePoiTypes().success {
             // must "get" task in main thread
-            areaStore.fakeAreas().successUi {
+            regionStore.fakeAreas().successUi {
                 pb.dismiss()
                 Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
                 setupAreas()
@@ -58,7 +58,7 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     lateinit private var binding: FragmentAreaListBinding
-    lateinit private var areas: List<Area>
+    lateinit private var regions: List<Region>
 
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
@@ -69,8 +69,8 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
         return binding.root
     }
 
-    private val areaStore: AreaStore by lazy {
-        AreaStore.with(activity)
+    private val regionStore: RegionStore by lazy {
+        RegionStore.with(activity)
     }
 
     private val poiTypeStore: POITypeStore by lazy {
@@ -79,9 +79,9 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
 
 
     fun setupAreas() {
-        areaStore.list successUi {
+        regionStore.list successUi {
             if (it != null && it.isNotEmpty()) {
-                this@AreaListFragment.areas = it
+                this@AreaListFragment.regions = it
                 (binding.args as Args).itemNo.set(it.size)
                 list.adapter = AreaRecyclerViewAdapter(it, listener!!, multiSelector)
                 list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
@@ -121,8 +121,8 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
      * See the Android Training lesson [Communicating with Other Fragments](http://developer.android.com/training/basics/fragments/communicating.html) for more information.
      */
     interface OnAreaListFragmentInteractionListener {
-        fun onClickItem(area: Area)
-        fun onLongClickItem(area: Area): Boolean
+        fun onClickItem(region: Region)
+        fun onLongClickItem(region: Region): Boolean
     }
 
 
@@ -130,9 +130,9 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
 
     fun removeSelectedAreas() {
         val adapter = (list.adapter as AreaRecyclerViewAdapter)
-        val selectedAreas = adapter.selectedAreas
+        val selectedAreas = adapter.selectedRegions
         adapter.removeSelectedAreas()
-        AreaStore.with(activity).removeAreas(selectedAreas) successUi {
+        RegionStore.with(activity).removeAreas(selectedAreas) successUi {
             Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
         }
     }

@@ -52,6 +52,7 @@ dependencies {
     compile files('libs/AMap_3DMap_V3.2.1_20160225.jar')
     compile 'nl.komponents.kovenant:kovenant:3.2.2'
     compile 'nl.komponents.kovenant:kovenant-android:3.2.2'
+    compile 'nl.komponents.kovenant:kovenant-combine:3.2.2'
 }
 
 buildscript {

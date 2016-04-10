@@ -13,8 +13,8 @@ import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.MapView
 import com.amap.api.maps.model.*
 import com.orhanobut.logger.Logger
-import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.model.Region
+import com.puzheng.area_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.dialog_create_area_successfully.view.*
 import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.successUi
@@ -36,14 +36,14 @@ class ConfirmCreateAreaDialog(val name: String, val latLngList: List<LatLng>) : 
             map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
                     Logger.v("${it.width}, ${it.height}")
-                    val areaStore = AreaStore.with(context)
-                    areaStore.createArea(Area(null, name, latLngList, Date()), p0) successUi {
+                    val areaStore = RegionStore.with(context)
+                    areaStore.createArea(Region(null, name, latLngList, Date()), p0) successUi {
                         Toast.makeText(context, R.string.create_area_successfully, Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     } then {
                         areaStore.getArea(it) successUi {
-                            val intent = Intent(context, EditAreaActivity::class.java)
-                            intent.putExtra(AreaListActivity.TAG_AREA, it)
+                            val intent = Intent(context, EditRegionActivity::class.java)
+                            intent.putExtra(RegionListActivity.TAG_AREA, it)
                             startActivity(intent)
                             activity.finish()
                         }
