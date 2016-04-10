@@ -28,13 +28,13 @@ import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
 
 
-class CreateAreaActivity : AppCompatActivity(),
-        CreateAreaStep1Fragment.OnFragmentInteractionListener,
-        CreateAreaStep2Fragment.OnFragmentInteractionListener {
+class CreateRegionActivity : AppCompatActivity(),
+        CreateRegionStep1Fragment.OnFragmentInteractionListener,
+        CreateRegionStep2Fragment.OnFragmentInteractionListener {
 
     override fun onDrawDone(latLngList: List<LatLng>) {
         drawingActionMode?.finish()
-        ConfirmCreateAreaDialog(createAreaStep1Fragment.name.text.toString(), latLngList).show(supportFragmentManager, "")
+        ConfirmCreateRegionDialog(createRegionStep1Fragment.name.text.toString(), latLngList).show(supportFragmentManager, "")
     }
 
     override fun afterTextChanged(s: Editable?) {
@@ -43,7 +43,7 @@ class CreateAreaActivity : AppCompatActivity(),
 
     private var drawingActionMode: ActionMode? = null
 
-    override fun onMapLongClick(fragment: CreateAreaStep2Fragment, lnglat: LatLng) {
+    override fun onMapLongClick(fragment: CreateRegionStep2Fragment, lnglat: LatLng) {
         if (drawingActionMode == null) {
             drawingActionMode = startSupportActionMode(object : ActionMode.Callback {
                 override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?) = false
@@ -66,11 +66,11 @@ class CreateAreaActivity : AppCompatActivity(),
 
     lateinit private var binding: ActivityCreateAreaBinding
 
-    private val createAreaStep1Fragment: CreateAreaStep1Fragment by lazy {
-        CreateAreaStep1Fragment.newInstance()
+    private val createRegionStep1Fragment: CreateRegionStep1Fragment by lazy {
+        CreateRegionStep1Fragment.newInstance()
     }
-    private val createAreaStep2Fragment: CreateAreaStep2Fragment by lazy {
-        CreateAreaStep2Fragment.newInstance()
+    private val createRegionStep2Fragment: CreateRegionStep2Fragment by lazy {
+        CreateRegionStep2Fragment.newInstance()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,8 +85,8 @@ class CreateAreaActivity : AppCompatActivity(),
             private var fragments: MutableList<Fragment> = mutableListOf()
 
             init {
-                fragments.add(createAreaStep1Fragment)
-                fragments.add(createAreaStep2Fragment)
+                fragments.add(createRegionStep1Fragment)
+                fragments.add(createRegionStep2Fragment)
             }
 
             override fun getItem(position: Int): Fragment? = fragments[position]
@@ -142,10 +142,10 @@ class CreateAreaActivity : AppCompatActivity(),
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            CreateAreaStep2Fragment.REQUEST_ACCESS_FINE_LOCATION ->
+            CreateRegionStep2Fragment.REQUEST_ACCESS_FINE_LOCATION ->
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    createAreaStep2Fragment.onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
-                            CreateAreaStep2Fragment.REQUEST_ACCESS_FINE_LOCATION)
+                    createRegionStep2Fragment.onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
+                            CreateRegionStep2Fragment.REQUEST_ACCESS_FINE_LOCATION)
                 }
         }
     }

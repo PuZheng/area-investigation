@@ -41,14 +41,14 @@ import java.util.*
 private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
 private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
-class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener,
+class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
 POIFilterDialogFragment.OnFragmentInteractionListener {
 
-    val fragmentEditArea: EditAreaActivityFragment by lazy {
-        findFragmentById<EditAreaActivityFragment>(R.id.fragment_edit_area)
+    val fragmentEditRegion: EditRegionActivityFragment by lazy {
+        findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_area)
     }
     override fun onFilterPOI(hiddenPOITypes: Set<POIType>) {
-        fragmentEditArea.hiddenPOITypes = hiddenPOITypes
+        fragmentEditRegion.hiddenPOITypes = hiddenPOITypes
         invalidateOptionsMenu()
     }
 
@@ -67,9 +67,15 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
                     val poi = marker.`object` as POI
                     POIStore.with(this).remove(poi).successUi {
                         toast(R.string.poi_deleted)
-                        fragmentEditArea.removePOI(poi)
+                        fragmentEditRegion.removePOI(poi)
                     }
                 }).show(supportFragmentManager, "")
+            }
+            design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
+                toast("尚未实现")
+            }
+            design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
+                toast("尚未实现")
             }
             fab?.visibility = View.GONE
         }
@@ -96,12 +102,12 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?) = when (item?.itemId) {
                 R.id.action_delete -> {
                     if (selectedVertex != null) {
-                        fragmentEditArea.deleteVertex(selectedVertex!!)
+                        fragmentEditRegion.deleteVertex(selectedVertex!!)
                     }
                     true
                 }
                 R.id.action_submit -> {
-                    (fragment_edit_area as EditAreaActivityFragment).saveOutline({
+                    (fragment_edit_area as EditRegionActivityFragment).saveOutline({
                         editOutlineActionMode?.finish()
                         // 注意， 一定要告诉Picasso清除图片缓存
                         Picasso.with(this@EditRegionActivity).invalidate(RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
@@ -116,13 +122,13 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu);
                 fab?.hide()
-                fragmentEditArea.editOutlineMode = true
+                fragmentEditRegion.editOutlineMode = true
                 return true
             }
 
             override fun onDestroyActionMode(mode: ActionMode?) {
                 editOutlineActionMode = null
-                fragmentEditArea.editOutlineMode = false
+                fragmentEditRegion.editOutlineMode = false
                 fab?.show()
             }
         })
@@ -198,7 +204,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         menu?.findItem(R.id.action_filter)?.icon = getDrawable(
-                if (fragmentEditArea.hiddenPOITypes.isNotEmpty()) {
+                if (fragmentEditRegion.hiddenPOITypes.isNotEmpty()) {
                     R.drawable.vector_drawable_filter_activated
                 } else {
                     R.drawable.vector_drawable_filter
@@ -255,7 +261,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
         }
         R.id.action_filter -> {
             POIFilterDialogFragment(region,
-                    fragmentEditArea.hiddenPOITypes).show(supportFragmentManager, "")
+                    fragmentEditRegion.hiddenPOITypes).show(supportFragmentManager, "")
             true
         }
         else ->
@@ -286,7 +292,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
                 Logger.v(poi.toString())
                 POIStore.with(this).create(poi) successUi {
                     toast(R.string.poi_created)
-                    (fragment_edit_area as EditAreaActivityFragment).addPOI(poi.copy(id = it))
+                    (fragment_edit_area as EditRegionActivityFragment).addPOI(poi.copy(id = it))
                 }
             }
         }
@@ -309,11 +315,11 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
                 }
-            EditAreaActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
+            EditRegionActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (fragment_edit_area as EditAreaActivityFragment).onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
-                            EditAreaActivityFragment.REQUEST_ACCESS_FINE_LOCATION)
+                    (fragment_edit_area as EditRegionActivityFragment).onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
+                            EditRegionActivityFragment.REQUEST_ACCESS_FINE_LOCATION)
                 }
         }
     }

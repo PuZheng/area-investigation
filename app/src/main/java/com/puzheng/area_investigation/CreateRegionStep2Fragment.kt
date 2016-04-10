@@ -20,12 +20,12 @@ import kotlinx.android.synthetic.main.fragment_create_area_step2.*
 /**
  * A simple [Fragment] subclass.
  * Activities that contain this fragment must implement the
- * [CreateAreaStep2Fragment.OnFragmentInteractionListener] interface
+ * [CreateRegionStep2Fragment.OnFragmentInteractionListener] interface
  * to handle interaction events.
- * Use the [CreateAreaStep2Fragment.newInstance] factory method to
+ * Use the [CreateRegionStep2Fragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class CreateAreaStep2Fragment : Fragment(), OnPermissionGrantedListener {
+class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
 
     private var listener: OnFragmentInteractionListener? = null
 
@@ -194,7 +194,7 @@ class CreateAreaStep2Fragment : Fragment(), OnPermissionGrantedListener {
      */
     interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        fun onMapLongClick(fragment: CreateAreaStep2Fragment, lnglat: LatLng)
+        fun onMapLongClick(fragment: CreateRegionStep2Fragment, lnglat: LatLng)
 
         fun onDrawDone(latLngList: List<LatLng>)
     }
@@ -206,7 +206,7 @@ class CreateAreaStep2Fragment : Fragment(), OnPermissionGrantedListener {
          * @return A new instance of fragment CreateAreaStep2Fragment.
          */
         // TODO: Rename and change types and number of parameters
-        fun newInstance() = CreateAreaStep2Fragment()
+        fun newInstance() = CreateRegionStep2Fragment()
 
         val REQUEST_ACCESS_FINE_LOCATION: Int = 100
         private val INIT_ZOOM_LEVEL: Float = 16.0F

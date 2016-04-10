@@ -1,5 +1,5 @@
 <fragment android:id="@+id/fragment_edit_area"
-          android:name="com.puzheng.area_investigation.EditAreaActivityFragment"
+          android:name="com.puzheng.area_investigation.EditRegionActivityFragment"
           xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:app="http://schemas.android.com/apk/res-auto"
           xmlns:tools="http://schemas.android.com/tools"

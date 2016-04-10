@@ -11,7 +11,7 @@ import android.widget.TextView
 import com.bignerdranch.android.multiselector.MultiSelector
 import com.bignerdranch.android.multiselector.SwappingHolder
 import com.orhanobut.logger.Logger
-import com.puzheng.area_investigation.AreaListFragment.OnAreaListFragmentInteractionListener
+import com.puzheng.area_investigation.RegionListFragment.OnAreaListFragmentInteractionListener
 import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.store.RegionStore
 import com.squareup.picasso.Picasso
@@ -25,9 +25,9 @@ private val AREA_TYPE = 2
  * specified [OnAreaListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
-class AreaRecyclerViewAdapter(private var regions: List<Region?>?,
-                              private val listener: OnAreaListFragmentInteractionListener,
-                              private val multiSelector: MultiSelector) :
+class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
+                                private val listener: OnAreaListFragmentInteractionListener,
+                                private val multiSelector: MultiSelector) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     val items = mutableListOf<Region?>()

@@ -4,7 +4,7 @@
 
     <data>
 
-        <import type="com.puzheng.area_investigation.CreateAreaActivity.Args" />
+        <import type="com.puzheng.area_investigation.CreateRegionActivity.Args" />
 
         <variable
             name="args"
@@ -15,7 +15,7 @@
 
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="com.puzheng.area_investigation.CreateAreaActivity">
+        tools:context="com.puzheng.area_investigation.CreateRegionActivity">
 
         <ScrollView
             android:layout_width="match_parent"

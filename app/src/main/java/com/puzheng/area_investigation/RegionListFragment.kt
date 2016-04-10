@@ -26,7 +26,7 @@ import nl.komponents.kovenant.ui.successUi
  * Activities containing this fragment MUST implement the [OnAreaListFragmentInteractionListener]
  * interface.
  */
-class AreaListFragment : Fragment(), OnPermissionGrantedListener {
+class RegionListFragment : Fragment(), OnPermissionGrantedListener {
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
         poiTypeStore.fakePoiTypes().success {
@@ -80,10 +80,10 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
     fun setupAreas() {
         regionStore.list successUi {
             if (it != null && it.isNotEmpty()) {
-                this@AreaListFragment.regions = it
+                this@RegionListFragment.regions = it
                 (binding.args as Args).itemNo.set(it.size)
-                list.adapter = AreaRecyclerViewAdapter(it, listener!!, multiSelector)
-                list.layoutManager = (list.adapter as AreaRecyclerViewAdapter).LayoutManager(activity, 2)
+                list.adapter = RegionRecyclerViewAdapter(it, listener!!, multiSelector)
+                list.layoutManager = (list.adapter as RegionRecyclerViewAdapter).LayoutManager(activity, 2)
             } else if (BuildConfig.DEBUG) {
                 activity.assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
@@ -128,7 +128,7 @@ class AreaListFragment : Fragment(), OnPermissionGrantedListener {
     data class Args(val loading: ObservableField<Boolean>, val itemNo: ObservableField<Int>)
 
     fun removeSelectedAreas() {
-        val adapter = (list.adapter as AreaRecyclerViewAdapter)
+        val adapter = (list.adapter as RegionRecyclerViewAdapter)
         val selectedAreas = adapter.selectedRegions
         adapter.removeSelectedAreas()
         RegionStore.with(activity).removeAreas(selectedAreas) successUi {

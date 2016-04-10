@@ -15,7 +15,7 @@ import android.view.inputmethod.InputMethodManager
 import kotlinx.android.synthetic.main.fragment_create_area_step1.*
 
 
-class CreateAreaStep1Fragment : Fragment() {
+class CreateRegionStep1Fragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,12 +47,12 @@ class CreateAreaStep1Fragment : Fragment() {
 
     }
 
-    private var mListener: CreateAreaStep1Fragment.OnFragmentInteractionListener? = null
+    private var mListener: CreateRegionStep1Fragment.OnFragmentInteractionListener? = null
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
-        if (context is CreateAreaStep1Fragment.OnFragmentInteractionListener) {
-            mListener = context as CreateAreaStep1Fragment.OnFragmentInteractionListener?
+        if (context is CreateRegionStep1Fragment.OnFragmentInteractionListener) {
+            mListener = context as CreateRegionStep1Fragment.OnFragmentInteractionListener?
         } else {
             throw RuntimeException(context!!.toString() + " must implement OnFragmentInteractionListener")
         }
@@ -68,7 +68,7 @@ class CreateAreaStep1Fragment : Fragment() {
          * Use this factory method to create a new instance of
          * this fragment using the provided parameters.
          */
-        fun newInstance() = CreateAreaStep1Fragment()
+        fun newInstance() = CreateRegionStep1Fragment()
     }
 
 

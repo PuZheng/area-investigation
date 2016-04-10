@@ -42,7 +42,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".CreateAreaActivity"
+            android:name=".CreateRegionActivity"
             android:parentActivityName=".RegionListActivity"/>
         <activity
             android:name=".EditRegionActivity"

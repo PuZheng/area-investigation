@@ -47,7 +47,7 @@ private enum class MarkerType {
  * }
  * </pre>
  */
-class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
+class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
 
     lateinit private var originRegion: Region
@@ -323,7 +323,7 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun saveOutline(afterSaving: () -> Unit) {
-        ConfirmSaveAreaOutlineDialog(hotCopyRegion, {
+        ConfirmSaveRegionOutlineDialog(hotCopyRegion, {
             originRegion = hotCopyRegion
             afterSaving()
         }).show(activity.supportFragmentManager, "")
@@ -465,15 +465,15 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
 
 
     private fun AMap.setupOutline() {
-        val area = if (editOutlineMode) hotCopyRegion else originRegion
+        val region = if (editOutlineMode) hotCopyRegion else originRegion
         outlinePolygon?.remove()
-        outlinePolygon = addPolygon(area.outline.toTypedArray())
+        outlinePolygon = addPolygon(region.outline.toTypedArray())
         outlineMarkers.apply {
             forEach {
                 it.remove()
             }
             clear()
-            area.outline.forEach {
+            region.outline.forEach {
                 this@apply.add(this@setupOutline.addOutlineMarker(it))
             }
         }
@@ -482,10 +482,10 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
         outlineSegs.apply {
             forEach { it.remove() }
             clear()
-            area.outline.withIndex().forEach {
+            region.outline.withIndex().forEach {
                 val (idx, latLng) = it
                 this@apply.add(
-                        addPolyline(PolylineOptions().add(area.outline[(idx - 1 + area.outline.size) % area.outline.size],
+                        addPolyline(PolylineOptions().add(region.outline[(idx - 1 + region.outline.size) % region.outline.size],
                                 latLng).width((2 * pixelsPerDp).toFloat())
                                 .color(ContextCompat.getColor(activity, R.color.colorOutlinePolyline)))
                 )

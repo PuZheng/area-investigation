@@ -10,7 +10,7 @@
 
 
     <fragment
-        android:name="com.puzheng.area_investigation.AreaListFragment"
+        android:name="com.puzheng.area_investigation.RegionListFragment"
         android:id="@+id/fragmentAreaList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"></fragment>

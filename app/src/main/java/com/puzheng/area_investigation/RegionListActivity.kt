@@ -22,7 +22,7 @@ import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
 
 class RegionListActivity : AppCompatActivity(),
-        AreaListFragment.OnAreaListFragmentInteractionListener {
+        RegionListFragment.OnAreaListFragmentInteractionListener {
 
 
     private var actionMode: ActionMode? = null
@@ -32,13 +32,15 @@ class RegionListActivity : AppCompatActivity(),
             return false;
         }
 
-        actionMode = startSupportActionMode(object : ModalMultiSelectorCallback((fragmentAreaList as AreaListFragment).multiSelector) {
+        actionMode = startSupportActionMode(object : ModalMultiSelectorCallback((fragmentAreaList as RegionListFragment).multiSelector) {
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                 when (item?.itemId) {
                     R.id.action_trash ->
                         TrashAlertDialogFragment().show(supportFragmentManager, "")
+                    R.id.action_upload ->
+                            toast("尚未实现")
                 }
                 return false
             }
@@ -75,7 +77,7 @@ class RegionListActivity : AppCompatActivity(),
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener({
-            val intent = Intent(this, CreateAreaActivity::class.java)
+            val intent = Intent(this, CreateRegionActivity::class.java)
             startActivity(intent)
         })
 
@@ -111,11 +113,11 @@ class RegionListActivity : AppCompatActivity(),
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            AreaListFragment.REQUEST_WRITE_EXTERNAL_STORAGE ->
+            RegionListFragment.REQUEST_WRITE_EXTERNAL_STORAGE ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (fragmentAreaList as AreaListFragment).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            AreaListFragment.REQUEST_WRITE_EXTERNAL_STORAGE)
+                    (fragmentAreaList as RegionListFragment).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            RegionListFragment.REQUEST_WRITE_EXTERNAL_STORAGE)
                 } else {
                     toast("why not fake some poi types?")
                 }
@@ -137,7 +139,7 @@ private class TrashAlertDialogFragment : DialogFragment() {
         builder.setTitle(R.string.warning).setMessage(R.string.trash_confirm_msg)
                 .setPositiveButton(R.string.confirm, {
                     dialog, v ->
-                    val fragment = (activity as RegionListActivity).fragmentAreaList as AreaListFragment
+                    val fragment = (activity as RegionListActivity).fragmentAreaList as RegionListFragment
                     fragment.removeSelectedAreas()
                     fragment.multiSelector.clearSelections()
                 }).setNegativeButton(R.string.cancel, null)
