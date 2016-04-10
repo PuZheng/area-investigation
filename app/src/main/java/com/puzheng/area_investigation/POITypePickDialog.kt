@@ -20,6 +20,10 @@ class POITypeChooseDialog(val poiTypes: List<POIType>, val after: (POIType) -> U
 
     class ViewHolder(val textView: TextView, val imageView: ImageView)
 
+    private val picasso: Picasso by lazy {
+        Picasso.with(context)
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
             AlertDialog.Builder(context).setTitle(R.string.pick_poi_type)
                     .setAdapter(object : BaseAdapter() {
@@ -38,7 +42,7 @@ class POITypeChooseDialog(val poiTypes: List<POIType>, val after: (POIType) -> U
                                     val item = getItem(position) as POIType
                                     val vh = tag as ViewHolder
                                     vh.textView.text = item.name
-                                    Picasso.with(context).load(store.getPOITypeIcon(item)).into(vh.imageView)
+                                    picasso.load(store.getPOITypeIcon(item)).into(vh.imageView)
                                 }
                     }, {
                         dialog, which ->

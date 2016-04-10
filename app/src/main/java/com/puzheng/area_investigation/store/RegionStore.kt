@@ -89,7 +89,7 @@ class RegionStore private constructor(val context: Context) {
             val areaId = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(area))
             Logger.v("create area: ${area.name}")
             fakeAreaImage(areaId)
-            for (i in 1..2 + Random().nextInt(20)) {
+            for (i in 1..2 + Random().nextInt(100)) {
                 db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(POI(null,
                         poiTypes!![random.nextInt(poiTypes.size)].uuid, areaId, randomHZLatLng, Date())))
             }

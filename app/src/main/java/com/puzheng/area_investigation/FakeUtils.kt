@@ -3,8 +3,6 @@ package com.puzheng.area_investigation
 import com.amap.api.maps.model.LatLng
 import java.util.*
 
-private val random = Random()
-
 object HANG_ZHOU {
     val ne = LatLng(30.311246, 120.18631)
     val sw = LatLng(30.15344, 120.076447)

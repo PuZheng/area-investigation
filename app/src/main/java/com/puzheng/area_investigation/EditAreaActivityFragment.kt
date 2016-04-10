@@ -101,7 +101,6 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
     private var onLocationChangeListener: LocationSource.OnLocationChangedListener? = null
 
-
     var editOutlineMode: Boolean = false
         set(b) {
             field = b
@@ -123,6 +122,13 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
             }
 
         }
+
+    var hiddenPOITypes: Set<POIType> = setOf()
+        set(set) {
+            field = set
+            map.map.setupPOIs()
+        }
+
 
     companion object {
         val REQUEST_ACCESS_FINE_LOCATION = 100
@@ -439,6 +445,7 @@ class EditAreaActivityFragment : Fragment(), OnPermissionGrantedListener {
             if (markerOption != null) {
                 poiMarkers.add(addMarker(markerOption).apply {
                     `object` = poi
+                    isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
                 })
             }
         }

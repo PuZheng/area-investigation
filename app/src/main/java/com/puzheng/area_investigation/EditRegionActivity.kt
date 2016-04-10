@@ -39,7 +39,16 @@ import java.util.*
 private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
 private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
-class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener {
+class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragmentInteractionListener,
+POIFilterDialogFragment.OnFragmentInteractionListener {
+
+    val fragmentEditArea: EditAreaActivityFragment by lazy {
+        findFragmentById<EditAreaActivityFragment>(R.id.fragment_edit_area)
+    }
+    override fun onFilterPOI(hiddenPOITypes: Set<POIType>) {
+        fragmentEditArea.hiddenPOITypes = hiddenPOITypes
+        invalidateOptionsMenu()
+    }
 
     private val bottomSheetBehavior: BottomSheetBehavior<out View> by lazy {
         BottomSheetBehavior.from(design_bottom_sheet)
@@ -76,7 +85,7 @@ class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragm
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?) = when (item?.itemId) {
                 R.id.action_delete -> {
                     if (selectedVertex != null) {
-                        (fragment_edit_area as EditAreaActivityFragment).deleteVertex(selectedVertex!!)
+                        fragmentEditArea.deleteVertex(selectedVertex!!)
                     }
                     true
                 }
@@ -96,13 +105,13 @@ class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragm
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu);
                 fab?.hide()
-                (fragment_edit_area as EditAreaActivityFragment).editOutlineMode = true
+                fragmentEditArea.editOutlineMode = true
                 return true
             }
 
             override fun onDestroyActionMode(mode: ActionMode?) {
                 editOutlineActionMode = null
-                (fragment_edit_area as EditAreaActivityFragment).editOutlineMode = false
+                fragmentEditArea.editOutlineMode = false
                 fab?.show()
             }
         })
@@ -176,6 +185,17 @@ class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragm
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.action_filter)?.icon = getDrawable(
+                if (fragmentEditArea.hiddenPOITypes.isNotEmpty()) {
+                    R.drawable.vector_drawable_filter_activated
+                } else {
+                    R.drawable.vector_drawable_filter
+                }
+        )
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     private var editNameActionMode: ActionMode? = null
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean = when (item?.itemId) {
@@ -219,7 +239,12 @@ class EditRegionActivity : AppCompatActivity(), EditAreaActivityFragment.OnFragm
             true
         }
         R.id.action_show_stat -> {
-            RegionStatDialog(region).show(supportFragmentManager, "")
+            RegionStatDialogFragment(region).show(supportFragmentManager, "")
+            true
+        }
+        R.id.action_filter -> {
+            POIFilterDialogFragment(region,
+                    fragmentEditArea.hiddenPOITypes).show(supportFragmentManager, "")
             true
         }
         else ->

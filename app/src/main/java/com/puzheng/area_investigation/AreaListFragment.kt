@@ -11,11 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.bignerdranch.android.multiselector.MultiSelector
-import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.FragmentAreaListBinding
 import com.puzheng.area_investigation.model.Region
-import com.puzheng.area_investigation.store.RegionStore
 import com.puzheng.area_investigation.store.POITypeStore
+import com.puzheng.area_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.fragment_area_list.*
 import nl.komponents.kovenant.ui.alwaysUi
 import nl.komponents.kovenant.ui.successUi
