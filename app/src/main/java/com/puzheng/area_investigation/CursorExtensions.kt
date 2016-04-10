@@ -33,5 +33,5 @@ fun Cursor.getRegionRow() = Region(getLong(BaseColumns._ID)!!, getString(Region.
 
 
 fun Cursor.getPOIRow() = POI(getLong(BaseColumns._ID)!!, getString(POI.Model.COL_POI_TYPE_UUID)!!,
-        getLong(POI.Model.COL_AREA_ID)!!, POI.decodeLatLng(getString(POI.Model.COL_LAT_LNG)!!),
+        getLong(POI.Model.COL_REGION_ID)!!, POI.decodeLatLng(getString(POI.Model.COL_LAT_LNG)!!),
         getDate(POI.Model.COL_CREATED)!!, getDate(Region.Model.COL_UPDATED))

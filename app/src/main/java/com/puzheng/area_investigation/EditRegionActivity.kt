@@ -9,11 +9,13 @@ import android.location.Location
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageButton
 import android.widget.Toast
 import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
@@ -60,6 +62,15 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
             fab?.visibility = View.VISIBLE
         } else {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
+                ConfirmRemovePOIDialogFragment({
+                    val poi = marker.`object` as POI
+                    POIStore.with(this).remove(poi).successUi {
+                        toast(R.string.poi_deleted)
+                        fragmentEditArea.removePOI(poi)
+                    }
+                }).show(supportFragmentManager, "")
+            }
             fab?.visibility = View.GONE
         }
     }
