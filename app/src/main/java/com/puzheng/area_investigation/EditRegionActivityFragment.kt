@@ -374,7 +374,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     fun removePOI(poi: POI) {
         pois.remove(poi)
         map.map.setupPOIs()
-        map.map.resetCamera()
     }
 
     private fun AMap.resetCamera() {
