@@ -6,7 +6,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
 import android.util.DisplayMetrics
 import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
@@ -31,24 +33,6 @@ fun Activity.loadBitmap(file: File): Bitmap = BitmapFactory.decodeStream(file.in
         })
 
 
-//fun Activity.assertPermission(permission: String, requestCode: Int) = Observable.create<Void> {
-//    val permissionCheck = ContextCompat.checkSelfPermission(this, permission)
-//    if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-//        it!!.onNext(null)
-//    } else {
-//        // Should we show an explanation?
-//        if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-//            // TODO Show an expanation to the user *asynchronously* -- don't block
-//            // this thread waiting for the user's response! After the user
-//            // sees the explanation, try again to request the permission.
-//
-//        } else {
-//            ActivityCompat.requestPermissions(this, arrayOf(permission),
-//                    requestCode)
-//        }
-//    }
-//}
-
 fun Activity.assertPermission(permission: String, requestCode: Int) = promiseOnUi {
     if (ContextCompat.checkSelfPermission(this@assertPermission, permission) != PackageManager.PERMISSION_GRANTED) {
         // Should we show an explanation?
@@ -64,3 +48,4 @@ fun Activity.assertPermission(permission: String, requestCode: Int) = promiseOnU
     }
 }
 
+fun <T : Fragment> AppCompatActivity.findFragmentById(id: Int) = supportFragmentManager.findFragmentById(id) as T

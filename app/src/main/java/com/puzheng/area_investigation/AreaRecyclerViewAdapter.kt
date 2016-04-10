@@ -32,6 +32,8 @@ class AreaRecyclerViewAdapter(private var regions: List<Region?>?,
 
     val items = mutableListOf<Region?>()
 
+    var picasso: Picasso? = null
+
     init {
         setupItems()
     }
@@ -64,6 +66,9 @@ class AreaRecyclerViewAdapter(private var regions: List<Region?>?,
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         fun inflate(layout: Int) = LayoutInflater.from(parent.context).inflate(layout, parent, false)
+        if (picasso == null) {
+            picasso = Picasso.with(parent.context)
+        }
         return if (viewType == HEADER_TYPE) {
             HeaderViewHolder(inflate(R.layout.fragment_area_header))
         } else {
@@ -81,7 +86,7 @@ class AreaRecyclerViewAdapter(private var regions: List<Region?>?,
             holder.textView.text = area.name
             val context = holder.textView.context
             val coverFile = RegionStore.with(context).getCoverImageFile(area)
-            Picasso.with(context).load(coverFile).into(holder.imageView);
+            picasso?.load(coverFile)?.into(holder.imageView);
             Logger.v("bind ${area.name}")
         }
     }

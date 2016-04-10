@@ -26,7 +26,7 @@ private fun roundOff(d: Double, n: Int): Double {
     }
 }
 
-class RegionStatDialog(val region: Region) : AppCompatDialogFragment() {
+class RegionStatDialogFragment(val region: Region) : AppCompatDialogFragment() {
 
     private val poiTypeStore: POITypeStore by lazy {
         POITypeStore.with(context)
@@ -42,16 +42,16 @@ class RegionStatDialog(val region: Region) : AppCompatDialogFragment() {
             regionStore.getPOIList(region) and poiTypeStore.list successUi {
                 val (pois, poiTypes) = it
                 findTextViewById(R.id.textViewPOINO).text = if (pois != null) {
-                    pois!!.size.toString()
+                    pois.size.toString()
                 } else {
                     "0"
                 }
                 if (poiTypes == null) {
                     activity.toast("找不到信息点配置信息")
                 } else {
-                    val poiTypeMap = mapOf(*poiTypes!!.map {
+                    val poiTypeMap = mapOf(*poiTypes.map {
                         it.uuid to it
-                    }?.toTypedArray())
+                    }.toTypedArray())
                     var type2POINo = mutableMapOf<String, Int>()
                     pois?.forEach {
                         type2POINo.put(it.poiTypeUUID, type2POINo.getOrElse(it.poiTypeUUID, { 0 }) + 1)
@@ -70,11 +70,13 @@ class RegionStatDialog(val region: Region) : AppCompatDialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
             AlertDialog.Builder(context).setTitle(R.string.region_stat_title).setView(contentView).create()
 
-    class ViewHolder(val textViewName: TextView, val imageViewIcon: ImageView, val textViewPOINO: TextView) {
-
-    }
+    class ViewHolder(val textViewName: TextView, val imageViewIcon: ImageView, val textViewPOINO: TextView)
 
     private inner class MyBaseAdaper(val type_N_POINOList: List<Pair<POIType?, Int>>) : BaseAdapter() {
+
+        private val picasso: Picasso by lazy {
+            Picasso.with(context)
+        }
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?) =
                 (convertView ?: View.inflate(context, R.layout.item_poi_type_and_poi_no,
@@ -89,7 +91,7 @@ class RegionStatDialog(val region: Region) : AppCompatDialogFragment() {
                         vh.textViewName.text = getString(R.string.unknown_poi_type)
                     } else {
                         vh.textViewName.text = poiType.name
-                        Picasso.with(context).load(poiTypeStore.getPOITypeIcon(poiType)).into(vh.imageViewIcon)
+                        picasso.load(poiTypeStore.getPOITypeIcon(poiType)).into(vh.imageViewIcon)
                     }
                     vh.textViewPOINO.text = poiNO.toString()
                 }
