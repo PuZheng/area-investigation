@@ -12,8 +12,8 @@ import com.bignerdranch.android.multiselector.MultiSelector
 import com.bignerdranch.android.multiselector.SwappingHolder
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.AreaListFragment.OnAreaListFragmentInteractionListener
-import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.model.Region
+import com.puzheng.area_investigation.store.RegionStore
 import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 
@@ -25,23 +25,23 @@ private val AREA_TYPE = 2
  * specified [OnAreaListFragmentInteractionListener].
  * TODO: Replace the implementation with code for your data type.
  */
-class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
+class AreaRecyclerViewAdapter(private var regions: List<Region?>?,
                               private val listener: OnAreaListFragmentInteractionListener,
                               private val multiSelector: MultiSelector) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    val items = mutableListOf<Area?>()
+    val items = mutableListOf<Region?>()
 
     init {
         setupItems()
     }
 
     private fun setupItems() {
-        if (areas != null) {
+        if (regions != null) {
             items.clear()
-            for ((idx, area) in areas!!.withIndex()) {
+            for ((idx, area) in regions!!.withIndex()) {
                 // 按天分组，如果不是同一天的，插入null，代表一个seperator
-                if (idx == 0 || !area!!.created.ofSameDay(areas!![idx - 1]!!.created)) {
+                if (idx == 0 || !area!!.created.ofSameDay(regions!![idx - 1]!!.created)) {
                     items.add(null)
                 }
                 items.add(area)
@@ -80,7 +80,7 @@ class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
             (holder as AreaViewHolder).item = items[position]
             holder.textView.text = area.name
             val context = holder.textView.context
-            val coverFile = AreaStore.with(context).getCoverImageFile(area)
+            val coverFile = RegionStore.with(context).getCoverImageFile(area)
             Picasso.with(context).load(coverFile).into(holder.imageView);
             Logger.v("bind ${area.name}")
         }
@@ -102,7 +102,7 @@ class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
         }
     }
 
-    val selectedAreas: List<Area>
+    val selectedRegions: List<Region>
         get() = (0..items.size - 1).filter {
             multiSelector.isSelected(it, 0)
         }.map {
@@ -110,9 +110,9 @@ class AreaRecyclerViewAdapter(private var areas: List<Area?>?,
         }
 
     fun removeSelectedAreas() {
-        Logger.v("""selected areas: ${selectedAreas.map { it.name }.joinToString(",")}""")
-        areas = areas?.filter { it?.id !in selectedAreas.map { it.id } }
-        Logger.v("""remained areas: ${areas?.map { it?.name }?.joinToString(",")}""")
+        Logger.v("""selected areas: ${selectedRegions.map { it.name }.joinToString(",")}""")
+        regions = regions?.filter { it?.id !in selectedRegions.map { it.id } }
+        Logger.v("""remained areas: ${regions?.map { it?.name }?.joinToString(",")}""")
         setupItems()
         notifyDataSetChanged()
     }
@@ -124,7 +124,7 @@ private class AreaViewHolder(val view: View, val multiSelector: MultiSelector, v
         SwappingHolder(view, multiSelector) {
     val textView: TextView
     val imageView: ImageView
-    var item: Area? = null
+    var item: Region? = null
 
     init {
         textView = view.findViewById(R.id.content) as TextView

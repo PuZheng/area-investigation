@@ -12,12 +12,12 @@ import com.amap.api.maps.model.BitmapDescriptorFactory
 import com.amap.api.maps.model.LatLngBounds
 import com.amap.api.maps.model.MarkerOptions
 import com.amap.api.maps.model.PolygonOptions
-import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.model.Region
+import com.puzheng.area_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.dialog_confirm_save_area_outline.view.*
 import nl.komponents.kovenant.ui.successUi
 
-class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) : AppCompatDialogFragment() {
+class ConfirmSaveAreaOutlineDialog(val region: Region, val afterSaved: () -> Unit) : AppCompatDialogFragment() {
     private val markerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
                 activity.loadBitmap(R.drawable.marker),
@@ -32,7 +32,7 @@ class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) :
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener({
             map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
-                    AreaStore.with(activity).updateAreaOutline(area.id!!, area.outline, p0) successUi {
+                    RegionStore.with(activity).updateAreaOutline(region.id!!, region.outline, p0) successUi {
                         afterSaved()
                         activity.toast(R.string.update_outline_success)
                         dialog.dismiss()
@@ -57,14 +57,14 @@ class ConfirmSaveAreaOutlineDialog(val area: Area, val afterSaved: () -> Unit) :
                 moveCamera(
                         CameraUpdateFactory.newLatLngBounds(
                                 LatLngBounds.Builder().apply {
-                                    area.outline.forEach { include(it) }
+                                    region.outline.forEach { include(it) }
                                 }.build(), (8 * pixelsPerDp).toInt()))
                 addPolygon(PolygonOptions()
-                        .add(*area.outline.toTypedArray())
+                        .add(*region.outline.toTypedArray())
                         .fillColor(ContextCompat.getColor(activity, R.color.colorOutlinePolygon))
                         .strokeWidth((1 * pixelsPerDp).toFloat())
                         .strokeColor(ContextCompat.getColor(activity, R.color.colorOutlinePolyline)))
-                area.outline.forEach {
+                region.outline.forEach {
                     addMarker(MarkerOptions()
                             .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
                             .position(it)

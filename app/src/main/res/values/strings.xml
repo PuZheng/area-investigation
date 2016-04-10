@@ -31,4 +31,6 @@
     <string name="no_poi_types">没有可用的信息点类型信息</string>
     <string name="poi_created">信息点创建成功</string>
     <string name="no_poi_type_meta_info">没有信息点类型信息, 请将信息点配置文件拷贝到%s</string>
+    <string name="region_stat_title">区域统计信息</string>
+    <string name="unknown_poi_type">未知类型</string>
 </resources>

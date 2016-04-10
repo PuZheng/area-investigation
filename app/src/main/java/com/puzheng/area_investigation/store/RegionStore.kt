@@ -7,7 +7,7 @@ import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.*
-import com.puzheng.area_investigation.model.Area
+import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.model.POI
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
@@ -19,29 +19,28 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AreaStore private constructor(val context: Context) {
+class RegionStore private constructor(val context: Context) {
 
     companion object {
-        fun with(context: Context) = AreaStore(context)
+        fun with(context: Context) = RegionStore(context)
 
 
     }
 
-    fun getCoverImageFile(areaId: Long): File? = context.openReadableFile("/areas", "$areaId.png")
-    fun getCoverImageFile(area: Area): File? = context.openReadableFile("/areas", "${area.id}.png")
+    fun getCoverImageFile(region: Region): File? = context.openReadableFile("/areas", "${region.id}.png")
 
     // a list of areas ordered by `created` in descending order
-    val list: Promise<List<Area>?, Exception>
+    val list: Promise<List<Region>?, Exception>
         get() = task {
             val db = DBHelpler(context).readableDatabase
-            val cursor = db.query(Area.Model.TABLE_NAME, null, null, null, null, null,
-                    "${Area.Model.COL_CREATED} DESC")
+            val cursor = db.query(Region.Model.TABLE_NAME, null, null, null, null, null,
+                    "${Region.Model.COL_CREATED} DESC")
             try {
-                var rows: List<Area>? = null
+                var rows: List<Region>? = null
                 if (cursor.moveToFirst()) {
                     rows = mutableListOf()
                     do {
-                        rows.add(cursor.getAreaRow())
+                        rows.add(cursor.getRegionRow())
                     } while (cursor.moveToNext())
                 }
                 rows
@@ -56,7 +55,7 @@ class AreaStore private constructor(val context: Context) {
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val db = DBHelpler(context).writableDatabase
 
-        fun fakeArea(id: Long, created: String, updated: String? = null) = Area(id, "area$id",
+        fun fakeArea(id: Long, created: String, updated: String? = null) = Region(id, "area$id",
                 // 任何三个点总能组成一个三角形
                 listOf(randomHZLatLng, randomHZLatLng, randomHZLatLng),
                 format.parse(created),
@@ -87,7 +86,7 @@ class AreaStore private constructor(val context: Context) {
                 fakeArea(12L, "2016-03-02 10:32:31"),
                 fakeArea(13L, "2016-03-02 8:32:31")
         )) {
-            val areaId = db.insert(Area.Model.TABLE_NAME, null, Area.Model.makeValues(area))
+            val areaId = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(area))
             Logger.v("create area: ${area.name}")
             fakeAreaImage(areaId)
             for (i in 1..2 + Random().nextInt(20)) {
@@ -98,24 +97,24 @@ class AreaStore private constructor(val context: Context) {
         db.close()
     }
 
-    fun removeAreas(areas: List<Area>) = task {
+    fun removeAreas(regions: List<Region>) = task {
         val db = DBHelpler(context).writableDatabase
         try {
-            db.delete(Area.Model.TABLE_NAME, """${BaseColumns._ID} IN (${areas.map { it.id.toString() }.joinToString(",")})""", null)
+            db.delete(Region.Model.TABLE_NAME, """${BaseColumns._ID} IN (${regions.map { it.id.toString() }.joinToString(",")})""", null)
 
         } finally {
             db.close()
         }
-        areas.forEach {
-            AreaStore.with(context).getCoverImageFile(it)?.delete()
+        regions.forEach {
+            with(context).getCoverImageFile(it)?.delete()
         }
     }
 
 
-    fun createArea(area: Area, bitmap: Bitmap? = null) = task {
+    fun createArea(region: Region, bitmap: Bitmap? = null) = task {
         val db = DBHelpler(context).writableDatabase
         try {
-            val id = db.insert(Area.Model.TABLE_NAME, null, Area.Model.makeValues(area))
+            val id = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
             if (bitmap != null) {
 
                 val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/areas", "$id.png"))
@@ -135,10 +134,10 @@ class AreaStore private constructor(val context: Context) {
     fun getArea(id: Long) = task {
         val db = DBHelpler(context).readableDatabase
         try {
-            val cursor = db.query(Area.Model.TABLE_NAME, null, "${BaseColumns._ID}=?", arrayOf(id.toString()), null,
+            val cursor = db.query(Region.Model.TABLE_NAME, null, "${BaseColumns._ID}=?", arrayOf(id.toString()), null,
                     null, null)
             if (cursor.moveToFirst()) {
-                cursor.getAreaRow()
+                cursor.getRegionRow()
             } else {
                 null
             }
@@ -154,7 +153,7 @@ class AreaStore private constructor(val context: Context) {
     fun updateAreaName(id: Long, name: String) = task {
         val db = DBHelpler(context).writableDatabase
         try {
-            db.update(Area.Model.TABLE_NAME, ContentValues().apply { put(Area.Model.COL_NAME, name) },
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply { put(Region.Model.COL_NAME, name) },
                     "${BaseColumns._ID}=$id", null)
         } finally {
             db.close()
@@ -164,7 +163,7 @@ class AreaStore private constructor(val context: Context) {
     fun updateAreaOutline(id: Long, outline: List<LatLng>, bitmap: Bitmap? = null) = task {
         val db = DBHelpler(context).writableDatabase
         try {
-            db.update(Area.Model.TABLE_NAME, ContentValues().apply { put(Area.Model.COL_OUTLINE, Area.encodeOutline(outline)) },
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply { put(Region.Model.COL_OUTLINE, Region.encodeOutline(outline)) },
                     "${BaseColumns._ID}=$id", null)
             if (bitmap != null) {
                 val destFile = context.openWritableFile("/areas", "$id.png")
@@ -183,11 +182,11 @@ class AreaStore private constructor(val context: Context) {
         }
     }
 
-    fun getPOIList(area: Area) = task {
+    fun getPOIList(region: Region) = task {
         val db = DBHelpler(context).readableDatabase
 
         try {
-            val cursor = db.query(POI.Model.TABLE_NAME, null, "area_id=?", arrayOf(area.id.toString()),
+            val cursor = db.query(POI.Model.TABLE_NAME, null, "area_id=?", arrayOf(region.id.toString()),
                     null, null, null)
             var rows: List<POI>? = null
             if (cursor.moveToFirst()) {

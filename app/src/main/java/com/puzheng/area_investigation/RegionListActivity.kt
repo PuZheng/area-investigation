@@ -13,21 +13,21 @@ import android.view.MenuItem
 import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
-import com.puzheng.area_investigation.model.Area
-import com.puzheng.area_investigation.store.AreaStore
+import com.puzheng.area_investigation.model.Region
+import com.puzheng.area_investigation.store.RegionStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
 import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
 
-class AreaListActivity : AppCompatActivity(),
+class RegionListActivity : AppCompatActivity(),
         AreaListFragment.OnAreaListFragmentInteractionListener {
 
 
     private var actionMode: ActionMode? = null
 
-    override fun onLongClickItem(area: Area): Boolean {
+    override fun onLongClickItem(region: Region): Boolean {
         if (actionMode != null) {
             return false;
         }
@@ -61,9 +61,9 @@ class AreaListActivity : AppCompatActivity(),
         return true;
     }
 
-    override fun onClickItem(area: Area) {
-        val intent = Intent(this, EditAreaActivity::class.java)
-        intent.putExtra(TAG_AREA, area)
+    override fun onClickItem(region: Region) {
+        val intent = Intent(this, EditRegionActivity::class.java)
+        intent.putExtra(TAG_AREA, region)
         startActivity(intent)
     }
 
@@ -137,7 +137,7 @@ private class TrashAlertDialogFragment : DialogFragment() {
         builder.setTitle(R.string.warning).setMessage(R.string.trash_confirm_msg)
                 .setPositiveButton(R.string.confirm, {
                     dialog, v ->
-                    val fragment = (activity as AreaListActivity).fragmentAreaList as AreaListFragment
+                    val fragment = (activity as RegionListActivity).fragmentAreaList as AreaListFragment
                     fragment.removeSelectedAreas()
                     fragment.multiSelector.clearSelections()
                 }).setNegativeButton(R.string.cancel, null)
