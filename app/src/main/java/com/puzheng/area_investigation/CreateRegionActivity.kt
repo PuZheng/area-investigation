@@ -24,8 +24,6 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.databinding.ActivityCreateAreaBinding
 import kotlinx.android.synthetic.main.activity_create_area.*
 import kotlinx.android.synthetic.main.fragment_create_area_step1.*
-import nl.komponents.kovenant.android.startKovenant
-import nl.komponents.kovenant.android.stopKovenant
 
 
 class CreateRegionActivity : AppCompatActivity(),
@@ -76,8 +74,6 @@ class CreateRegionActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.init("CreateAreaActivitiy")
-
-        startKovenant()
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_create_area)
         pager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
@@ -150,11 +146,6 @@ class CreateRegionActivity : AppCompatActivity(),
         }
     }
 
-
-    override fun onDestroy() {
-        stopKovenant()
-        super.onDestroy()
-    }
 }
 
 private class AffirmBackDialogFragment(val after: () -> Unit) : AppCompatDialogFragment() {

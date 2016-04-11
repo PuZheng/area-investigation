@@ -14,12 +14,8 @@ import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Region
-import com.puzheng.area_investigation.store.RegionStore
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_area_list.*
 import kotlinx.android.synthetic.main.content_area_list.*
-import nl.komponents.kovenant.android.startKovenant
-import nl.komponents.kovenant.android.stopKovenant
 
 class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnAreaListFragmentInteractionListener {
@@ -72,7 +68,6 @@ class RegionListActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.init("AreaListActivity")
-        startKovenant()
         setContentView(R.layout.activity_area_list)
         setSupportActionBar(toolbar)
 
@@ -84,11 +79,6 @@ class RegionListActivity : AppCompatActivity(),
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
-    }
-
-    override fun onDestroy() {
-        stopKovenant()
-        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

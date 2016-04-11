@@ -33,8 +33,6 @@ import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
 import kotlinx.android.synthetic.main.content_edit_area.*
 import kotlinx.android.synthetic.main.fragment_edit_area.*
 import kotlinx.android.synthetic.main.poi_bottom_sheet.*
-import nl.komponents.kovenant.android.startKovenant
-import nl.komponents.kovenant.android.stopKovenant
 import nl.komponents.kovenant.ui.successUi
 import java.util.*
 
@@ -171,7 +169,6 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startKovenant()
         setContentView(R.layout.activity_edit_area)
 
         setSupportActionBar(toolbar)
@@ -189,12 +186,6 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
         region = intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
         Logger.v(region.toString())
         updateContent()
-    }
-
-
-    override fun onDestroy() {
-        stopKovenant(true)
-        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
