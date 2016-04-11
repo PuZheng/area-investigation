@@ -68,6 +68,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
                     POIStore.with(this).remove(poi).successUi {
                         toast(R.string.poi_deleted)
                         fragmentEditRegion.removePOI(poi)
+                        onPOIMarkerSelected(null)
                     }
                 }).show(supportFragmentManager, "")
             }
@@ -122,13 +123,13 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu);
                 fab?.hide()
-                fragmentEditRegion.editOutlineMode = true
+                fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.EDIT_OUTLINE
                 return true
             }
 
             override fun onDestroyActionMode(mode: ActionMode?) {
                 editOutlineActionMode = null
-                fragmentEditRegion.editOutlineMode = false
+                fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.DEFAULT
                 fab?.show()
             }
         })
@@ -279,7 +280,6 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
                         region.id!!,
                         LatLng(it.latitude, it.longitude),
                         Date())
-                Logger.v(poi.toString())
                 POIStore.with(this).create(poi) successUi {
                     toast(R.string.poi_created)
                     (fragment_edit_area as EditRegionActivityFragment).addPOI(poi.copy(id = it))

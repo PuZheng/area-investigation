@@ -27,8 +27,10 @@ import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 
 private enum class MarkerType {
-    POI, OUTLINE_VERTEX
+    POI, OUTLINE_VERTEX,
+    UNKOWN
 }
+
 
 /**
  * 该fragment会请求ACCESS_FINE_LOCATION权限，所以使用该fragment的activity必须支持在
@@ -101,31 +103,119 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
     private var onLocationChangeListener: LocationSource.OnLocationChangedListener? = null
 
-    var editOutlineMode: Boolean = false
-        set(b) {
-            field = b
-            if (b) {
-                outlineMarkers.forEach {
-                    it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
-                    it.isDraggable = true
+    var editMode: EditMode = EditMode.DEFAULT
+        set(value) {
+            field = value
+            // 设置编辑模式包含两步： 如何展示信息点和边界; 如何设置地图的响应事件
+            when (value) {
+                EditMode.DEFAULT ->
+                    enterDefaultEditMode()
+                EditMode.EDIT_OUTLINE ->
+                    enterOutlineEditMode()
+            }
+        }
+
+    private fun enterOutlineEditMode() {
+        // 编辑边界模式
+        hotCopyRegion = originRegion.copy()
+
+        outlineMarkers.forEach {
+            it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
+            it.isDraggable = true
+        }
+        selectedPOIMarker?.selected = false
+        // 为了避免POI和顶点互相干扰，隐藏POI5
+        poiMarkers.forEach { it.isVisible = false }
+
+        listener?.onPOIMarkerSelected(null)
+
+        map.map.apply {
+            setOnMapLongClickListener {
+                latLng ->
+                val polyline = findPolylineCloseTo(latLng)
+                if (polyline != null) {
+                    val index = hotCopyRegion.outline.indexOf(polyline.points[0])
+                    hotCopyRegion.outline = hotCopyRegion.outline.toMutableList().apply { add(index + 1, latLng) }
+                    setupOutline()
+                    // select the newly created marker
+                    outlineMarkers.forEach {
+                        if (it.position == latLng) {
+                            it.selected = true
+                            listener?.onOutlineMarkerSelected(latLng)
+                        }
+                    }
                 }
-                hotCopyRegion = originRegion.copy()
+            }
+            setOnMarkerClickListener {
+                Logger.v("clicked ${it.type.toString()}")
+                if (it.selectable) {
+                    it.selected = true
+                    listener?.onOutlineMarkerSelected(it.position)
+                }
+                true
+            }
+            setOnMapClickListener {
+                selectedOutlineMarker?.selected = false
+                listener?.onOutlineMarkerSelected(null)
+            }
+            setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
+
+                override fun onMarkerDragEnd(p0: Marker?) {
+                    p0?.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
+                    hotCopyRegion.outline = outlineMarkers.map { it.position }
+                    setupOutline()
+                }
+
+                override fun onMarkerDragStart(p0: Marker?) {
+                    p0?.setIcon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
+                }
+
+                override fun onMarkerDrag(p0: Marker?) {
+                    val (scrollX, scrollY) = violationToBoundary(p0!!.screenLocation)
+                    map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
+                }
+            })
+        }
+    }
+
+    private fun enterDefaultEditMode() {
+        // 默认模式下，只能选择信息点，不能做出任何实际的修改
+        hotCopyRegion = originRegion.copy()
+
+        outlineMarkers.forEach {
+            it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerBitmap))
+            it.isDraggable = true
+        }
+        poiMarkers.forEach { it.isVisible = true }
+
+        map.map.apply {
+            setOnMapLongClickListener {
+                listener?.onMapLongClick()
+            }
+            setOnMarkerClickListener {
+                Logger.v("clicked ${it.type.toString()}")
+                if (it.selectable) {
+                    it.selected = true
+                    listener?.onPOIMarkerSelected(it)
+                }
+                true
+            }
+            setOnMapClickListener {
+                Logger.v("map clicked")
                 selectedPOIMarker?.selected = false
                 listener?.onPOIMarkerSelected(null)
-                // 为了避免POI和顶点互相干扰，隐藏POI5
-                poiMarkers.forEach { it.isVisible = false }
-            } else {
-                // 恢复为初始数据
-                hotCopyRegion = originRegion.copy()
-                map.map.setupOutline()
-                poiMarkers.forEach { it.isVisible = true }
             }
-
+            setOnMarkerDragListener(null)
         }
+    }
+
     var hiddenPOITypes: Set<POIType> = setOf()
         set(set) {
             field = set
-            map.map.setupPOIs()
+            poiMarkers.forEach {
+                val poi = it.`object` as POI
+                it.isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
+            }
         }
     private val horizontalBoundaryLimit: Int by lazy {
         (40 * pixelsPerDp).toInt()
@@ -136,6 +226,10 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     companion object {
         val REQUEST_ACCESS_FINE_LOCATION = 100
+
+        enum class EditMode {
+            DEFAULT, EDIT_OUTLINE, POI_RELOCATE
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
@@ -183,68 +277,12 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                 resetCamera()
                 setupOutline()
                 setupPOIs()
-                setOnMapLongClickListener {
-                    latLng ->
-                    listener?.onMapLongClick()
-                    if (editOutlineMode) {
-                        val polyline = findPolylineCloseTo(latLng)
-                        if (polyline != null) {
-                            val index = hotCopyRegion.outline.indexOf(polyline.points[0])
-                            hotCopyRegion.outline = hotCopyRegion.outline.toMutableList().apply { add(index + 1, latLng) }
-                            setupOutline()
-                            // select the newly created marker
-                            outlineMarkers.forEach {
-                                if (it.position == latLng) {
-                                    it.selected = true
-                                    listener?.onOutlineMarkerSelected(latLng)
-                                }
-                            }
-                        }
-                    }
+                editMode = EditMode.DEFAULT
+                Logger.v(poiMarkers.size.toString())
+                poiMarkers.forEach {
+                    Logger.v((it.`object` as POI).toString())
                 }
-                setOnMarkerClickListener {
-                    Logger.v("clicked ${it.type.toString()}")
-                    if (it.selectable) {
-                        it.selected = true
-                        if (editOutlineMode) {
-                            listener?.onOutlineMarkerSelected(it.position)
-                        } else {
-                            listener?.onPOIMarkerSelected(it)
-                        }
-                    }
-                    true
-                }
-                setOnMapClickListener {
-                    selectedOutlineMarker?.selected = false
-                    selectedPOIMarker?.selected = false
-                    if (editOutlineMode) {
-                        listener?.onOutlineMarkerSelected(null)
-                    } else {
-                        listener?.onPOIMarkerSelected(null)
-                    }
-                }
-
-                // 只有轮廓顶点可以被拖动
-                setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
-
-                    override fun onMarkerDragEnd(p0: Marker?) {
-                        p0?.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
-                        hotCopyRegion.outline = outlineMarkers.map { it.position }
-                        setupOutline()
-                    }
-
-                    override fun onMarkerDragStart(p0: Marker?) {
-                        p0?.setIcon(BitmapDescriptorFactory.fromBitmap(touchingMarkerBitmap))
-                    }
-
-                    override fun onMarkerDrag(p0: Marker?) {
-                        val (scrollX, scrollY) = violationToBoundary(p0!!.screenLocation)
-                        map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
-                    }
-                })
             }
-
-
         }
     }
 
@@ -331,9 +369,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun deleteVertex(vertex: LatLng) {
-        if (!editOutlineMode) {
-            return
-        }
         if (hotCopyRegion.outline.size <= 3) {
             activity.toast(R.string.outline_needs_3_points)
             return
@@ -388,14 +423,20 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
 
     fun addPOI(poi: POI) {
-        map.map.addMarker(makeMarkerOption(poi)!!).`object` = poi
+        map.map.addMarker(makeMarkerOption(poi)!!).let {
+            poiMarkers.add(it)
+            it.`object` = poi
+            it.selected = true
+            listener?.onPOIMarkerSelected(it)
+        }
         pois.add(poi)
-        map.map.resetCamera()
     }
 
     fun removePOI(poi: POI) {
         pois.remove(poi)
-        map.map.setupPOIs()
+        val marker = poiMarkers.find { (it.`object` as POI) == poi }
+        marker?.remove()
+        poiMarkers.remove(marker)
     }
 
     private fun AMap.resetCamera() {
@@ -411,15 +452,20 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     private val Marker.screenLocation: Point
         get() = map.map.projection.toScreenLocation(position)
 
+    /**
+     * marker的类型，注意，当前位置也是一个特殊的Marker，这个marker一定要区分出来，不能被选中
+     */
     private val Marker.type: MarkerType
-        get() = if (outlineMarkers.contains(this)) MarkerType.OUTLINE_VERTEX else MarkerType.POI
+        get() = if (outlineMarkers.contains(this)) MarkerType.OUTLINE_VERTEX
+        else if (poiMarkers.contains(this)) MarkerType.POI
+        else MarkerType.UNKOWN
 
     private val Marker.selectable: Boolean
         get() = when (type) {
             MarkerType.OUTLINE_VERTEX ->
-                editOutlineMode
+                editMode == EditMode.EDIT_OUTLINE
             MarkerType.POI ->
-                !editOutlineMode
+                editMode == EditMode.DEFAULT
             else -> false
         }
 
@@ -468,7 +514,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             if (markerOption != null) {
                 poiMarkers.add(addMarker(markerOption).apply {
                     `object` = poi
-                    isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
                 })
             }
         }
@@ -483,13 +528,14 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     private fun AMap.addOutlineMarker(latLng: LatLng) =
             addMarker(MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromBitmap(if (editOutlineMode) outlineMarkerEditModeBitmap else outlineMarkerBitmap))
+                    .icon(BitmapDescriptorFactory.fromBitmap(
+                            if (editMode == EditMode.EDIT_OUTLINE) outlineMarkerEditModeBitmap else outlineMarkerBitmap))
                     .position(latLng)
-                    .anchor(0.5F, 0.5F).draggable(editOutlineMode))
+                    .anchor(0.5F, 0.5F).draggable(editMode == EditMode.EDIT_OUTLINE))
 
 
     private fun AMap.setupOutline() {
-        val region = if (editOutlineMode) hotCopyRegion else originRegion
+        val region = if (editMode == EditMode.EDIT_OUTLINE) hotCopyRegion else originRegion
         outlinePolygon?.remove()
         outlinePolygon = addPolygon(region.outline.toTypedArray())
         outlineMarkers.apply {
