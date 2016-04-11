@@ -42,11 +42,12 @@ private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
 private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 
 class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
-POIFilterDialogFragment.OnFragmentInteractionListener {
+        POIFilterDialogFragment.OnFragmentInteractionListener {
 
     val fragmentEditRegion: EditRegionActivityFragment by lazy {
         findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_area)!!
     }
+
     override fun onFilterPOI(hiddenPOITypes: Set<POIType>) {
         fragmentEditRegion.hiddenPOITypes = hiddenPOITypes
         invalidateOptionsMenu()
@@ -56,28 +57,14 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
         BottomSheetBehavior.from(design_bottom_sheet)
     }
 
+    private var poiRelocateActionMode: ActionMode? = null
+
     override fun onPOIMarkerSelected(marker: Marker?) {
         if (marker == null) {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             fab?.visibility = View.VISIBLE
         } else {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-            design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
-                ConfirmRemovePOIDialogFragment({
-                    val poi = marker.`object` as POI
-                    POIStore.with(this).remove(poi).successUi {
-                        toast(R.string.poi_deleted)
-                        fragmentEditRegion.removePOI(poi)
-                        onPOIMarkerSelected(null)
-                    }
-                }).show(supportFragmentManager, "")
-            }
-            design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
-                toast("尚未实现")
-            }
-            design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
-                toast("尚未实现")
-            }
             fab?.visibility = View.GONE
         }
     }
@@ -108,8 +95,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
                     true
                 }
                 R.id.action_submit -> {
-                    (fragment_edit_area as EditRegionActivityFragment).saveOutline({
-                        editOutlineActionMode?.finish()
+                    fragmentEditRegion.saveOutline({
                         // 注意， 一定要告诉Picasso清除图片缓存
                         Picasso.with(this@EditRegionActivity).invalidate(RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
                     })
@@ -121,7 +107,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
             }
 
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu);
+                mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu)
                 fab?.hide()
                 fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.EDIT_OUTLINE
                 return true
@@ -129,6 +115,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
 
             override fun onDestroyActionMode(mode: ActionMode?) {
                 editOutlineActionMode = null
+                fragmentEditRegion.restoreOutline()
                 fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.DEFAULT
                 fab?.show()
             }
@@ -185,6 +172,42 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
         }
         region = intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
         updateContent()
+        design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
+            fragmentEditRegion.removeSelectedPOIMarker()
+            onPOIMarkerSelected(null)
+        }
+        design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
+            toast("尚未实现")
+        }
+        design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
+
+            poiRelocateActionMode = startSupportActionMode(object : ActionMode.Callback {
+                override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
+
+                override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?) = when (item?.itemId) {
+                    R.id.action_submit -> {
+                        fragmentEditRegion.savePOILocation()
+                        true
+                    }
+                    else -> false
+                }
+
+                override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                    mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu)
+                    fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.POI_RELOCATE
+                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                    fab?.visibility = View.GONE
+                    return true
+                }
+
+                override fun onDestroyActionMode(mode: ActionMode?) {
+                    fragmentEditRegion.restorePOILocation()
+                    poiRelocateActionMode = null
+                    fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.DEFAULT
+                    fab?.visibility = View.VISIBLE
+                }
+            })
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

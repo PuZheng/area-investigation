@@ -18,6 +18,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.model.POI
 import com.puzheng.area_investigation.model.POIType
+import com.puzheng.area_investigation.store.POIStore
 import com.puzheng.area_investigation.store.RegionStore
 import com.puzheng.area_investigation.store.POITypeStore
 import kotlinx.android.synthetic.main.content_edit_area.*
@@ -112,6 +113,8 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                     enterDefaultEditMode()
                 EditMode.EDIT_OUTLINE ->
                     enterOutlineEditMode()
+                EditMode.POI_RELOCATE ->
+                    enterPOIRelocateEditMode()
             }
         }
 
@@ -187,6 +190,8 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             it.isDraggable = true
         }
         poiMarkers.forEach { it.isVisible = true }
+        selectedPOIMarker?.selected = false
+        listener?.onPOIMarkerSelected(null)
 
         map.map.apply {
             setOnMapLongClickListener {
@@ -204,6 +209,23 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                 Logger.v("map clicked")
                 selectedPOIMarker?.selected = false
                 listener?.onPOIMarkerSelected(null)
+            }
+            setOnMarkerDragListener(null)
+        }
+    }
+
+    private fun enterPOIRelocateEditMode() {
+        outlineMarkers.forEach {
+            it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerBitmap))
+            it.isDraggable = true
+        }
+        poiMarkers.forEach { it.isVisible = true }
+        map.map.apply {
+            setOnMapLongClickListener(null)
+            setOnMarkerClickListener(null)
+            setOnMapClickListener {
+                Logger.v("map clicked")
+                selectedPOIMarker?.position = it
             }
             setOnMarkerDragListener(null)
         }
@@ -386,6 +408,24 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         }).show(activity.supportFragmentManager, "")
     }
 
+    fun savePOILocation() {
+        val poi = selectedPOIMarker!!.`object` as POI
+        val latLng = selectedPOIMarker!!.position
+        ConfirmSavePOILocationDialog(poi, latLng, {
+            selectedPOIMarker!!.`object` = poi.copy(latLng=latLng)
+            activity.toast(R.string.poi_location_modified)
+        }).show(activity.supportFragmentManager, "")
+    }
+
+    fun restoreOutline() {
+        hotCopyRegion = originRegion
+        map.map.setupOutline()
+    }
+
+    fun restorePOILocation() {
+        selectedPOIMarker?.position = (selectedPOIMarker?.`object` as POI).latLng
+    }
+
     private fun getIconBitmap(poi: POI): Bitmap? {
         val poiType = poiTypeMap[poi.poiTypeUUID] ?: return null
         if (!poiTypeIconMap.containsKey(poiType.uuid)) {
@@ -432,11 +472,17 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         pois.add(poi)
     }
 
-    fun removePOI(poi: POI) {
-        pois.remove(poi)
-        val marker = poiMarkers.find { (it.`object` as POI) == poi }
-        marker?.remove()
-        poiMarkers.remove(marker)
+    fun removeSelectedPOIMarker() {
+        ConfirmRemovePOIDialogFragment({
+            val poi = selectedPOIMarker?.`object` as POI
+            POIStore.with(activity).remove(poi).successUi {
+                activity.toast(R.string.poi_deleted)
+                pois.remove(poi)
+                val marker = poiMarkers.find { (it.`object` as POI) == poi }
+                marker?.remove()
+                poiMarkers.remove(marker)
+            }
+        }).show(activity.supportFragmentManager, "")
     }
 
     private fun AMap.resetCamera() {
