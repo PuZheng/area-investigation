@@ -1,13 +1,12 @@
 package com.puzheng.area_investigation
 
 import android.Manifest
-import android.app.Dialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.databinding.ObservableField
+import android.databinding.ViewDataBinding
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentStatePagerAdapter
 import android.support.v4.view.ViewPager
@@ -74,8 +73,10 @@ class CreateRegionActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.init("CreateAreaActivitiy")
-
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_create_area)
+        val x: ViewDataBinding = DataBindingUtil.setContentView(this, R.layout.activity_create_area)
+        binding = x as ActivityCreateAreaBinding
+        setSupportActionBar(toolbar)
+        supportActionBar?.setHomeButtonEnabled(true)
         pager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
 
             private var fragments: MutableList<Fragment> = mutableListOf()

@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val latLng: LatLng, val created: Date,
-               val updated: Date? = null) {
+               val updated: Date?=null) {
 
     class Model {
         companion object {
@@ -48,7 +48,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
     }
 
     companion object {
-        public fun decodeLatLng(s: String): LatLng {
+        fun decodeLatLng(s: String): LatLng {
             val (lat, lng) = s.split(",").map { it.toDouble() }
             return LatLng(lat, lng)
         }

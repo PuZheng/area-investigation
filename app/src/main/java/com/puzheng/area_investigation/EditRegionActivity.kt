@@ -8,9 +8,11 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -43,7 +45,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 POIFilterDialogFragment.OnFragmentInteractionListener {
 
     val fragmentEditRegion: EditRegionActivityFragment by lazy {
-        findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_area)
+        findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_area)!!
     }
     override fun onFilterPOI(hiddenPOITypes: Set<POIType>) {
         fragmentEditRegion.hiddenPOITypes = hiddenPOITypes
@@ -170,8 +172,9 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_area)
-
+        Logger.init("EditAreaActivity")
         setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         fab.setOnClickListener {
             fetchPOITypes {
                 POITypeChooseDialog(it, { addPOI(it) })
@@ -179,12 +182,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
             }
 
         }
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-
-
-        Logger.init("EditAreaActivity")
         region = intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
-        Logger.v(region.toString())
         updateContent()
     }
 
@@ -194,7 +192,8 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menu?.findItem(R.id.action_filter)?.icon = getDrawable(
+        menu?.findItem(R.id.action_filter)?.icon = ContextCompat.getDrawable(
+                this,
                 if (fragmentEditRegion.hiddenPOITypes.isNotEmpty()) {
                     R.drawable.vector_drawable_filter_activated
                 } else {
@@ -260,7 +259,7 @@ POIFilterDialogFragment.OnFragmentInteractionListener {
     }
 
     private fun updateContent() {
-        supportActionBar!!.title = region.name
+        supportActionBar?.title = region.name
     }
 
     companion object {

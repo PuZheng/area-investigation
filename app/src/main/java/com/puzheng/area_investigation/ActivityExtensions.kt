@@ -48,4 +48,4 @@ fun Activity.assertPermission(permission: String, requestCode: Int) = promiseOnU
     }
 }
 
-fun <T : Fragment> AppCompatActivity.findFragmentById(id: Int) = supportFragmentManager.findFragmentById(id) as T
+fun <T : Fragment?> AppCompatActivity.findFragmentById(id: Int) = supportFragmentManager.findFragmentById(id) as T

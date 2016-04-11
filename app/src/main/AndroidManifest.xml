@@ -44,6 +44,8 @@
         </activity>
         <activity
             android:name=".CreateRegionActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/create_region"
             android:parentActivityName=".RegionListActivity"/>
         <activity
             android:name=".EditRegionActivity"
