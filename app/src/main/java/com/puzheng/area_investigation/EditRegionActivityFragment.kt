@@ -122,13 +122,17 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             }
 
         }
-
     var hiddenPOITypes: Set<POIType> = setOf()
         set(set) {
             field = set
             map.map.setupPOIs()
         }
-
+    private val horizontalBoundaryLimit: Int by lazy {
+        (40 * pixelsPerDp).toInt()
+    }
+    private val verticalBoundaryLimit: Int by lazy {
+        (40 * pixelsPerDp).toInt()
+    }
 
     companion object {
         val REQUEST_ACCESS_FINE_LOCATION = 100
@@ -142,7 +146,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         super.onViewCreated(view, savedInstanceState)
         map.onCreate(savedInstanceState)
         originRegion = activity.intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
-
         // 不要被SET迷惑，这里实际的意义是GET到地图的onLocationChangeListener
         map.map.setLocationSource(object : LocationSource {
             override fun deactivate() {
@@ -161,7 +164,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         })
         map.map.uiSettings.isMyLocationButtonEnabled = true
 
-        Logger.v(originRegion.toString())
         RegionStore.with(activity).getPOIList(originRegion) successUi  {
             it?.forEach {
                 pois.add(it)
@@ -236,7 +238,8 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                     }
 
                     override fun onMarkerDrag(p0: Marker?) {
-
+                        val (scrollX, scrollY) = violationToBoundary(p0!!.screenLocation)
+                        map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
                     }
                 })
             }
@@ -244,6 +247,25 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
         }
     }
+
+    private fun violationToBoundary(screenLocation: Point): FloatArray {
+        val scrollX = if (screenLocation.x < horizontalBoundaryLimit) {
+            screenLocation.x - horizontalBoundaryLimit.toFloat()
+        } else if (screenLocation.x + horizontalBoundaryLimit > map.width) {
+            screenLocation.x + horizontalBoundaryLimit.toFloat() - map.width
+        } else {
+            0.0F
+        }
+        val scrollY = if (screenLocation.y < verticalBoundaryLimit) {
+            screenLocation.y - verticalBoundaryLimit.toFloat()
+        } else if (screenLocation.y + verticalBoundaryLimit > map.height) {
+            screenLocation.y + verticalBoundaryLimit.toFloat() - map.height
+        } else {
+            0.0F
+        }
+        return floatArrayOf(scrollX, scrollY)
+    }
+
 
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {
@@ -386,6 +408,9 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     // MR extensions
+    private val Marker.screenLocation: Point
+        get() = map.map.projection.toScreenLocation(position)
+
     private val Marker.type: MarkerType
         get() = if (outlineMarkers.contains(this)) MarkerType.OUTLINE_VERTEX else MarkerType.POI
 

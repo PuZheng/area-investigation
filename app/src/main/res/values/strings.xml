@@ -36,4 +36,5 @@
     <string name="poi_filter_dialog_title">选择要显示的信息点类型</string>
     <string name="confirm_remove_poi">确认删除该信息点?</string>
     <string name="poi_deleted">信息点已被删除</string>
+    <string name="create_region">创建重点区域</string>
 </resources>
