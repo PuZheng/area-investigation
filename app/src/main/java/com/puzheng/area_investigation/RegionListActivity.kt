@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -60,9 +61,9 @@ class RegionListActivity : AppCompatActivity(),
     }
 
     override fun onClickItem(region: Region) {
-        val intent = Intent(this, EditRegionActivity::class.java)
-        intent.putExtra(TAG_AREA, region)
-        startActivity(intent)
+        startActivity(Intent(this, EditRegionActivity::class.java).apply {
+            putExtra(TAG_REGION, region)
+        })
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,10 +72,9 @@ class RegionListActivity : AppCompatActivity(),
         setContentView(R.layout.activity_area_list)
         setSupportActionBar(toolbar)
 
-        fab.setOnClickListener({
-            val intent = Intent(this, CreateRegionActivity::class.java)
-            startActivity(intent)
-        })
+        fab.setOnClickListener {
+            startActivity(Intent(this, CreateRegionActivity::class.java))
+        }
 
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
@@ -117,7 +117,7 @@ class RegionListActivity : AppCompatActivity(),
     companion object {
         private val CREATE_AREA = 100
         private val EDIT_AREA = 100
-        val TAG_AREA = "AREA"
+        val TAG_REGION = "AREA"
     }
 }
 
