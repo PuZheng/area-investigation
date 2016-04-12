@@ -1,18 +1,15 @@
 package com.puzheng.area_investigation
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
+import android.support.design.widget.Snackbar
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -23,12 +20,12 @@ import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
 import com.amap.api.maps.model.Marker
 import com.orhanobut.logger.Logger
-import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.model.POI
 import com.puzheng.area_investigation.model.POIType
-import com.puzheng.area_investigation.store.RegionStore
+import com.puzheng.area_investigation.model.Region
 import com.puzheng.area_investigation.store.POIStore
 import com.puzheng.area_investigation.store.POITypeStore
+import com.puzheng.area_investigation.store.RegionStore
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_edit_area.*
 import kotlinx.android.synthetic.main.app_bar_edit_area_name.*
@@ -312,7 +309,14 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                         Date())
                 POIStore.with(this).create(poi) successUi {
                     toast(R.string.poi_created)
-                    (fragment_edit_area as EditRegionActivityFragment).addPOI(poi.copy(id = it))
+                    val marker = fragmentEditRegion.addPOI(poi.copy(id = it))
+                    if (!marker.isVisible) {
+                        Snackbar.make(findViewById(android.R.id.content)!!, R.string.create_hidden_poi, Snackbar.LENGTH_INDEFINITE).apply {
+                            setAction(R.string.i_see, {
+                                dismiss()
+                            }).show()
+                        }
+                    }
                 }
             }
         }
@@ -345,7 +349,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
     val center: LatLng
-        get() = fragment_edit_area.map.map.cameraPosition.target
+        get() = fragmentEditRegion.map.map.cameraPosition.target
 }
 
 

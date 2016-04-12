@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.view.LayoutInflater
@@ -420,7 +421,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         val poi = selectedPOIMarker!!.`object` as POI
         val latLng = selectedPOIMarker!!.position
         ConfirmSavePOILocationDialog(poi, latLng, {
-            selectedPOIMarker!!.`object` = poi.copy(latLng=latLng)
+            selectedPOIMarker!!.`object` = poi.copy(latLng = latLng)
             activity.toast(R.string.poi_location_modified)
         }).show(activity.supportFragmentManager, "")
     }
@@ -470,14 +471,19 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
 
-    fun addPOI(poi: POI) {
-        map.map.addMarker(makeMarkerOption(poi)!!).let {
-            poiMarkers.add(it)
-            it.`object` = poi
-            it.selected = true
-            listener?.onPOIMarkerSelected(it)
-        }
+    fun addPOI(poi: POI): Marker {
         pois.add(poi)
+        return map.map.addMarker(makeMarkerOption(poi)!!).apply {
+            poiMarkers.add(this)
+            `object` = poi
+            val isHidden = hiddenPOITypes.any { it.uuid == poi.poiTypeUUID }
+            if (isHidden) {
+                isVisible = false
+            } else {
+                selected = true
+                listener?.onPOIMarkerSelected(this)
+            }
+        }
     }
 
     fun removeSelectedPOIMarker() {
