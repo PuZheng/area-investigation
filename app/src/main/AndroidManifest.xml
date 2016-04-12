@@ -18,6 +18,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:launchMode="singleTop"
         android:theme="@style/AppTheme">
         <service android:name="com.amap.api.location.APSService"/>
 
@@ -44,17 +45,26 @@
         </activity>
         <activity
             android:name=".CreateRegionActivity"
-            android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/create_region"
-            android:parentActivityName=".RegionListActivity"/>
+            android:parentActivityName=".RegionListActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".EditRegionActivity"
             android:label="@string/title_activity_edit_area"
+            android:launchMode="singleTop"
             android:parentActivityName=".RegionListActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.puzheng.area_investigation.RegionListActivity"/>
+        </activity>
+        <activity
+            android:name=".EditPOIActivity"
+            android:label="@string/title_activity_edit_poi"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.puzheng.area_investigation.EditRegionActivity"/>
         </activity>
     </application>
 

@@ -10,7 +10,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-data class Region(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date, var updated: Date? = null) : Parcelable {
+data class Region(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date,
+                  var updated: Date? = null) : Parcelable {
     class Model : BaseColumns {
 
         companion object {

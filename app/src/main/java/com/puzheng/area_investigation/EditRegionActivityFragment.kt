@@ -53,10 +53,6 @@ private enum class MarkerType {
  */
 class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
-    val region: Region
-        get() = originRegion
-
-    lateinit private var originRegion: Region
     lateinit private var hotCopyRegion: Region // 用于保存编辑状态下的区域信息
     private val outlineMarkerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
@@ -123,7 +119,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     private fun enterOutlineEditMode() {
         // 编辑边界模式
-        hotCopyRegion = originRegion.copy()
+        hotCopyRegion = listener?.region!!.copy()
 
         outlineMarkers.forEach {
             it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerEditModeBitmap))
@@ -186,7 +182,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     private fun enterDefaultEditMode() {
         // 默认模式下，只能选择信息点，不能做出任何实际的修改
-        hotCopyRegion = originRegion.copy()
+        hotCopyRegion = listener?.region!!.copy()
 
         outlineMarkers.forEach {
             it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerBitmap))
@@ -270,7 +266,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         map.onCreate(savedInstanceState)
-        originRegion = activity.intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
+
         // 不要被SET迷惑，这里实际的意义是GET到地图的onLocationChangeListener
         map.map.setLocationSource(object : LocationSource {
             override fun deactivate() {
@@ -289,7 +285,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         })
         map.map.uiSettings.isMyLocationButtonEnabled = true
 
-        RegionStore.with(activity).getPOIList(originRegion) successUi  {
+        RegionStore.with(activity).getPOIList(listener?.region!!) successUi  {
             it?.forEach {
                 pois.add(it)
             }
@@ -397,6 +393,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         fun onMapLongClick()
         fun onOutlineMarkerSelected(position: LatLng?)
         fun onPOIMarkerSelected(marker: Marker?)
+        var region: Region
     }
 
     fun deleteVertex(vertex: LatLng) {
@@ -412,7 +409,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     fun saveOutline(afterSaving: () -> Unit) {
         ConfirmSaveRegionOutlineDialog(hotCopyRegion, {
-            originRegion = hotCopyRegion
+            listener?.region = hotCopyRegion
             afterSaving()
         }).show(activity.supportFragmentManager, "")
     }
@@ -427,7 +424,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun restoreOutline() {
-        hotCopyRegion = originRegion
+        hotCopyRegion = listener?.region!!
         map.map.setupOutline()
     }
 
@@ -503,7 +500,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         moveCamera(
                 CameraUpdateFactory.newLatLngBounds(
                         LatLngBounds.Builder().apply {
-                            originRegion.outline.forEach { include(it) }
+                            listener?.region!!.outline.forEach { include(it) }
                             pois.forEach { include(it.latLng) }
                         }.build(), (8 * pixelsPerDp).toInt()))
     }
@@ -595,7 +592,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
 
     private fun AMap.setupOutline() {
-        val region = if (editMode == EditMode.EDIT_OUTLINE) hotCopyRegion else originRegion
+        val region = if (editMode == EditMode.EDIT_OUTLINE) hotCopyRegion else listener?.region!!
         outlinePolygon?.remove()
         outlinePolygon = addPolygon(region.outline.toTypedArray())
         outlineMarkers.apply {

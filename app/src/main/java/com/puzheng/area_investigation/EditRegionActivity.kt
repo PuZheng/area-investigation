@@ -2,9 +2,11 @@ package com.puzheng.area_investigation
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.Snackbar
 import android.support.v4.content.ContextCompat
@@ -123,7 +125,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
     }
 
-    lateinit private var region: Region
+    override lateinit var region: Region
 
     private val permissionRequestHandlerMap: MutableMap<String, () -> Unit> = mutableMapOf()
 
@@ -159,6 +161,11 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        region = if (savedInstanceState != null) {
+            savedInstanceState.getParcelable(RegionListActivity.TAG_REGION)!!
+        } else {
+            intent.getParcelableExtra<Region>(RegionListActivity.TAG_REGION)
+        }
         setContentView(R.layout.activity_edit_area)
         Logger.init("EditAreaActivity")
         setSupportActionBar(toolbar)
@@ -170,14 +177,14 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             }
 
         }
-        region = intent.getParcelableExtra<Region>(RegionListActivity.TAG_AREA)
         updateContent()
         design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
             fragmentEditRegion.removeSelectedPOIMarker()
             onPOIMarkerSelected(null)
         }
         design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
-            toast("尚未实现")
+            startActivity(Intent(this, EditPOIActivity::class.java).apply {
+            })
         }
         design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
 
@@ -211,6 +218,12 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 }
             })
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        Logger.v("save instance state")
+        outState?.putParcelable(RegionListActivity.TAG_REGION, region)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -273,8 +286,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             true
         }
         R.id.action_show_stat -> {
-            // 注意，一定要选取修改后的区域（即保存在fragmentEditRegion的区域信息）
-            RegionStatDialogFragment(fragmentEditRegion.region).show(supportFragmentManager, "")
+            RegionStatDialogFragment(region).show(supportFragmentManager, "")
             true
         }
         R.id.action_filter -> {
@@ -290,10 +302,6 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         supportActionBar?.title = region.name
     }
 
-    companion object {
-        val TAG_AREA_ID = "AREA_ID"
-
-    }
 
     fun addPOI(poiType: POIType) {
         permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION] = {

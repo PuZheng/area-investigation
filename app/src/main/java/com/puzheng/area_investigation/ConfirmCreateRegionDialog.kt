@@ -42,7 +42,7 @@ class ConfirmCreateRegionDialog(val name: String, val latLngList: List<LatLng>) 
                     } then {
                         areaStore.getArea(it) successUi {
                             val intent = Intent(context, EditRegionActivity::class.java)
-                            intent.putExtra(RegionListActivity.TAG_AREA, it)
+                            intent.putExtra(RegionListActivity.TAG_REGION, it)
                             startActivity(intent)
                             activity.finish()
                         }
