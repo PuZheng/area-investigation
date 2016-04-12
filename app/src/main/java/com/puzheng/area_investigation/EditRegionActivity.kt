@@ -108,8 +108,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                 mode?.menuInflater?.inflate(R.menu.context_menu_edit_area_outline, menu)
-                fab?.hide()
                 fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.EDIT_OUTLINE
+                fab?.visibility = View.GONE
                 return true
             }
 
@@ -117,7 +117,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 editOutlineActionMode = null
                 fragmentEditRegion.restoreOutline()
                 fragmentEditRegion.editMode = EditRegionActivityFragment.Companion.EditMode.DEFAULT
-                fab?.show()
+                fab?.visibility = View.VISIBLE
             }
         })
 
