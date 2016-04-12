@@ -191,7 +191,10 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerBitmap))
             it.isDraggable = true
         }
-        poiMarkers.forEach { it.isVisible = true }
+        poiMarkers.forEach {
+            val poi = it.`object` as POI
+            it.isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
+        }
         selectedPOIMarker?.selected = false
         listener?.onPOIMarkerSelected(null)
 
@@ -221,7 +224,10 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             it.setIcon(BitmapDescriptorFactory.fromBitmap(outlineMarkerBitmap))
             it.isDraggable = true
         }
-        poiMarkers.forEach { it.isVisible = true }
+        poiMarkers.forEach {
+            val poi = it.`object` as POI
+            it.isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
+        }
         map.map.apply {
             setOnMapLongClickListener(null)
             setOnMarkerClickListener(null)
