@@ -48,6 +48,7 @@
             android:label="@string/create_region"
             android:parentActivityName=".RegionListActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+        <!--注意!!!launchMode必须是singleTop, 否则每次从EditPOIActivity返回的时候，都要重新创建整个Activity-->
         <activity
             android:name=".EditRegionActivity"
             android:label="@string/title_activity_edit_area"
