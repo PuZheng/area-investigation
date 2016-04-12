@@ -52,6 +52,8 @@ private enum class MarkerType {
  */
 class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
+    val region: Region
+        get() = originRegion
 
     lateinit private var originRegion: Region
     lateinit private var hotCopyRegion: Region // 用于保存编辑状态下的区域信息
