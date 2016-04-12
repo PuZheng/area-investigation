@@ -85,7 +85,10 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         }
 
         editOutlineActionMode = startSupportActionMode(object : ActionMode.Callback {
-            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
+            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                mode?.setTitle(R.string.editing_outline)
+                return false
+            }
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?) = when (item?.itemId) {
                 R.id.action_delete -> {
@@ -182,7 +185,10 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
 
             poiRelocateActionMode = startSupportActionMode(object : ActionMode.Callback {
-                override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
+                override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+                    mode?.setTitle(R.string.poi_relocating)
+                    return false
+                }
 
                 override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?) = when (item?.itemId) {
                     R.id.action_submit -> {
