@@ -270,7 +270,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             true
         }
         R.id.action_show_stat -> {
-            RegionStatDialogFragment(region).show(supportFragmentManager, "")
+            // 注意，一定要选取修改后的区域（即保存在fragmentEditRegion的区域信息）
+            RegionStatDialogFragment(fragmentEditRegion.region).show(supportFragmentManager, "")
             true
         }
         R.id.action_filter -> {

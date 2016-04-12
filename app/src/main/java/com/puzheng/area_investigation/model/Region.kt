@@ -52,7 +52,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     /**
      * 计算区域面积， 参考http://www.mathopenref.com/heronsformula.html
      */
-    public val area: Double
+    val area: Double
         get() = (1..outline.size - 2).map {
             val a = AMapUtils.calculateLineDistance(outline[it], outline[0])
             val b = AMapUtils.calculateLineDistance(outline[it + 1], outline[0])
