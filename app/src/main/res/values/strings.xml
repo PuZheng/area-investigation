@@ -41,4 +41,6 @@
     <string name="poi_location_modified">信息点位置已修改</string>
     <string name="poi_relocating">正在重新定位信息点</string>
     <string name="editing_outline">正在编辑边界</string>
+    <string name="i_see">知道了</string>
+    <string name="create_hidden_poi">新创建的信息点类型已经被隐藏，请在过滤器中显示该类型信息点</string>
 </resources>
