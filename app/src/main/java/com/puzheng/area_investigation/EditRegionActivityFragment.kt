@@ -53,6 +53,9 @@ private enum class MarkerType {
  */
 class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
+    val selectedPOI: POI? by lazy {
+        selectedPOIMarker?.`object` as POI
+    }
     lateinit private var hotCopyRegion: Region // 用于保存编辑状态下的区域信息
     private val outlineMarkerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
@@ -619,5 +622,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             }
         }
     }
+
 
 }

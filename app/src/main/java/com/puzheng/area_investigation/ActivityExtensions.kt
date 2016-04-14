@@ -10,6 +10,7 @@ import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.DisplayMetrics
+import android.view.View
 import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
 
@@ -49,3 +50,5 @@ fun Activity.assertPermission(permission: String, requestCode: Int) = promiseOnU
 }
 
 fun <T : Fragment?> AppCompatActivity.findFragmentById(id: Int) = supportFragmentManager.findFragmentById(id) as T
+
+fun <T : View?> Activity.findView(id: Int) = findViewById(id) as T
