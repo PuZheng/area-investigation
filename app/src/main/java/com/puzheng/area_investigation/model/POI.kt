@@ -1,17 +1,40 @@
 package com.puzheng.area_investigation.model
 
+import android.content.ContentValues
+import android.os.Environment
 import android.os.Parcel
 import android.os.Parcelable
-
-import android.content.ContentValues
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
-import com.puzheng.area_investigation.getString
+import com.orhanobut.logger.Logger
+import com.puzheng.area_investigation.MyApplication
+import nl.komponents.kovenant.task
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
 data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val latLng: LatLng, val created: Date,
                val updated: Date?=null) : Parcelable {
+
+    val dir: File by lazy {
+        File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName), "pois/$id")
+    }
+
+    val dataFile: File by lazy {
+        File(dir, "data.json")
+    }
+
+    fun saveData(s: String) = task {
+        Logger.json(s)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        if (!dataFile.exists()) {
+            dataFile.createNewFile()
+        }
+        dataFile.writeText(s)
+    }
+
     class Model {
         companion object {
 
