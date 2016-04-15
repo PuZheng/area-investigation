@@ -9,13 +9,9 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import android.util.DisplayMetrics
 import android.view.View
 import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
-
-val Activity.pixelsPerDp: Double
-    get() = resources.displayMetrics.densityDpi.toDouble() / DisplayMetrics.DENSITY_DEFAULT
 
 fun Activity.loadBitmap(resId: Int): Bitmap {
     val canvas = Canvas()

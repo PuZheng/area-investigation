@@ -6,6 +6,7 @@ import android.os.Parcelable
 import android.content.ContentValues
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
+import com.puzheng.area_investigation.getString
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -73,6 +74,11 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
             override fun newArray(size: Int): Array<POI?> {
                 return arrayOfNulls(size)
             }
+        }
+
+        fun decodeLatLng(s: String): LatLng {
+            val (lat, lng) = s.split(",").map { it.toDouble() }
+            return LatLng(lat, lng)
         }
     }
 }

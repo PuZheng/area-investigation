@@ -1,6 +1,7 @@
 package com.puzheng.area_investigation
 
 import android.content.Context
+import android.util.DisplayMetrics
 import android.widget.Toast
 import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
@@ -9,6 +10,9 @@ import com.orhanobut.logger.Logger
 import nl.komponents.kovenant.deferred
 import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
+
+val Context.pixelsPerDp: Double
+    get() = resources.displayMetrics.densityDpi.toDouble() / DisplayMetrics.DENSITY_DEFAULT
 
 fun Context.openReadableFile(dir: String, type: String? = null) = File(
         (if (isExternalStorageReadable) getExternalFilesDir(type).absolutePath

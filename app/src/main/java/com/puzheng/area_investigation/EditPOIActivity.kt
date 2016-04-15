@@ -31,6 +31,7 @@ class EditPOIActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Logger.init("EditPOIActivity")
         setContentView(R.layout.activity_edit_poi)
         setSupportActionBar(findView<Toolbar>(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -65,7 +66,9 @@ class EditPOIActivity : AppCompatActivity() {
                 }.filter {
                     it != null
                 }.forEach {
-                    container.addView(it!!.view)
+                    container.addView(it!!.view.apply {
+                        Logger.v(toString())
+                    })
                 }
             }
         }
