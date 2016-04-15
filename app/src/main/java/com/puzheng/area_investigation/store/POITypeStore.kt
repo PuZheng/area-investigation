@@ -7,6 +7,8 @@ import com.puzheng.area_investigation.copyTo
 import com.puzheng.area_investigation.model.POIType
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
+import nl.komponents.kovenant.then
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
@@ -40,6 +42,24 @@ class POITypeStore private constructor(val context: Context) {
                     writeText(JSONObject().apply {
                         put("uuid", UUID.randomUUID().toString())
                         put("name", it.second)
+                        val jsonArray = JSONArray()
+                        jsonArray.put(JSONObject().apply field@ {
+                            this@field.put("name", "字段一")
+                            this@field.put("type", "STRING")
+                        })
+                        jsonArray.put(JSONObject().apply field@ {
+                            this@field.put("name", "字段二")
+                            this@field.put("type", "TEXT")
+                        })
+                        jsonArray.put(JSONObject().apply field@ {
+                            this@field.put("name", "字段三")
+                            this@field.put("type", "IMAGES")
+                        })
+                        jsonArray.put(JSONObject().apply field@ {
+                            this@field.put("name", "字段四")
+                            this@field.put("type", "VIDEO")
+                        })
+                        put("fields", jsonArray)
                     }.toString())
                 }
                 context.assets.open("icons/ic_${it.first}.png").copyTo(File(this, "ic.png"))
@@ -56,8 +76,19 @@ class POITypeStore private constructor(val context: Context) {
                 if (configFile?.exists() ?: false) {
                     try {
                         val json = JSONObject(configFile!!.readText())
-                        POIType(json.getString("uuid"), json.getString("name"), it.name)
+                        val jsonArray = json.getJSONArray("fields")
+
+                        POIType(json.getString("uuid"), json.getString("name"),
+                                (0..jsonArray.length() - 1).map {
+                                    val o = jsonArray.getJSONObject(it)
+                                    POIType.Field(o.getString("name"),
+                                            POIType.FieldType.valueOf(o.getString("type").toUpperCase()),
+                                            null)
+                                }, it.name)
                     } catch (e: JSONException) {
+                        Logger.e(e.toString())
+                        null
+                    } catch (e: IllegalArgumentException) {
                         Logger.e(e.toString())
                         null
                     }
@@ -71,4 +102,8 @@ class POITypeStore private constructor(val context: Context) {
             }
             // TODO if met a unzipped zip file (no corresponding dir or phased out), zip it
         }
+
+    fun get(uuid: String) = list then {
+        it?.find { it.uuid == uuid }
+    }
 }

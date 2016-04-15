@@ -1,13 +1,39 @@
 package com.puzheng.area_investigation.model
 
 import android.content.ContentValues
+import android.os.Environment
+import android.os.Parcel
+import android.os.Parcelable
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
+import com.orhanobut.logger.Logger
+import com.puzheng.area_investigation.MyApplication
+import nl.komponents.kovenant.task
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
 data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val latLng: LatLng, val created: Date,
-               val updated: Date?=null) {
+               val updated: Date?=null) : Parcelable {
+
+    val dir: File by lazy {
+        File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName), "pois/$id")
+    }
+
+    val dataFile: File by lazy {
+        File(dir, "data.json")
+    }
+
+    fun saveData(s: String) = task {
+        Logger.json(s)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        if (!dataFile.exists()) {
+            dataFile.createNewFile()
+        }
+        dataFile.writeText(s)
+    }
 
     class Model {
         companion object {
@@ -47,11 +73,35 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
         }
     }
 
+    constructor(source: Parcel): this(source.readSerializable() as Long?, source.readString(), source.readLong(), source.readParcelable<LatLng>(LatLng::class.java.classLoader), source.readSerializable() as Date, source.readSerializable() as Date?)
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(dest: Parcel?, flags: Int) {
+        dest?.writeSerializable(id)
+        dest?.writeString(poiTypeUUID)
+        dest?.writeLong(regionId)
+        dest?.writeParcelable(latLng, 0)
+        dest?.writeSerializable(created)
+        dest?.writeSerializable(updated)
+    }
+
     companion object {
+        @JvmField final val CREATOR: Parcelable.Creator<POI> = object : Parcelable.Creator<POI> {
+            override fun createFromParcel(source: Parcel): POI {
+                return POI(source)
+            }
+
+            override fun newArray(size: Int): Array<POI?> {
+                return arrayOfNulls(size)
+            }
+        }
+
         fun decodeLatLng(s: String): LatLng {
             val (lat, lng) = s.split(",").map { it.toDouble() }
             return LatLng(lat, lng)
         }
     }
-
 }

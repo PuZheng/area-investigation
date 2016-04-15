@@ -184,6 +184,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         }
         design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
             startActivity(Intent(this, EditPOIActivity::class.java).apply {
+                putExtra(EditPOIActivity.TAG_POI, fragmentEditRegion.selectedPOI)
             })
         }
         design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
