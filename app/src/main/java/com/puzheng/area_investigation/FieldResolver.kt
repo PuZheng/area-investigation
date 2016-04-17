@@ -1,6 +1,9 @@
 package com.puzheng.area_investigation
 
+import android.support.design.widget.TextInputEditText
+import android.support.design.widget.TextInputLayout
 import android.view.View
+import android.widget.EditText
 import com.orhanobut.logger.Logger
 import com.puzheng.area_investigation.model.POI
 import org.json.JSONArray
@@ -15,12 +18,19 @@ interface FieldResolver {
 }
 
 class StringFieldResolver(val name: String) : FieldResolver {
+
+    private val editText: TextInputEditText by lazy {
+        view.findView<TextInputEditText>(R.id.editText)
+    }
+
     override fun populate(jsonObject: JSONObject, poi: POI) {
-        jsonObject.put(name, "string field value")
+        jsonObject.put(name, editText.text)
     }
 
     override val view: View by lazy {
-        View.inflate(MyApplication.context, R.layout.poi_field_string, null)
+        View.inflate(MyApplication.context, R.layout.poi_field_string, null).apply {
+            (this as TextInputLayout).hint = "请输入$name"
+        }
     }
 
     private var text: String? = null
@@ -28,6 +38,7 @@ class StringFieldResolver(val name: String) : FieldResolver {
     override fun bind(value: Any?): FieldResolver {
         Logger.v("bind with `$value`")
         text = value as String?
+        editText.setText(value)
         return this
     }
 }
