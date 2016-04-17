@@ -13,11 +13,12 @@ interface FieldResolver {
 
     fun bind(value: Any?): FieldResolver
     val view: View
-
     fun populate(jsonObject: JSONObject, poi: POI)
 }
 
-class StringFieldResolver(val name: String) : FieldResolver {
+open class StringFieldResolver(val name: String) : FieldResolver {
+
+    open protected val layoutId = R.layout.poi_field_string
 
     private val editText: TextInputEditText by lazy {
         view.findView<TextInputEditText>(R.id.editText)
@@ -28,7 +29,7 @@ class StringFieldResolver(val name: String) : FieldResolver {
     }
 
     override val view: View by lazy {
-        View.inflate(MyApplication.context, R.layout.poi_field_string, null).apply {
+        View.inflate(MyApplication.context, layoutId, null).apply {
             (this as TextInputLayout).hint = "请输入$name"
         }
     }
@@ -43,22 +44,8 @@ class StringFieldResolver(val name: String) : FieldResolver {
     }
 }
 
-class TextFieldResolver(val name: String) : FieldResolver {
-    override fun populate(jsonObject: JSONObject, poi: POI) {
-        jsonObject.put(name, "text field value")
-    }
-
-    override val view: View by lazy {
-        View.inflate(MyApplication.context, R.layout.poi_field_text, null)
-    }
-
-    private var text: String? = null
-
-    override fun bind(value: Any?): FieldResolver {
-        Logger.v("bind with `$value`")
-        text = value as String?
-        return this
-    }
+class TextFieldResolver(name: String) : StringFieldResolver(name) {
+    override val layoutId = R.layout.poi_field_text
 }
 
 class ImagesFieldResolver(val name: String) : FieldResolver {
