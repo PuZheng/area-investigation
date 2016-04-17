@@ -9,7 +9,6 @@
         android:id="@+id/editText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="asd"
         android:imeActionId="@+id/next"
         android:imeActionLabel="@string/next"
         android:imeOptions="actionUnspecified"
