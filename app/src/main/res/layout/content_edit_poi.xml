@@ -11,7 +11,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.puzheng.area_investigation.EditPOIActivity"
+    tools:context="com.puzheng.region_investigation.EditPOIActivity"
     tools:showIn="@layout/activity_edit_poi">
 
     <TableLayout

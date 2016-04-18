@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.puzheng.area_investigation"
+        applicationId "com.puzheng.region_investigation"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1

@@ -1,4 +1,4 @@
-package com.puzheng.area_investigation;
+package com.puzheng.region_investigation;
 
 import org.junit.Test;
 
