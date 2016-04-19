@@ -1,8 +1,13 @@
 package com.puzheng.region_investigation
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -21,13 +26,17 @@ import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.successUi
 import org.json.JSONObject
+import java.io.File
 import java.text.SimpleDateFormat
+import java.util.*
 
 class EditPOIActivity : AppCompatActivity() {
 
     companion object {
         const val TAG_POI = "TAG_POI"
         const val REQUEST_WRITE_EXTERNAL_STORAGE = 100
+        const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = 101
+        const val SELECT_IMAGE = 1
     }
 
     private var poi: POI? = null
@@ -73,7 +82,7 @@ class EditPOIActivity : AppCompatActivity() {
             poiType!!.extractPOIRawData(poi!!) successUi {
                 data ->
                 fieldResolvers = poiType.fields.map {
-                    resolve(it)?.bind(data?.get(it.name)).apply {
+                    resolve(it)?.apply {
                         if (this == null) {
                             toast("无法识别的字段, $it")
                         }
@@ -84,11 +93,14 @@ class EditPOIActivity : AppCompatActivity() {
                     it!!
                 }
                 fieldResolvers.forEach {
-                    container.addView(it.view)
+                    container.addView(it.bind(data?.get(it.name)))
                 }
             }
         }
     }
+
+    private var outputFileUri: Uri? = null
+    private val permisssionHandlers = mutableMapOf<Int, () -> Unit>()
 
     private fun resolve(field: POIType.Field) = when (field.type) {
         POIType.FieldType.STRING ->
@@ -96,7 +108,50 @@ class EditPOIActivity : AppCompatActivity() {
         POIType.FieldType.TEXT ->
             TextFieldResolver(field.name)
         POIType.FieldType.IMAGES ->
-            ImagesFieldResolver(field.name)
+
+            ImagesFieldResolver(field.name, {
+                permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
+                    val captureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    val cameraIntents = packageManager.queryIntentActivities(captureIntent, 0).map {
+                        val packageName = it.activityInfo.packageName
+                        Intent(captureIntent).apply {
+                            intent.component = ComponentName(it.activityInfo.packageName, it.activityInfo.name)
+                            intent.`package` = packageName
+                            //                            poi!!.dir.mkdirs()
+                            //                            outputFileUri = Uri.fromFile(File.createTempFile(
+                            //                                    SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
+                            //                                    ".jpg",
+                            //                                    poi!!.dir
+                            //                            ))
+
+                            val mediaStorageDir = File(Environment.getExternalStoragePublicDirectory(
+                                    Environment.DIRECTORY_PICTURES), "MyCameraApp")
+                            mediaStorageDir.mkdirs()
+                            outputFileUri = Uri.fromFile(File.createTempFile(
+                                    SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
+                                    ".jpg",
+                                    mediaStorageDir
+                            ).apply {
+                                setWritable(true, false)
+                            })
+                            Logger.v(outputFileUri.toString())
+                            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+                            intent.flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        }
+                    }
+                    val galleryIntent = Intent()
+                    galleryIntent.type = "image/*"
+                    galleryIntent.action = Intent.ACTION_GET_CONTENT
+                    val chooserIntent = Intent.createChooser(galleryIntent, "选择图片来源")
+                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS,
+                            cameraIntents.toTypedArray())
+                    startActivityForResult(chooserIntent, SELECT_IMAGE)
+                }
+                // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
+                assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE) successUi {
+                    permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
+                }
+            })
         POIType.FieldType.VIDEO ->
             VideoFieldResolver(field.name)
         else ->
@@ -148,6 +203,32 @@ class EditPOIActivity : AppCompatActivity() {
                         }
                     }
                 }
+            REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    collectData() then {
+                        permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
+                    }
+                }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == SELECT_IMAGE) {
+            if (resultCode == RESULT_OK) {
+                val isCamera = (data == null ||
+                        data.action == android.provider.MediaStore.ACTION_IMAGE_CAPTURE ||
+                        data.action == "inline-data")
+                if (!isCamera) {
+                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
+                }
+                (fieldResolvers.find {
+                    it is ImagesFieldResolver
+                } as ImagesFieldResolver).add(outputFileUri!!.path)
+            } else if (resultCode == RESULT_CANCELED) {
+                Logger.v(outputFileUri!!.path)
+                File(outputFileUri!!.path).delete()
+            }
         }
     }
 }
