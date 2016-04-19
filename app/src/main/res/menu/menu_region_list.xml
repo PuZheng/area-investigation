@@ -2,12 +2,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.puzheng.region_investigation.RegionListActivity">
-
     <item
-        android:id="@+id/action_submit"
+        android:id="@+id/action_settings"
         android:orderInCategory="100"
-        android:title="@string/action_ok"
-        android:icon="@drawable/ic_check_circle_white_24dp"
-        app:showAsAction="always" />
-
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
 </menu>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="com.puzheng.region_investigation.CreateRegionActivity.Args" />
+
+        <variable
+            name="args"
+            type="Args" />
+    </data>
+
+    <RelativeLayout
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="com.puzheng.region_investigation.CreateRegionActivity">
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/appBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/AppTheme.AppBarOverlay">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:title="创建重点区域"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorPrimary"
+                app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+        </android.support.design.widget.AppBarLayout>
+
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:layout_below="@id/appBar"
+            android:paddingBottom="48dp">
+
+            <com.puzheng.region_investigation.NonSwipeableViewPager
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </ScrollView>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_alignParentBottom="true"
+            android:background="@android:color/white">
+
+            <Button
+                android:id="@+id/prev"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16sp"
+                android:layout_marginStart="16sp"
+                android:background="?android:attr/selectableItemBackground"
+                android:drawableLeft="@drawable/ic_keyboard_arrow_left_grey_400_18dp"
+                android:drawableStart="@drawable/ic_keyboard_arrow_left_grey_400_18dp"
+                android:enabled="@{args.hasPrevious}"
+                android:paddingEnd="5sp"
+                android:paddingLeft="0sp"
+                android:paddingRight="5sp"
+                android:paddingStart="0sp"
+                android:text="@string/prev"
+                android:textColor="@android:color/secondary_text_light"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/next"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginEnd="16sp"
+                android:layout_marginRight="16sp"
+                android:background="?android:attr/selectableItemBackground"
+                android:drawableEnd="@drawable/ic_keyboard_arrow_right_grey_400_18dp"
+                android:drawableRight="@drawable/ic_keyboard_arrow_right_grey_400_18dp"
+                android:paddingEnd="5sp"
+                android:paddingLeft="5sp"
+                android:paddingRight="5sp"
+                android:paddingStart="5sp"
+                android:text="@{args.hasNext? @string/next: @string/finish}"
+                android:textColor="@android:color/secondary_text_light"
+                android:textSize="16sp"
+                android:enabled="@{args.hasNext}"/>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</layout>

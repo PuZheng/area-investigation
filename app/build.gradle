@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.puzheng.area_investigation"
+        applicationId "com.puzheng.region_investigation"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
@@ -41,13 +41,13 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     kapt 'com.android.databinding:compiler:1.0-rc4'
-    compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.android.support:design:23.2.1'
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:design:23.3.0'
     compile 'com.github.orhanobut:logger:1.12'
-    compile 'com.android.support:support-v4:23.2.1'
-    compile 'com.android.support:recyclerview-v7:23.2.1'
+    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:recyclerview-v7:23.3.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.bignerdranch.android:recyclerview-multiselect:+'
+    compile 'com.bignerdranch.android:recyclerview-multiselect:0.2'
     compile files('libs/AMap_Location_V2.4.0_20160308.jar')
     compile files('libs/AMap_3DMap_V3.2.1_20160225.jar')
     compile 'nl.komponents.kovenant:kovenant:3.2.2'
