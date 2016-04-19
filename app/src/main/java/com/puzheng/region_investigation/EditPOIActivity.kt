@@ -12,6 +12,7 @@ import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
+import android.util.Log
 import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
@@ -36,6 +37,7 @@ class EditPOIActivity : AppCompatActivity() {
         const val TAG_POI = "TAG_POI"
         const val REQUEST_WRITE_EXTERNAL_STORAGE = 100
         const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = 101
+        const val REQUEST_CAMERA = 102
         const val SELECT_IMAGE = 1
     }
 
@@ -104,48 +106,40 @@ class EditPOIActivity : AppCompatActivity() {
 
     private fun resolve(field: POIType.Field) = when (field.type) {
         POIType.FieldType.STRING ->
-            StringFieldResolver(field.name)
+            StringFieldResolver(field.name, this)
         POIType.FieldType.TEXT ->
-            TextFieldResolver(field.name)
+            TextFieldResolver(field.name, this)
         POIType.FieldType.IMAGES ->
-
-            ImagesFieldResolver(field.name, {
+            ImagesFieldResolver(field.name, poi!!, {
                 permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
-                    val captureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    val cameraIntents = packageManager.queryIntentActivities(captureIntent, 0).map {
-                        val packageName = it.activityInfo.packageName
-                        Intent(captureIntent).apply {
-                            intent.component = ComponentName(it.activityInfo.packageName, it.activityInfo.name)
-                            intent.`package` = packageName
-                            //                            poi!!.dir.mkdirs()
-                            //                            outputFileUri = Uri.fromFile(File.createTempFile(
-                            //                                    SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
-                            //                                    ".jpg",
-                            //                                    poi!!.dir
-                            //                            ))
-
-                            val mediaStorageDir = File(Environment.getExternalStoragePublicDirectory(
-                                    Environment.DIRECTORY_PICTURES), "MyCameraApp")
-                            mediaStorageDir.mkdirs()
-                            outputFileUri = Uri.fromFile(File.createTempFile(
-                                    SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
-                                    ".jpg",
-                                    mediaStorageDir
-                            ).apply {
-                                setWritable(true, false)
-                            })
-                            Logger.v(outputFileUri.toString())
-                            intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-                            intent.flags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    permisssionHandlers[REQUEST_CAMERA] = {
+                        outputFileUri = Uri.fromFile(File.createTempFile(
+                                SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
+                                ".jpg",
+                                poi!!.dir
+                        ).apply {
+                            setWritable(true, false)
+                        })
+                        Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                            putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri)
+                            if (resolveActivity(packageManager) != null) {
+                                startActivityForResult(this, SELECT_IMAGE)
+                            }
                         }
+
+                        // TODO select from galleries
+//                        val galleryIntent = Intent()
+//                        galleryIntent.type = "image/*"
+//                        galleryIntent.action = Intent.ACTION_GET_CONTENT
+//                        val chooserIntent = Intent.createChooser(galleryIntent, "选择图片来源")
+//                        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS,
+//                                cameraIntents.toTypedArray())
+//                        startActivityForResult(chooserIntent, SELECT_IMAGE)
                     }
-                    val galleryIntent = Intent()
-                    galleryIntent.type = "image/*"
-                    galleryIntent.action = Intent.ACTION_GET_CONTENT
-                    val chooserIntent = Intent.createChooser(galleryIntent, "选择图片来源")
-                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS,
-                            cameraIntents.toTypedArray())
-                    startActivityForResult(chooserIntent, SELECT_IMAGE)
+                    assertPermission(Manifest.permission.CAMERA, REQUEST_CAMERA).successUi {
+                        permisssionHandlers[REQUEST_CAMERA]?.invoke()
+                    }
+
                 }
                 // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
                 assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE) successUi {
@@ -153,7 +147,7 @@ class EditPOIActivity : AppCompatActivity() {
                 }
             })
         POIType.FieldType.VIDEO ->
-            VideoFieldResolver(field.name)
+            VideoFieldResolver(field.name, this)
         else ->
             null
     }
@@ -208,6 +202,13 @@ class EditPOIActivity : AppCompatActivity() {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     collectData() then {
                         permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
+                    }
+                }
+            REQUEST_CAMERA ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    collectData() then {
+                        permisssionHandlers[REQUEST_CAMERA]?.invoke()
                     }
                 }
         }

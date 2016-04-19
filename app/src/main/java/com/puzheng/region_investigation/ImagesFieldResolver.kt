@@ -1,52 +1,55 @@
 package com.puzheng.region_investigation
 
-import android.content.ComponentName
-import android.content.Intent
-import android.net.Uri
-import android.provider.MediaStore
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
+import com.squareup.picasso.Picasso
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
-class ImagesFieldResolver(override val name: String, val onClickAddImage: () -> Unit) : FieldResolver {
+class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAddImage: () -> Unit) : FieldResolver {
+
+    private val picasso: Picasso by lazy {
+        Picasso.with(MyApplication.context)
+    }
 
     override fun populate(jsonObject: JSONObject, poi: POI) {
         jsonObject.put(name, JSONArray().apply {
-            put("1.jpg")
-            put("2.jpg")
-            put("3.jpg")
-            put("4.jpg")
-            put("5.jpg")
+            images.forEach {
+                put(it)
+            }
         })
     }
 
     private val view: View by lazy {
-        View.inflate(MyApplication.context, R.layout.poi_field_images, null)
+        View.inflate(MyApplication.context, R.layout.poi_field_images, null).apply {
+            findView<TextView>(R.id.textViewFieldName).text = name
+        }
     }
 
-    private var images: List<String>? = null
+    private var images = mutableListOf<String>()
 
     private val recyclerView: RecyclerView by lazy {
         view.findView<RecyclerView>(R.id.recyclerView)
     }
 
     override fun bind(value: Any?): View {
-        Logger.v("bind with `$value`")
+        Logger.e("bind with `$value`")
         if (value != null) {
             val jsonArray = value as JSONArray
-            images = (0..jsonArray.length() - 1).map {
-                jsonArray.getString(it)
+            (0..jsonArray.length() - 1).forEach {
+                images.add(jsonArray.getString(it))
             }
         }
         recyclerView.layoutManager = GridLayoutManager(view.context, 3)
-        recyclerView.adapter = MyRecyclerView()
-
+        recyclerView.adapter = MyRecyclerViewAdapter()
         return view
     }
 
@@ -56,18 +59,16 @@ class ImagesFieldResolver(override val name: String, val onClickAddImage: () -> 
         private const val ADD_IMAGE = 1
     }
 
-    private inner class MyRecyclerView: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    private inner class MyRecyclerViewAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
             if (position != 0) {
-
+                picasso.load(File(poi.dir, images[position - 1])).into((holder as ImageViewHolder).imageView)
             }
         }
 
-        override fun getItemCount(): Int {
-            return 1 + (images?.size ?: 0)
-        }
+        override fun getItemCount() = (1 + images.size)
 
         override fun getItemViewType(position: Int) = if (position == 0) {
             ADD_IMAGE
@@ -95,10 +96,15 @@ class ImagesFieldResolver(override val name: String, val onClickAddImage: () -> 
     }
 
     private class ImageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+        lateinit var imageView: ImageView
 
+        init {
+            imageView = view.findView(R.id.imageView)
+        }
     }
 
     fun add(path: String) {
-        Logger.v(path)
+        images.add(File(path).relativeTo(poi.dir.absoluteFile).path)
+        recyclerView.adapter.notifyDataSetChanged()
     }
 }
