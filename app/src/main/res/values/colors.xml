@@ -9,4 +9,6 @@
     <color name="colorOutlinePolyline">#1565C0</color>
     <color name="colorOutlineMarker">#1565C0</color>
     <color name="colorOutlineMarkerLighter">#1E88E5</color>
+    <color name="colorCarouselBackground">#424242</color>
+
 </resources>

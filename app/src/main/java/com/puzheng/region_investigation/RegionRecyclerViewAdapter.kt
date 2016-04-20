@@ -133,7 +133,7 @@ private class RegionViewHolder(val view: View, val multiSelector: MultiSelector,
 
     init {
         textView = view.findViewById(R.id.content) as TextView
-        imageView = view.findViewById(R.id.imageView) as ImageView
+        imageView = view.findViewById(R.id.imageButton) as ImageView
         view.setOnClickListener {
             if (!multiSelector.tapSelection(this)) {
                 listener.onClickItem(item!!)

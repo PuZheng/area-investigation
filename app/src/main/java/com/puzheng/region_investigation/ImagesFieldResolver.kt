@@ -5,7 +5,6 @@ import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.TextView
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
@@ -14,7 +13,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAddImage: () -> Unit) : FieldResolver {
+class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAddImage: () -> Unit,
+                          val onClickImage: (images: List<String>, pos: Int) -> Unit) : FieldResolver {
 
     private val picasso: Picasso by lazy {
         Picasso.with(MyApplication.context)
@@ -64,7 +64,15 @@ class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAd
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder?, position: Int) {
             if (position != 0) {
-                picasso.load(File(poi.dir, images[position - 1])).into((holder as ImageViewHolder).imageView)
+                val imageButton = (holder as ImageViewHolder).imageButton
+                val image = images[position - 1]
+                picasso.load(File(poi.dir, image)).into(imageButton)
+                imageButton.setOnClickListener {
+                    onClickImage(images.map {
+                        File(poi.dir, it).absolutePath
+                    }, position - 1)
+                }
+
             }
         }
 
@@ -96,10 +104,10 @@ class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAd
     }
 
     private class ImageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
-        lateinit var imageView: ImageView
+        lateinit var imageButton: ImageButton
 
         init {
-            imageView = view.findView(R.id.imageView)
+            imageButton = view.findView(R.id.imageButton)
         }
     }
 
