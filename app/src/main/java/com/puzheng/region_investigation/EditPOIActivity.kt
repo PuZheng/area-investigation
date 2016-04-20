@@ -111,6 +111,7 @@ class EditPOIActivity : AppCompatActivity() {
             TextFieldResolver(field.name, this)
         POIType.FieldType.IMAGES ->
             ImagesFieldResolver(field.name, poi!!, {
+                // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
                 permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
                     permisssionHandlers[REQUEST_CAMERA] = {
                         outputFileUri = Uri.fromFile(File.createTempFile(
@@ -128,23 +129,28 @@ class EditPOIActivity : AppCompatActivity() {
                         }
 
                         // TODO select from galleries
-//                        val galleryIntent = Intent()
-//                        galleryIntent.type = "image/*"
-//                        galleryIntent.action = Intent.ACTION_GET_CONTENT
-//                        val chooserIntent = Intent.createChooser(galleryIntent, "选择图片来源")
-//                        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS,
-//                                cameraIntents.toTypedArray())
-//                        startActivityForResult(chooserIntent, SELECT_IMAGE)
+                        //                        val galleryIntent = Intent()
+                        //                        galleryIntent.type = "image/*"
+                        //                        galleryIntent.action = Intent.ACTION_GET_CONTENT
+                        //                        val chooserIntent = Intent.createChooser(galleryIntent, "选择图片来源")
+                        //                        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS,
+                        //                                cameraIntents.toTypedArray())
+                        //                        startActivityForResult(chooserIntent, SELECT_IMAGE)
                     }
                     assertPermission(Manifest.permission.CAMERA, REQUEST_CAMERA).successUi {
                         permisssionHandlers[REQUEST_CAMERA]?.invoke()
                     }
 
                 }
-                // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
                 assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE) successUi {
                     permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
                 }
+            }, {
+                images, pos ->
+                startActivity(Intent(this, CarouselActivity::class.java).apply {
+                    putStringArrayListExtra(CarouselActivity.TAG_IMAGES, ArrayList(images))
+                    putExtra(CarouselActivity.TAG_POS, pos)
+                })
             })
         POIType.FieldType.VIDEO ->
             VideoFieldResolver(field.name, this)
@@ -217,12 +223,12 @@ class EditPOIActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == SELECT_IMAGE) {
             if (resultCode == RESULT_OK) {
-                val isCamera = (data == null ||
-                        data.action == android.provider.MediaStore.ACTION_IMAGE_CAPTURE ||
-                        data.action == "inline-data")
-                if (!isCamera) {
-                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
-                }
+//                val isCamera = (data == null ||
+//                        data.action == android.provider.MediaStore.ACTION_IMAGE_CAPTURE ||
+//                        data.action == "inline-data")
+//                if (!isCamera) {
+//                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
+//                }
                 (fieldResolvers.find {
                     it is ImagesFieldResolver
                 } as ImagesFieldResolver).add(outputFileUri!!.path)
