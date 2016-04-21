@@ -37,9 +37,12 @@ class EditPOIActivity : AppCompatActivity() {
         const val TAG_POI = "TAG_POI"
         const val REQUEST_WRITE_EXTERNAL_STORAGE = 100
         const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = 101
+        const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO = 102
         const val REQUEST_CAMERA = 102
-        const val SELECT_IMAGE = 1
+        const val REQUEST_VIDEO_CAPTURE = 103
+        const val SELECT_IMAGE = 998
         const val VIEW_CAROUSEL = 999
+        const val TAKE_VIDEO = 1000
     }
 
     private var poi: POI? = null
@@ -102,10 +105,12 @@ class EditPOIActivity : AppCompatActivity() {
         }
     }
 
-    private var cameraOutputFileUri: Uri? = null
+    private var photoOutputFileUri: Uri? = null
     private val permisssionHandlers = mutableMapOf<Int, () -> Unit>()
 
     private var targetImagesFieldResolver: ImagesFieldResolver? = null
+    private var videoOutputFileUri: Uri? = null
+    private var targetVideoFieldResolver: VideoFieldResolver? = null
 
     private fun resolve(field: POIType.Field) = when (field.type) {
         POIType.FieldType.STRING ->
@@ -118,14 +123,14 @@ class EditPOIActivity : AppCompatActivity() {
                 // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
                 permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
                     permisssionHandlers[REQUEST_CAMERA] = {
-                        cameraOutputFileUri = Uri.fromFile(File.createTempFile(
+                        photoOutputFileUri = Uri.fromFile(File.createTempFile(
                                 SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
                                 ".jpg",
                                 poi!!.dir
                         ))
                         Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
                             if (resolveActivity(packageManager) != null) {
-                                putExtra(MediaStore.EXTRA_OUTPUT, cameraOutputFileUri)
+                                putExtra(MediaStore.EXTRA_OUTPUT, photoOutputFileUri)
                                 targetImagesFieldResolver = fieldResolver
                                 startActivityForResult(this, SELECT_IMAGE)
                             }
@@ -155,9 +160,38 @@ class EditPOIActivity : AppCompatActivity() {
                     putStringArrayListExtra(CarouselActivity.TAG_IMAGES, ArrayList(images))
                     putExtra(CarouselActivity.TAG_POS, pos)
                 }, VIEW_CAROUSEL)
+
+
             })
         POIType.FieldType.VIDEO ->
-            VideoFieldResolver(field.name, this)
+            VideoFieldResolver(field.name, this, poi!!, {
+                fieldResolvers, path ->
+
+
+                permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO] = {
+                    permisssionHandlers[REQUEST_VIDEO_CAPTURE] = {
+                        videoOutputFileUri = Uri.fromFile(File.createTempFile(
+                                SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
+                                ".mp4",
+                                poi!!.dir
+                        ))
+                        val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+                        if (takeVideoIntent.resolveActivity(packageManager) != null) {
+                            targetVideoFieldResolver = fieldResolvers
+                            takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoOutputFileUri)
+                            startActivityForResult(takeVideoIntent, TAKE_VIDEO)
+                        }
+                    }
+                    assertPermission(Manifest.permission.CAMERA, REQUEST_VIDEO_CAPTURE).successUi {
+                        permisssionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
+                    }
+                }
+                assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO) successUi {
+                    permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
+                }
+
+
+            })
         else ->
             null
     }
@@ -221,6 +255,20 @@ class EditPOIActivity : AppCompatActivity() {
                         permisssionHandlers[REQUEST_CAMERA]?.invoke()
                     }
                 }
+            REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    collectData() then {
+                        permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
+                    }
+                }
+            REQUEST_VIDEO_CAPTURE ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    collectData() then {
+                        permisssionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
+                    }
+                }
         }
     }
 
@@ -235,17 +283,25 @@ class EditPOIActivity : AppCompatActivity() {
                     //                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
                     //                }
                     // TODO should connect with field name
-                    targetImagesFieldResolver?.add(cameraOutputFileUri!!.path)
+                    targetImagesFieldResolver?.add(File(photoOutputFileUri!!.path).relativeTo(poi!!.dir.absoluteFile).path)
                 } else if (resultCode == RESULT_CANCELED) {
-                    Logger.v(cameraOutputFileUri!!.path)
-                    File(cameraOutputFileUri!!.path).delete()
+                    Logger.v(photoOutputFileUri!!.path)
+                    File(photoOutputFileUri!!.path).delete()
                 }
             }
             VIEW_CAROUSEL -> {
                 if (resultCode == RESULT_OK) {
-                    targetImagesFieldResolver?.reset(data?.getStringArrayListExtra(CarouselActivity.TAG_IMAGES))
+                    targetImagesFieldResolver?.reset(data?.getStringArrayListExtra(CarouselActivity.TAG_IMAGES)?.map {
+                        File(it).relativeTo(poi!!.dir.absoluteFile).path
+                    })
                 }
             }
+            TAKE_VIDEO ->
+                if (resultCode == RESULT_OK) {
+                    targetVideoFieldResolver?.path = File(videoOutputFileUri!!.path).relativeTo(poi!!.dir.absoluteFile).path
+                } else if (resultCode == RESULT_CANCELED) {
+                    File(videoOutputFileUri!!.path).delete()
+                }
         }
     }
 }

@@ -12,7 +12,6 @@ import com.squareup.picasso.Picasso
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.util.*
 
 class ImagesFieldResolver(override val name: String, val poi: POI,
                           val onClickAddImage: (fieldResolver: ImagesFieldResolver) -> Unit,
@@ -113,15 +112,21 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
         }
     }
 
+    /**
+     * @param path 图片相对路径
+     */
     fun add(path: String) {
-        images.add(File(path).relativeTo(poi.dir.absoluteFile).path)
+        images.add(path)
         recyclerView.adapter.notifyDataSetChanged()
     }
 
+    /**
+     * @param images 图片相对路径列表
+     */
     fun reset(images: List<String>?) {
         this.images.clear()
         images?.forEach {
-            this.images.add(File(it).relativeTo(poi.dir.absoluteFile).path)
+            this.images.add(it)
         }
         recyclerView.adapter.notifyDataSetChanged()
     }
