@@ -1,24 +1,20 @@
 package com.puzheng.region_investigation
 
 import android.Manifest
-import android.content.ComponentName
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
+import android.os.Handler
 import android.provider.MediaStore
-import android.support.design.widget.FloatingActionButton
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.widget.Toolbar
-import android.util.Log
-import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
 import com.puzheng.region_investigation.model.POIType
@@ -38,6 +34,7 @@ class EditPOIActivity : AppCompatActivity() {
         const val REQUEST_WRITE_EXTERNAL_STORAGE = 100
         const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = 101
         const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO = 102
+        const val REQUEST_READ_EXTERNAL_STORAGE = 103
         const val REQUEST_CAMERA = 102
         const val REQUEST_VIDEO_CAPTURE = 103
         const val SELECT_IMAGE = 998
@@ -70,10 +67,21 @@ class EditPOIActivity : AppCompatActivity() {
         }
         if (poi == null && BuildConfig.DEBUG) {
             // 伪造一个信息点用于调试
-            val poiType = poiTypeStore.list.get()!![0]
-            poi = POI(1L, poiType.uuid, 1L, randomHZLatLng,
-                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-03-09 12:32:23"))
+            permisssionHandlers[REQUEST_READ_EXTERNAL_STORAGE] = {
+                    val poiType = poiTypeStore.list.get()!![0]
+                    poi = POI(1L, poiType.uuid, 1L, randomHZLatLng,
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-03-09 12:32:23"))
+                    setupView()
+            }
+//            assertPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_READ_EXTERNAL_STORAGE).successUi {
+                permisssionHandlers[REQUEST_READ_EXTERNAL_STORAGE]?.invoke()
+//            }
+        } else {
+            setupView()
         }
+    }
+
+    private fun setupView() {
         findView<TextView>(R.id.textViewCreated).text =
                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi?.created)
         poiTypeStore.get(poi!!.poiTypeUUID) then {
@@ -166,31 +174,59 @@ class EditPOIActivity : AppCompatActivity() {
         POIType.FieldType.VIDEO ->
             VideoFieldResolver(field.name, this, poi!!, {
                 fieldResolvers, path ->
-
-
-                permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO] = {
-                    permisssionHandlers[REQUEST_VIDEO_CAPTURE] = {
-                        videoOutputFileUri = Uri.fromFile(File.createTempFile(
-                                SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
-                                ".mp4",
-                                poi!!.dir
-                        ))
-                        val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
-                        if (takeVideoIntent.resolveActivity(packageManager) != null) {
-                            targetVideoFieldResolver = fieldResolvers
-                            takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoOutputFileUri)
-                            startActivityForResult(takeVideoIntent, TAKE_VIDEO)
+                if (path == null) {
+                    permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO] = {
+                        permisssionHandlers[REQUEST_VIDEO_CAPTURE] = {
+                            videoOutputFileUri = Uri.fromFile(File.createTempFile(
+                                    SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
+                                    ".mp4",
+                                    poi!!.dir
+                            ))
+                            val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+                            if (takeVideoIntent.resolveActivity(packageManager) != null) {
+                                targetVideoFieldResolver = fieldResolvers
+                                takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoOutputFileUri)
+                                startActivityForResult(takeVideoIntent, TAKE_VIDEO)
+                            }
+                        }
+                        assertPermission(Manifest.permission.CAMERA, REQUEST_VIDEO_CAPTURE).successUi {
+                            permisssionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
                         }
                     }
-                    assertPermission(Manifest.permission.CAMERA, REQUEST_VIDEO_CAPTURE).successUi {
-                        permisssionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
+                    assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO) successUi {
+                        permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
                     }
-                }
-                assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO) successUi {
-                    permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
-                }
+                } else {
+                    object : AppCompatDialogFragment() {
+                        override fun onCreateDialog(savedInstanceState: Bundle?) =
+                                AlertDialog.Builder(context)
+                                        .setView(layoutInflater.inflate(R.layout.view_video_dialog, null).apply {
+                                            val videoView = findView<VideoView>(R.id.videoView)
+                                            val playButton = findView<ImageButton>(R.id.imageButton).apply {
+                                                setOnClickListener {
+                                                    this@apply.visibility = View.GONE
+                                                    videoView.start()
+                                                }
+                                            }
+                                            videoView.apply {
+                                                setVideoURI(Uri.fromFile(File(poi!!.dir, path)))
+                                                setMediaController(MediaController(context))
+                                                setOnCompletionListener {
+                                                    playButton.visibility = View.VISIBLE
+                                                }
+                                                playButton.visibility = View.GONE
+                                                start()
+                                            }
 
-
+                                        })
+                                        .setNeutralButton("删除", {
+                                            dialog, which ->
+                                            fieldResolvers.path = null
+                                        })
+                                        .setNegativeButton(R.string.cancel, null)
+                                        .create()
+                    }.show(supportFragmentManager, "")
+                }
             })
         else ->
             null
@@ -203,7 +239,6 @@ class EditPOIActivity : AppCompatActivity() {
             }
         }.toString()
     }
-
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -241,33 +276,14 @@ class EditPOIActivity : AppCompatActivity() {
                         }
                     }
                 }
+            REQUEST_CAMERA,
+            REQUEST_READ_EXTERNAL_STORAGE,
+            REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO,
+            REQUEST_VIDEO_CAPTURE,
             REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    collectData() then {
-                        permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
-                    }
-                }
-            REQUEST_CAMERA ->
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    collectData() then {
-                        permisssionHandlers[REQUEST_CAMERA]?.invoke()
-                    }
-                }
-            REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO ->
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    collectData() then {
-                        permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
-                    }
-                }
-            REQUEST_VIDEO_CAPTURE ->
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    collectData() then {
-                        permisssionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
-                    }
+                    permisssionHandlers[requestCode]?.invoke()
                 }
         }
     }

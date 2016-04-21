@@ -5,6 +5,7 @@ import android.media.ThumbnailUtils
 import android.provider.MediaStore
 import android.view.View
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
@@ -35,12 +36,12 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
         }).build()
     }
 
-    private val imageButton: ImageButton by lazy {
-        view.findView<ImageButton>(R.id.imageButton)
+    private val imageView: ImageView by lazy {
+        view.findView<ImageView>(R.id.imageView)
     }
 
-    private val imageButtonPlay: ImageButton by lazy {
-        view.findView<ImageButton>(R.id.imageButtonPlay)
+    private val imageButton: ImageButton by lazy {
+        view.findView<ImageButton>(R.id.imageButton)
     }
 
     override fun populate(jsonObject: JSONObject, poi: POI) {
@@ -59,13 +60,13 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
         set(value) {
             field = value
             if (value != null) {
-                imageButtonPlay.visibility = View.VISIBLE
+                picasso.load(R.drawable.ic_play_circle_filled_white_36dp).into(imageButton)
                 picasso.load(
-                        File(poi.dir, value))
+                        File(poi.dir, value)).fit().centerInside().into(imageView)
             } else {
-                imageButtonPlay.visibility = View.GONE
-                picasso.load(R.drawable.ic_camera_pink_a200_48dp)
-            }.fit().centerInside().into(imageButton)
+                imageView.setImageBitmap(null)
+                picasso.load(R.drawable.ic_camera_pink_a200_48dp).into(imageButton)
+            }
         }
 
     override fun bind(value: Any?): View {
