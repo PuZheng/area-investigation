@@ -1,27 +1,21 @@
 package com.puzheng.region_investigation
 
+import android.content.Intent
+import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
-import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.Toolbar
-
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.ViewPager
-import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-
-import android.widget.TextView
 import com.orhanobut.logger.Logger
-import com.puzheng.region_investigation.model.POI
 import com.squareup.picasso.Picasso
 import java.io.File
+import java.util.*
 
 class CarouselActivity : AppCompatActivity() {
 
@@ -63,18 +57,33 @@ class CarouselActivity : AppCompatActivity() {
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
         // Set up the ViewPager with the sections adapter.
         viewPager = findView(R.id.container)
-        viewPager.adapter = sectionsPagerAdapter
-        viewPager.setCurrentItem(pos)
-
-
+        viewPager.adapter = SectionsPagerAdapter(supportFragmentManager)
+        viewPager.currentItem = pos
 
         findView<FloatingActionButton>(R.id.fab).setOnClickListener {
-            // TODO delete
+            Picasso.with(this).invalidate(images[viewPager.currentItem])
+            images = images.filterIndexed { i, s -> i != viewPager.currentItem }
+            (viewPager.adapter as SectionsPagerAdapter).apply {
+                fragments = fragments.filterIndexed { i, fragment -> i != viewPager.currentItem }
+                viewPager.adapter = viewPager.adapter
+            }
+
         }
     }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        setResult(RESULT_OK, Intent().apply {
+            putExtra(TAG_IMAGES, ArrayList(images))
+        })
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
+
 
 
     /**
@@ -85,18 +94,16 @@ class CarouselActivity : AppCompatActivity() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                                   savedInstanceState: Bundle?) =
                 inflater!!.inflate(R.layout.fragment_carousel, container, false).apply {
+                    picasso.load(File(arguments.getString(ARG_IMAGE_PATH))).fit().centerInside().into(findView<ImageView>(R.id.imageView))
                 }
-
-        override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
-            picasso.load(File(arguments.getString(ARG_IMAGE_PATH))).into(view?.findView<ImageView>(R.id.imageView))
-        }
 
         companion object {
             /**
              * The fragment argument representing the section number for this
              * fragment.
              */
-            private val ARG_IMAGE_PATH = "image_path"
+            val ARG_IMAGE_PATH = "image_path"
+            val ARG_INDEX = "index"
 
 
             private val picasso: Picasso by lazy {
@@ -107,10 +114,11 @@ class CarouselActivity : AppCompatActivity() {
              * Returns a new instance of this fragment for the given section
              * number.
              */
-            fun newInstance(imagePath: String): PlaceholderFragment {
+            fun newInstance(index: Int, imagePath: String): PlaceholderFragment {
                 val fragment = PlaceholderFragment()
                 val args = Bundle()
                 args.putString(ARG_IMAGE_PATH, imagePath)
+                args.putLong(ARG_INDEX, index.toLong())
                 fragment.arguments = args
                 return fragment
             }
@@ -123,14 +131,23 @@ class CarouselActivity : AppCompatActivity() {
      */
     inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
 
-        override fun getItem(position: Int): Fragment {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(images[position])
+        lateinit var fragments: List<Fragment>
+
+        init {
+            fragments = images.mapIndexed { i, s ->
+                PlaceholderFragment.newInstance(i, s)
+            }
         }
 
-        override fun getCount() = images.size
+        override fun getItem(position: Int): Fragment {
+            return fragments[position]
+        }
 
-        override fun getPageTitle(position: Int) = images[position]
+        override fun getItemId(position: Int): Long {
+            return fragments[position].arguments.getLong(PlaceholderFragment.ARG_INDEX)
+        }
+
+        override fun getCount() = fragments.size
+
     }
 }
