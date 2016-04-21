@@ -16,22 +16,20 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-        <ImageButton
-            android:id="@+id/imageButton"
+        <ImageView
+            android:id="@+id/imageView"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_camera_pink_a200_48dp"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
             />
         <ImageButton
-            android:id="@+id/imageButtonPlay"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:scaleType="centerInside"
+            android:id="@+id/imageButton"
+            android:layout_width="128dp"
+            android:layout_height="128dp"
             android:src="@drawable/ic_play_circle_filled_white_36dp"
-            android:background="@android:color/transparent"
+            android:background="@drawable/background_toolbar_translucent"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"/>
     </RelativeLayout>
