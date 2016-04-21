@@ -7,6 +7,6 @@
         android:id="@+id/imageButton"
         android:layout_width="match_parent"
         android:layout_height="128dp"
-        android:src="@drawable/ic_camera_pink_a200_48dp"
+        android:src="@drawable/ic_photo_camera_pink_a200_48dp"
         />
 </LinearLayout>

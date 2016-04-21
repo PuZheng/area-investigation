@@ -48,22 +48,3 @@ open class StringFieldResolver(override val name: String, val context: Context) 
 class TextFieldResolver(name: String, context: Context) : StringFieldResolver(name, context) {
     override val layoutId = R.layout.poi_field_text
 }
-
-
-class VideoFieldResolver(override val name: String, context: Context) : FieldResolver {
-    override fun populate(jsonObject: JSONObject, poi: POI) {
-        jsonObject.put(name, "1.mp4")
-    }
-
-    private val view: View by lazy {
-        View.inflate(context, R.layout.poi_field_video, null)
-    }
-
-    private var path: String? = null
-
-    override fun bind(value: Any?): View {
-        Logger.v("bind with `$value`")
-        path = value as String?
-        return view
-    }
-}
