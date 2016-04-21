@@ -102,8 +102,10 @@ class EditPOIActivity : AppCompatActivity() {
         }
     }
 
-    private var outputFileUri: Uri? = null
+    private var cameraOutputFileUri: Uri? = null
     private val permisssionHandlers = mutableMapOf<Int, () -> Unit>()
+
+    private var targetImagesFieldResolver: ImagesFieldResolver? = null
 
     private fun resolve(field: POIType.Field) = when (field.type) {
         POIType.FieldType.STRING ->
@@ -112,19 +114,19 @@ class EditPOIActivity : AppCompatActivity() {
             TextFieldResolver(field.name, this)
         POIType.FieldType.IMAGES ->
             ImagesFieldResolver(field.name, poi!!, {
+                fieldResolver ->
                 // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
                 permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
                     permisssionHandlers[REQUEST_CAMERA] = {
-                        outputFileUri = Uri.fromFile(File.createTempFile(
+                        cameraOutputFileUri = Uri.fromFile(File.createTempFile(
                                 SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
                                 ".jpg",
                                 poi!!.dir
-                        ).apply {
-                            setWritable(true, false)
-                        })
+                        ))
                         Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                            putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri)
                             if (resolveActivity(packageManager) != null) {
+                                putExtra(MediaStore.EXTRA_OUTPUT, cameraOutputFileUri)
+                                targetImagesFieldResolver = fieldResolver
                                 startActivityForResult(this, SELECT_IMAGE)
                             }
                         }
@@ -147,7 +149,8 @@ class EditPOIActivity : AppCompatActivity() {
                     permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
                 }
             }, {
-                images, pos ->
+                fieldResolver, images, pos ->
+                targetImagesFieldResolver = fieldResolver
                 startActivityForResult(Intent(this, CarouselActivity::class.java).apply {
                     putStringArrayListExtra(CarouselActivity.TAG_IMAGES, ArrayList(images))
                     putExtra(CarouselActivity.TAG_POS, pos)
@@ -232,19 +235,15 @@ class EditPOIActivity : AppCompatActivity() {
                     //                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
                     //                }
                     // TODO should connect with field name
-                    (fieldResolvers.find {
-                        it is ImagesFieldResolver
-                    } as ImagesFieldResolver).add(outputFileUri!!.path)
+                    targetImagesFieldResolver?.add(cameraOutputFileUri!!.path)
                 } else if (resultCode == RESULT_CANCELED) {
-                    Logger.v(outputFileUri!!.path)
-                    File(outputFileUri!!.path).delete()
+                    Logger.v(cameraOutputFileUri!!.path)
+                    File(cameraOutputFileUri!!.path).delete()
                 }
             }
             VIEW_CAROUSEL -> {
                 if (resultCode == RESULT_OK) {
-                    (fieldResolvers.find {
-                        it is ImagesFieldResolver
-                    } as ImagesFieldResolver).reset(data?.getStringArrayListExtra(CarouselActivity.TAG_IMAGES))
+                    targetImagesFieldResolver?.reset(data?.getStringArrayListExtra(CarouselActivity.TAG_IMAGES))
                 }
             }
         }

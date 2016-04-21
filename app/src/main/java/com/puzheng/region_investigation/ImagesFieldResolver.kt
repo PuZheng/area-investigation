@@ -14,8 +14,9 @@ import org.json.JSONObject
 import java.io.File
 import java.util.*
 
-class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAddImage: () -> Unit,
-                          val onClickImage: (images: List<String>, pos: Int) -> Unit) : FieldResolver {
+class ImagesFieldResolver(override val name: String, val poi: POI,
+                          val onClickAddImage: (fieldResolver: ImagesFieldResolver) -> Unit,
+                          val onClickImage: (fieldResolver: ImagesFieldResolver, images: List<String>, pos: Int) -> Unit) : FieldResolver {
 
     private val picasso: Picasso by lazy {
         Picasso.with(MyApplication.context)
@@ -69,7 +70,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAd
                 val image = images[position - 1]
                 picasso.load(File(poi.dir, image)).fit().centerInside().into(imageButton)
                 imageButton.setOnClickListener {
-                    onClickImage(images.map {
+                    onClickImage(this@ImagesFieldResolver, images.map {
                         File(poi.dir, it).absolutePath
                     }, position - 1)
                 }
@@ -99,7 +100,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAd
     private inner class AddImageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         init {
             view.findView<ImageButton>(R.id.imageButton).setOnClickListener {
-                onClickAddImage()
+                onClickAddImage(this@ImagesFieldResolver)
             }
         }
     }
