@@ -86,7 +86,7 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
             holder.textView.text = region.name
             val context = holder.textView.context
             val coverFile = RegionStore.with(context).getCoverImageFile(region)
-            picasso?.load(coverFile)?.into(holder.imageView);
+            picasso?.load(coverFile)?.fit()?.centerInside()?.into(holder.imageView);
             Logger.v("bind ${region.name}")
         }
     }
@@ -133,7 +133,7 @@ private class RegionViewHolder(val view: View, val multiSelector: MultiSelector,
 
     init {
         textView = view.findViewById(R.id.content) as TextView
-        imageView = view.findViewById(R.id.imageButton) as ImageView
+        imageView = view.findViewById(R.id.imageView) as ImageView
         view.setOnClickListener {
             if (!multiSelector.tapSelection(this)) {
                 listener.onClickItem(item!!)

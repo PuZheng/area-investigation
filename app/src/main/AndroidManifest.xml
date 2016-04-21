@@ -82,7 +82,6 @@
         </activity>
         <activity
             android:name=".CarouselActivity"
-            android:label="@string/title_activity_carousel"
             android:parentActivityName=".EditPOIActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data

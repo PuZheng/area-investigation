@@ -11,4 +11,5 @@
     <dimen name="dialog_list_item_horizontal_padding">16dp</dimen>
     <dimen name="dialog_list_item_vertical_padding">16dp</dimen>
     <dimen name="appbar_padding_top">8dp</dimen>
+    <dimen name="poi_field_title">12sp</dimen>
 </resources>

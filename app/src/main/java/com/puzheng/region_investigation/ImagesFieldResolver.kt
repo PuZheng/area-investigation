@@ -12,6 +12,7 @@ import com.squareup.picasso.Picasso
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.util.*
 
 class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAddImage: () -> Unit,
                           val onClickImage: (images: List<String>, pos: Int) -> Unit) : FieldResolver {
@@ -66,7 +67,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAd
             if (position != 0) {
                 val imageButton = (holder as ImageViewHolder).imageButton
                 val image = images[position - 1]
-                picasso.load(File(poi.dir, image)).into(imageButton)
+                picasso.load(File(poi.dir, image)).fit().centerInside().into(imageButton)
                 imageButton.setOnClickListener {
                     onClickImage(images.map {
                         File(poi.dir, it).absolutePath
@@ -115,4 +116,13 @@ class ImagesFieldResolver(override val name: String, val poi: POI, val onClickAd
         images.add(File(path).relativeTo(poi.dir.absoluteFile).path)
         recyclerView.adapter.notifyDataSetChanged()
     }
+
+    fun reset(images: List<String>?) {
+        this.images.clear()
+        images?.forEach {
+            this.images.add(File(it).relativeTo(poi.dir.absoluteFile).path)
+        }
+        recyclerView.adapter.notifyDataSetChanged()
+    }
+
 }

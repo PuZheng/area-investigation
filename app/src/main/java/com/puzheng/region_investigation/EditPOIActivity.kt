@@ -39,6 +39,7 @@ class EditPOIActivity : AppCompatActivity() {
         const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = 101
         const val REQUEST_CAMERA = 102
         const val SELECT_IMAGE = 1
+        const val VIEW_CAROUSEL = 999
     }
 
     private var poi: POI? = null
@@ -147,10 +148,10 @@ class EditPOIActivity : AppCompatActivity() {
                 }
             }, {
                 images, pos ->
-                startActivity(Intent(this, CarouselActivity::class.java).apply {
+                startActivityForResult(Intent(this, CarouselActivity::class.java).apply {
                     putStringArrayListExtra(CarouselActivity.TAG_IMAGES, ArrayList(images))
                     putExtra(CarouselActivity.TAG_POS, pos)
-                })
+                }, VIEW_CAROUSEL)
             })
         POIType.FieldType.VIDEO ->
             VideoFieldResolver(field.name, this)
@@ -221,20 +222,30 @@ class EditPOIActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == SELECT_IMAGE) {
-            if (resultCode == RESULT_OK) {
-//                val isCamera = (data == null ||
-//                        data.action == android.provider.MediaStore.ACTION_IMAGE_CAPTURE ||
-//                        data.action == "inline-data")
-//                if (!isCamera) {
-//                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
-//                }
-                (fieldResolvers.find {
-                    it is ImagesFieldResolver
-                } as ImagesFieldResolver).add(outputFileUri!!.path)
-            } else if (resultCode == RESULT_CANCELED) {
-                Logger.v(outputFileUri!!.path)
-                File(outputFileUri!!.path).delete()
+        when (requestCode) {
+            SELECT_IMAGE -> {
+                if (resultCode == RESULT_OK) {
+                    //                val isCamera = (data == null ||
+                    //                        data.action == android.provider.MediaStore.ACTION_IMAGE_CAPTURE ||
+                    //                        data.action == "inline-data")
+                    //                if (!isCamera) {
+                    //                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
+                    //                }
+                    // TODO should connect with field name
+                    (fieldResolvers.find {
+                        it is ImagesFieldResolver
+                    } as ImagesFieldResolver).add(outputFileUri!!.path)
+                } else if (resultCode == RESULT_CANCELED) {
+                    Logger.v(outputFileUri!!.path)
+                    File(outputFileUri!!.path).delete()
+                }
+            }
+            VIEW_CAROUSEL -> {
+                if (resultCode == RESULT_OK) {
+                    (fieldResolvers.find {
+                        it is ImagesFieldResolver
+                    } as ImagesFieldResolver).reset(data?.getStringArrayListExtra(CarouselActivity.TAG_IMAGES))
+                }
             }
         }
     }
