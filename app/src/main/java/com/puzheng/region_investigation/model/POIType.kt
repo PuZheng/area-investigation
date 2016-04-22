@@ -1,6 +1,5 @@
 package com.puzheng.region_investigation.model
 
-import com.orhanobut.logger.Logger
 import nl.komponents.kovenant.task
 import org.json.JSONObject
 
@@ -8,7 +7,6 @@ data class POIType(val uuid: String, val name: String, val fields: List<Field>, 
     fun extractPOIRawData(poi: POI) = task {
         if (poi.dataFile.exists()) {
             val json = JSONObject(poi.dataFile.readText())
-            Logger.v(json.toString())
             mapOf<String, Any?>(*fields.map {
                 it.name to json.get(it.name)
             }.toTypedArray())
