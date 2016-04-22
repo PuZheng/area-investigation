@@ -1,14 +1,19 @@
 package com.puzheng.region_investigation.model
 
 import nl.komponents.kovenant.task
+import org.json.JSONException
 import org.json.JSONObject
 
 data class POIType(val uuid: String, val name: String, val fields: List<Field>, val path: String) {
     fun extractPOIRawData(poi: POI) = task {
         if (poi.dataFile.exists()) {
             val json = JSONObject(poi.dataFile.readText())
-            mapOf<String, Any?>(*fields.map {
-                it.name to json.get(it.name)
+            mapOf(*fields.map {
+                it.name to try {
+                    json.get(it.name)
+                } catch (e: JSONException) {
+                    null
+                }
             }.toTypedArray())
         } else {
             null

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.provider.MediaStore
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
@@ -19,9 +18,9 @@ import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
 import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.store.POITypeStore
-import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
+import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 import org.json.JSONObject
 import java.io.File
@@ -67,6 +66,7 @@ class EditPOIActivity : AppCompatActivity() {
             savedInstanceState.getParcelable(TAG_POI)
         }
         if (poi == null && BuildConfig.DEBUG) {
+
             // 伪造一个信息点用于调试
             permissionHandlers[REQUEST_READ_EXTERNAL_STORAGE] = {
                 val poiType = poiTypeStore.list.get()!![0]
@@ -74,7 +74,7 @@ class EditPOIActivity : AppCompatActivity() {
                         SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-03-09 12:32:23"))
                 setupView()
             }
-            assertPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_READ_EXTERNAL_STORAGE).successUi {
+            assertPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_READ_EXTERNAL_STORAGE) successUi {
                 permissionHandlers[REQUEST_READ_EXTERNAL_STORAGE]?.invoke()
             }
         } else {
@@ -92,6 +92,8 @@ class EditPOIActivity : AppCompatActivity() {
             poiType = it!!
             poiType.extractPOIRawData(poi!!) then {
                 poiData = it
+            } failUi {
+                toast(it.toString())
             } successUi {
                 findView<TextView>(R.id.textViewPOIType).text = poiType.name
                 fieldResolvers = poiType.fields.map {
@@ -247,6 +249,13 @@ class EditPOIActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         android.R.id.home -> {
+            if (isDirty) {
+                ConfirmExitDialogFragment({
+                    super.onOptionsItemSelected(item)
+                }).show(supportFragmentManager, "")
+            } else {
+                super.onOptionsItemSelected(item)
+            }
             true
         }
         R.id.action_submit -> {
@@ -325,4 +334,25 @@ class EditPOIActivity : AppCompatActivity() {
                 }
         }
     }
+
+    override fun onBackPressed() {
+        if (isDirty) {
+            ConfirmExitDialogFragment({
+                super.onBackPressed()
+            }).show(supportFragmentManager, "")
+        } else {
+            super.onBackPressed()
+        }
+    }
+}
+
+private class ConfirmExitDialogFragment(val after: () -> Unit) : AppCompatDialogFragment() {
+    override fun onCreateDialog(savedInstanceState: Bundle?) =
+            AlertDialog.Builder(context).setMessage(R.string.confirm_poi_no_save)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.action_ok, {
+                        dialog, which ->
+                        after()
+                    })
+                    .create()
 }
