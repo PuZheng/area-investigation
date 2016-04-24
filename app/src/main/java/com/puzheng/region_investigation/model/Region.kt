@@ -11,7 +11,8 @@ import java.util.*
 
 
 data class Region(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date,
-                  var updated: Date? = null) : Parcelable {
+                  var updated: Date? = null, var synced: Date? = null) : Parcelable {
+
     class Model : BaseColumns {
 
         companion object {
@@ -20,6 +21,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
             val COL_OUTLINE = "outline"
             val COL_CREATED = "created"
             val COL_UPDATED = "updated"
+            val COL_SYNCED = "synced"
 
             val CREATE_SQL: String
                 get() = """
@@ -28,7 +30,8 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
                         $COL_NAME TEXT NOT NULL,
                         $COL_OUTLINE TEXT NOT NULL,
                         $COL_CREATED TEXT NOT NULL,
-                        $COL_UPDATED TEXT
+                        $COL_UPDATED TEXT,
+                        $COL_SYNCED TEXT
                     )
                 """
 
@@ -38,20 +41,23 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
                 put(COL_OUTLINE, encodeOutline(region.outline))
                 put(COL_CREATED, format.format(region.created))
                 put(COL_UPDATED, if (region.updated != null) format.format(region.updated) else null)
+                put(COL_SYNCED, if (region.synced != null) format.format(region.synced) else null)
             }
         }
-
     }
+
+    val isDirty: Boolean
+        get() = synced == null || synced!! < updated
 
     constructor(source: Parcel) : this(
             source.readSerializable() as Long?,
             source.readString(),
             decodeOutline(source.readString()),
             source.readSerializable() as Date,
+            source.readSerializable() as Date?,
             source.readSerializable() as Date?)
-
     /**
-     * 计算区域面积， 参考http://www.mathopenref.com/heronsformula.html
+    * 计算区域面积， 参考http://www.mathopenref.com/heronsformula.html
      */
     val area: Double
         get() = (1..outline.size - 2).map {
@@ -72,6 +78,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         dest?.writeString(encodeOutline(outline))
         dest?.writeSerializable(created)
         dest?.writeSerializable(updated)
+        dest?.writeSerializable(synced)
     }
 
 
