@@ -32,7 +32,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="公交站"
+                    android:text="信息点类型"
                     android:id="@+id/textViewPOIType"/>
             </TableRow>
 

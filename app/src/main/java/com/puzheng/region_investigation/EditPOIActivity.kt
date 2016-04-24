@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.provider.MediaStore
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
@@ -21,6 +20,7 @@ import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.store.POITypeStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
+import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 import org.json.JSONObject
 import java.io.File
@@ -66,35 +66,36 @@ class EditPOIActivity : AppCompatActivity() {
             savedInstanceState.getParcelable(TAG_POI)
         }
         if (poi == null && BuildConfig.DEBUG) {
+
             // 伪造一个信息点用于调试
-            permisssionHandlers[REQUEST_READ_EXTERNAL_STORAGE] = {
-                    val poiType = poiTypeStore.list.get()!![0]
-                    poi = POI(1L, poiType.uuid, 1L, randomHZLatLng,
-                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-03-09 12:32:23"))
-                    setupView()
+            permissionHandlers[REQUEST_READ_EXTERNAL_STORAGE] = {
+                val poiType = poiTypeStore.list.get()!![0]
+                poi = POI(1L, poiType.uuid, 1L, randomHZLatLng,
+                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-03-09 12:32:23"))
+                setupView()
             }
-//            assertPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_READ_EXTERNAL_STORAGE).successUi {
-                permisssionHandlers[REQUEST_READ_EXTERNAL_STORAGE]?.invoke()
-//            }
+            assertPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_READ_EXTERNAL_STORAGE) successUi {
+                permissionHandlers[REQUEST_READ_EXTERNAL_STORAGE]?.invoke()
+            }
         } else {
             setupView()
         }
     }
 
+    private var poiData: Map<String, Any?>? = null
+    lateinit private var poiType: POIType
+
     private fun setupView() {
         findView<TextView>(R.id.textViewCreated).text =
                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi?.created)
         poiTypeStore.get(poi!!.poiTypeUUID) then {
-            if (it == null) {
-                Logger.e("不存在该信息点类型 uuid ${poi!!.poiTypeUUID}")
-                throw NoSuchPOIType()
-            }
-            it
-        } then {
-            poiType ->
-            findView<TextView>(R.id.textViewPOIType).text = poiType?.name
-            poiType!!.extractPOIRawData(poi!!) successUi {
-                data ->
+            poiType = it!!
+            poiType.extractPOIRawData(poi!!) then {
+                poiData = it
+            } failUi {
+                toast(it.toString())
+            } successUi {
+                findView<TextView>(R.id.textViewPOIType).text = poiType.name
                 fieldResolvers = poiType.fields.map {
                     resolve(it)?.apply {
                         if (this == null) {
@@ -107,14 +108,14 @@ class EditPOIActivity : AppCompatActivity() {
                     it!!
                 }
                 fieldResolvers.forEach {
-                    container.addView(it.bind(data?.get(it.name)))
+                    container.addView(it.bind(poiData?.get(it.name)))
                 }
             }
         }
     }
 
     private var photoOutputFileUri: Uri? = null
-    private val permisssionHandlers = mutableMapOf<Int, () -> Unit>()
+    private val permissionHandlers = mutableMapOf<Int, () -> Unit>()
 
     private var targetImagesFieldResolver: ImagesFieldResolver? = null
     private var videoOutputFileUri: Uri? = null
@@ -129,8 +130,8 @@ class EditPOIActivity : AppCompatActivity() {
             ImagesFieldResolver(field.name, poi!!, {
                 fieldResolver ->
                 // see http://stackoverflow.com/questions/4455558/allow-user-to-select-camera-or-gallery-for-image
-                permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
-                    permisssionHandlers[REQUEST_CAMERA] = {
+                permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE] = {
+                    permissionHandlers[REQUEST_CAMERA] = {
                         photoOutputFileUri = Uri.fromFile(File.createTempFile(
                                 SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
                                 ".jpg",
@@ -154,12 +155,12 @@ class EditPOIActivity : AppCompatActivity() {
                         //                        startActivityForResult(chooserIntent, SELECT_IMAGE)
                     }
                     assertPermission(Manifest.permission.CAMERA, REQUEST_CAMERA).successUi {
-                        permisssionHandlers[REQUEST_CAMERA]?.invoke()
+                        permissionHandlers[REQUEST_CAMERA]?.invoke()
                     }
 
                 }
                 assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE) successUi {
-                    permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
+                    permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
                 }
             }, {
                 fieldResolver, images, pos ->
@@ -175,8 +176,8 @@ class EditPOIActivity : AppCompatActivity() {
             VideoFieldResolver(field.name, this, poi!!, {
                 fieldResolvers, path ->
                 if (path == null) {
-                    permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO] = {
-                        permisssionHandlers[REQUEST_VIDEO_CAPTURE] = {
+                    permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO] = {
+                        permissionHandlers[REQUEST_VIDEO_CAPTURE] = {
                             videoOutputFileUri = Uri.fromFile(File.createTempFile(
                                     SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
                                     ".mp4",
@@ -190,11 +191,11 @@ class EditPOIActivity : AppCompatActivity() {
                             }
                         }
                         assertPermission(Manifest.permission.CAMERA, REQUEST_VIDEO_CAPTURE).successUi {
-                            permisssionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
+                            permissionHandlers[REQUEST_VIDEO_CAPTURE]?.invoke()
                         }
                     }
                     assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO) successUi {
-                        permisssionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
+                        permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO]?.invoke()
                     }
                 } else {
                     object : AppCompatDialogFragment() {
@@ -237,7 +238,7 @@ class EditPOIActivity : AppCompatActivity() {
             fieldResolvers.forEach {
                 it.populate(this, poi!!)
             }
-        }.toString()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -248,34 +249,53 @@ class EditPOIActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         android.R.id.home -> {
+            if (isDirty) {
+                ConfirmExitDialogFragment({
+                    super.onOptionsItemSelected(item)
+                }).show(supportFragmentManager, "")
+            } else {
+                super.onOptionsItemSelected(item)
+            }
             true
         }
         R.id.action_submit -> {
-            assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    REQUEST_WRITE_EXTERNAL_STORAGE) then {
-                collectData() then {
-                    poi?.saveData(it)?.successUi {
-                        toast(R.string.poi_data_saved)
+            if (isDirty) {
+                permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE] = {
+                    collectData() then {
+                        newPOIData ->
+                        poi?.saveData(poiData.toString())?.successUi {
+                            toast(R.string.poi_data_saved)
+                            val map = mutableMapOf<String, Any?>()
+                            newPOIData.keys().forEach {
+                                map[it] = newPOIData.get(it)
+                            }
+                            poiData = map
+                        }
                     }
                 }
+                assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        REQUEST_WRITE_EXTERNAL_STORAGE) then {
+                    permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE]?.invoke()
+                }
+            } else {
+                toast(R.string.poi_not_changed)
             }
-
             true
         }
         else -> super.onOptionsItemSelected(item)
     }
 
+    private val isDirty: Boolean
+        get() = poiType.fields.any {
+            field ->
+            fieldResolvers.find { it.name == field.name }!!.changed(poiData?.get(field.name)).apply {
+                Logger.v("$this, ${field.name}, ${poiData?.get(field.name)}")
+            }
+        }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            REQUEST_WRITE_EXTERNAL_STORAGE ->
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    collectData() then {
-                        poi?.saveData(it)?.successUi {
-                            toast(R.string.poi_data_saved)
-                        }
-                    }
-                }
+            REQUEST_WRITE_EXTERNAL_STORAGE,
             REQUEST_CAMERA,
             REQUEST_READ_EXTERNAL_STORAGE,
             REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO,
@@ -283,7 +303,7 @@ class EditPOIActivity : AppCompatActivity() {
             REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    permisssionHandlers[requestCode]?.invoke()
+                    permissionHandlers[requestCode]?.invoke()
                 }
         }
     }
@@ -320,4 +340,25 @@ class EditPOIActivity : AppCompatActivity() {
                 }
         }
     }
+
+    override fun onBackPressed() {
+        if (isDirty) {
+            ConfirmExitDialogFragment({
+                super.onBackPressed()
+            }).show(supportFragmentManager, "")
+        } else {
+            super.onBackPressed()
+        }
+    }
+}
+
+private class ConfirmExitDialogFragment(val after: () -> Unit) : AppCompatDialogFragment() {
+    override fun onCreateDialog(savedInstanceState: Bundle?) =
+            AlertDialog.Builder(context).setMessage(R.string.confirm_poi_no_save)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.action_ok, {
+                        dialog, which ->
+                        after()
+                    })
+                    .create()
 }

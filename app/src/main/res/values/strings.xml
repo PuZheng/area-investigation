@@ -46,4 +46,6 @@
     <string name="title_activity_edit_poi">编辑信息点</string>
     <string name="poi_data_saved">信息点数据已保存</string>
     <string name="confirm_delete_image">确认删除该图片?</string>
+    <string name="poi_not_changed">信息点数据没有变化</string>
+    <string name="confirm_poi_no_save">信息点数据已经修改,确认退出?</string>
 </resources>

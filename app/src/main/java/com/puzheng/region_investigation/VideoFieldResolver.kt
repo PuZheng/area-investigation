@@ -18,6 +18,7 @@ import java.io.File
 
 class VideoFieldResolver(override val name: String, context: Context, val poi: POI,
                          val onClick: (fieldResolver: VideoFieldResolver, path: String?) -> Unit) : FieldResolver {
+    override fun changed(value: Any?) = path != value
 
     private val picasso: Picasso by lazy {
         Picasso.Builder(context).addRequestHandler(object : RequestHandler() {
