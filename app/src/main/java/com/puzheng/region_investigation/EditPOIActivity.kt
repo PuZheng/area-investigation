@@ -262,8 +262,14 @@ class EditPOIActivity : AppCompatActivity() {
             if (isDirty) {
                 permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE] = {
                     collectData() then {
-                        poi?.saveData(it.toString())?.successUi {
+                        newPOIData ->
+                        poi?.saveData(poiData.toString())?.successUi {
                             toast(R.string.poi_data_saved)
+                            val map = mutableMapOf<String, Any?>()
+                            newPOIData.keys().forEach {
+                                map[it] = newPOIData.get(it)
+                            }
+                            poiData = map
                         }
                     }
                 }
