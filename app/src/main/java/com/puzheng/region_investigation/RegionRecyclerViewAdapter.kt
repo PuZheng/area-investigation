@@ -1,6 +1,7 @@
 package com.puzheng.region_investigation
 
 import android.content.Context
+import android.graphics.Color
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -32,7 +33,10 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
 
     val items = mutableListOf<Region?>()
 
-    var picasso: Picasso? = null
+    private val picasso: Picasso by lazy {
+        Picasso.with(MyApplication.context)
+    }
+
 
     init {
         setupItems()
@@ -66,9 +70,6 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         fun inflate(layout: Int) = LayoutInflater.from(parent.context).inflate(layout, parent, false)
-        if (picasso == null) {
-            picasso = Picasso.with(parent.context)
-        }
         return if (viewType == HEADER_TYPE) {
             HeaderViewHolder(inflate(R.layout.fragment_region_header))
         } else {
@@ -84,9 +85,13 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
         } else {
             (holder as RegionViewHolder).item = items[position]
             holder.textView.text = region.name
+            holder.textView.setTextColor(R.color.abc_primary_text_material_light)
             val context = holder.textView.context
             val coverFile = RegionStore.with(context).getCoverImageFile(region)
-            picasso?.load(coverFile)?.fit()?.centerInside()?.into(holder.imageView);
+            picasso.load(coverFile).into(holder.imageView)
+            if (region.isDirty) {
+                holder.markAsDirty()
+            }
             Logger.v("bind ${region.name}")
         }
     }
@@ -123,6 +128,10 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
     }
 
 
+    private fun RegionViewHolder.markAsDirty() {
+        textView.text = "*" + textView.text
+        textView.setTextColor(Color.RED)
+    }
 }
 
 private class RegionViewHolder(val view: View, val multiSelector: MultiSelector, val listener: OnRegionListFragmentInteractionListener) :

@@ -18,6 +18,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
 import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.store.POITypeStore
+import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.failUi
@@ -88,6 +89,7 @@ class EditPOIActivity : AppCompatActivity() {
     private fun setupView() {
         findView<TextView>(R.id.textViewCreated).text =
                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi?.created)
+        findView<TextView>(R.id.textViewPOIId).text = poi?.id.toString()
         poiTypeStore.get(poi!!.poiTypeUUID) then {
             poiType = it!!
             poiType.extractPOIRawData(poi!!) then {

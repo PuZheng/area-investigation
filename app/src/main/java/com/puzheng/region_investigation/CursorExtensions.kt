@@ -29,7 +29,8 @@ fun Cursor.getDate(colName: String): Date? {
 
 fun Cursor.getRegionRow() = Region(getLong(BaseColumns._ID)!!, getString(Region.Model.COL_NAME)!!,
         Region.decodeOutline(getString(Region.Model.COL_OUTLINE)!!),
-        getDate(Region.Model.COL_CREATED)!!, getDate(Region.Model.COL_UPDATED))
+        getDate(Region.Model.COL_CREATED)!!, getDate(Region.Model.COL_UPDATED),
+        getDate(Region.Model.COL_SYNCED))
 
 
 fun Cursor.getPOIRow() = POI(getLong(BaseColumns._ID)!!, getString(POI.Model.COL_POI_TYPE_UUID)!!,

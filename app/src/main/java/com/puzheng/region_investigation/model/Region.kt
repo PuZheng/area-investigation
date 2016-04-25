@@ -6,6 +6,7 @@ import android.os.Parcelable
 import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
+import com.orhanobut.logger.Logger
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,7 +48,10 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     }
 
     val isDirty: Boolean
-        get() = synced == null || synced!! < updated
+        get() = (synced == null || synced!! < updated).apply {
+            Logger.v("$id $synced, $updated")
+        }
+
 
     constructor(source: Parcel) : this(
             source.readSerializable() as Long?,
