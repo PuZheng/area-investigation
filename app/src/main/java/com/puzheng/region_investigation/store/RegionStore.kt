@@ -211,4 +211,30 @@ class RegionStore private constructor(val context: Context) {
             db.close()
         }
     }
+
+    fun touch(id: Long) = task {
+        val db = DBHelpler(context).writableDatabase
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        try {
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_UPDATED, format.format(Date()))
+            },
+                    "${BaseColumns._ID}=$id", null)
+        } finally {
+            db.close()
+        }
+    }
+
+    fun sync(ids: List<Long>) = task {
+        val db = DBHelpler(context).writableDatabase
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        try {
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_SYNCED, format.format(Date()))
+            },
+                    "${BaseColumns._ID} in (${ids.joinToString()})", null)
+        } finally {
+            db.close()
+        }
+    }
 }

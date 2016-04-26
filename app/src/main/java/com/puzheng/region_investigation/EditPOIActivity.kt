@@ -250,28 +250,26 @@ class EditPOIActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        android.R.id.home -> {
-            if (isDirty) {
-                ConfirmExitDialogFragment({
-                    super.onOptionsItemSelected(item)
-                }).show(supportFragmentManager, "")
-            } else {
-                super.onOptionsItemSelected(item)
-            }
+        android.R.id.home -> if (isDirty) {
+            ConfirmExitDialogFragment({
+                this@EditPOIActivity.finish()
+            }).show(supportFragmentManager, "")
             true
+        } else {
+            super.onOptionsItemSelected(item)
         }
         R.id.action_submit -> {
             if (isDirty) {
                 permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE] = {
                     collectData() then {
-                        newPOIData ->
-                        poi?.saveData(poiData.toString())?.successUi {
+                        formData ->
+                        poi?.saveData(formData.toString())?.successUi {
                             toast(R.string.poi_data_saved)
-                            val map = mutableMapOf<String, Any?>()
-                            newPOIData.keys().forEach {
-                                map[it] = newPOIData.get(it)
+                            poiData = mutableMapOf<String, Any?>().apply {
+                                formData.keys().forEach {
+                                    this@apply[it] = formData.get(it)
+                                }
                             }
-                            poiData = map
                         }
                     }
                 }
@@ -286,6 +284,7 @@ class EditPOIActivity : AppCompatActivity() {
         }
         else -> super.onOptionsItemSelected(item)
     }
+
 
     private val isDirty: Boolean
         get() = poiType.fields.any {

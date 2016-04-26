@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
+import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
@@ -15,8 +16,11 @@ import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.Region
+import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.activity_region_list.*
 import kotlinx.android.synthetic.main.content_region_list.*
+import nl.komponents.kovenant.ui.successUi
+import java.util.*
 
 class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnRegionListFragmentInteractionListener {
@@ -24,9 +28,14 @@ class RegionListActivity : AppCompatActivity(),
 
     private var actionMode: ActionMode? = null
 
+    private val regionListFragment: RegionListFragment by lazy {
+        findFragmentById<RegionListFragment>(R.id.fragmentRegionList)
+    }
+
+
     override fun onLongClickItem(region: Region): Boolean {
         if (actionMode != null) {
-            return false;
+            return false
         }
 
         actionMode = startSupportActionMode(object : ModalMultiSelectorCallback((fragmentRegionList as RegionListFragment).multiSelector) {
@@ -37,7 +46,13 @@ class RegionListActivity : AppCompatActivity(),
                     R.id.action_trash ->
                         TrashAlertDialogFragment().show(supportFragmentManager, "")
                     R.id.action_upload ->
-                            toast("尚未实现")
+                        RegionStore.with(this@RegionListActivity).sync(regionListFragment.selectedRegions.map { it.id!! }) successUi {
+                            regionListFragment.selectedRegions.forEach {
+                                it.synced = Date()
+                            }
+                            regionListFragment.setupRegions()
+                            toast("synced")
+                        }
                 }
                 return false
             }

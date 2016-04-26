@@ -17,7 +17,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
                           val onClickAddImage: (fieldResolver: ImagesFieldResolver) -> Unit,
                           val onClickImage: (fieldResolver: ImagesFieldResolver, images: List<String>, pos: Int) -> Unit) : FieldResolver {
     override fun changed(value: Any?): Boolean {
-        val jsonArray = value as JSONArray
+        val jsonArray = value as JSONArray? ?: return images.size > 0
         val set = images.toSet()
         return jsonArray.length() != images.size || (0..jsonArray.length() - 1).any {
             !set.contains(jsonArray.getString(it))

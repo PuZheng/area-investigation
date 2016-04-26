@@ -48,6 +48,16 @@ private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
         POIFilterDialogFragment.OnFragmentInteractionListener {
 
+    override fun onPOIRemoved(poi: POI) {
+        region.updated = Date()
+        updateActionBar()
+    }
+
+    override fun onPOILocationSaved(poi: POI) {
+        region.updated = Date()
+        updateActionBar()
+    }
+
     companion object {
         private const val EDIT_POI = 100
     }
@@ -198,6 +208,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         updateActionBar()
         design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
             fragmentEditRegion.removeSelectedPOIMarker()
+            updateActionBar()
             onPOIMarkerSelected(null)
         }
         design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {

@@ -22,6 +22,7 @@ import com.puzheng.region_investigation.store.POIStore
 import com.puzheng.region_investigation.store.POITypeStore
 import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.fragment_create_region_step2.*
+import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 
@@ -393,6 +394,8 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         fun onMapLongClick()
         fun onOutlineMarkerSelected(position: LatLng?)
         fun onPOIMarkerSelected(marker: Marker?)
+        fun onPOIRemoved(poi: POI)
+        fun onPOILocationSaved(poi: POI)
         var region: Region
     }
 
@@ -420,6 +423,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         ConfirmSavePOILocationDialog(poi, latLng, {
             selectedPOIMarker!!.`object` = poi.copy(latLng = latLng)
             activity.toast(R.string.poi_location_modified)
+            listener?.onPOILocationSaved(poi)
         }).show(activity.supportFragmentManager, "")
     }
 
@@ -486,12 +490,13 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     fun removeSelectedPOIMarker() {
         ConfirmRemovePOIDialogFragment({
             val poi = selectedPOIMarker?.`object` as POI
-            POIStore.with(activity).remove(poi).successUi {
+            POIStore.with(activity).remove(poi) and RegionStore.with(activity).touch(poi.regionId) successUi {
                 activity.toast(R.string.poi_deleted)
                 pois.remove(poi)
                 val marker = poiMarkers.find { (it.`object` as POI) == poi }
                 marker?.remove()
                 poiMarkers.remove(marker)
+                listener?.onPOIRemoved(poi)
             }
         }).show(activity.supportFragmentManager, "")
     }

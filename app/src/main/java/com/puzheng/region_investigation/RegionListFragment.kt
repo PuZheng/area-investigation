@@ -127,6 +127,10 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
 
     data class Args(val loading: ObservableField<Boolean>, val itemNo: ObservableField<Int>)
 
+    val selectedRegions: List<Region> by lazy {
+        (list.adapter as RegionRecyclerViewAdapter).selectedRegions
+    }
+
     fun removeSelectedRegions() {
         val adapter = (list.adapter as RegionRecyclerViewAdapter)
         adapter.removeSelectedRegions()
@@ -134,5 +138,4 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
             Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
         }
     }
-
 }
