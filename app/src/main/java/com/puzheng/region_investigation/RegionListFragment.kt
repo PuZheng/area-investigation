@@ -6,6 +6,7 @@ import android.databinding.DataBindingUtil
 import android.databinding.ObservableField
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -85,7 +86,7 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
                 list.adapter = RegionRecyclerViewAdapter(it, listener!!, multiSelector)
                 list.layoutManager = (list.adapter as RegionRecyclerViewAdapter).LayoutManager(activity, 2)
             } else if (BuildConfig.DEBUG) {
-                activity.assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                (activity as AppCompatActivity).assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
                     onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             REQUEST_WRITE_EXTERNAL_STORAGE)

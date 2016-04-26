@@ -139,10 +139,10 @@ class CreateRegionActivity : AppCompatActivity(),
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            CreateRegionStep2Fragment.REQUEST_ACCESS_FINE_LOCATION ->
+            CreateRegionStep2Fragment.REQUEST_ACCESS_COARSE_LOCATION ->
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    createRegionStep2Fragment.onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
-                            CreateRegionStep2Fragment.REQUEST_ACCESS_FINE_LOCATION)
+                    createRegionStep2Fragment.onPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION,
+                            CreateRegionStep2Fragment.REQUEST_ACCESS_COARSE_LOCATION)
                 }
         }
     }

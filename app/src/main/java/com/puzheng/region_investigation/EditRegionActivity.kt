@@ -41,9 +41,10 @@ import kotlinx.android.synthetic.main.fragment_edit_region.*
 import kotlinx.android.synthetic.main.poi_bottom_sheet.*
 import nl.komponents.kovenant.ui.successUi
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
-private val REQUEST_WRITE_EXTERNAL_STORAGE = 100
-private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
+private val REQUEST_WRITE_EXTERNAL_STORAGE = AtomicInteger().incrementAndGet()
+private val REQUEST_ACCESS_COARSE_LOCATION = AtomicInteger().incrementAndGet()
 
 class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
         POIFilterDialogFragment.OnFragmentInteractionListener {
@@ -344,7 +345,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
 
     fun addPOI(poiType: POIType) {
-        permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION] = {
+        permissionRequestHandlerMap[Manifest.permission.ACCESS_COARSE_LOCATION] = {
             getLocation(AMapLocation(Location("").apply {
                 latitude = center.latitude
                 longitude = center.longitude
@@ -368,8 +369,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 }
             }
         }
-        assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).successUi {
-            permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+        assertPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_ACCESS_COARSE_LOCATION).successUi {
+            permissionRequestHandlerMap[Manifest.permission.ACCESS_COARSE_LOCATION]?.invoke()
         }
     }
 
@@ -382,16 +383,17 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 } else {
                     toast("why not fake some poi types?")
                 }
-            REQUEST_ACCESS_FINE_LOCATION ->
+            REQUEST_ACCESS_COARSE_LOCATION ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    permissionRequestHandlerMap[Manifest.permission.ACCESS_FINE_LOCATION]?.invoke()
+                    permissionRequestHandlerMap[Manifest.permission.ACCESS_COARSE_LOCATION]?.invoke()
                 }
-            EditRegionActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
+            EditRegionActivityFragment.REQUEST_ACCESS_COARSE_LOCATION ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (fragment_edit_region as EditRegionActivityFragment).onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
-                            EditRegionActivityFragment.REQUEST_ACCESS_FINE_LOCATION)
+                    (fragment_edit_region as EditRegionActivityFragment).onPermissionGranted(
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            EditRegionActivityFragment.REQUEST_ACCESS_COARSE_LOCATION)
                 }
         }
     }
