@@ -167,10 +167,10 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
 
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).let {
-            helpler ->
-            helpler.locate().failUi {
+            helper ->
+            helper.locate().failUi {
                 // http://stackoverflow.com/questions/17983865/making-a-location-object-in-android-with-latitude-and-longitude-values
-                val lastLocation = helpler.lastLocation
+                val lastLocation = helper.lastLocation
                 if (lastLocation != null) {
                     onLocationChangeListener?.onLocationChanged(AMapLocation(Location("").apply {
                         latitude = lastLocation.latitude

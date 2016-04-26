@@ -32,6 +32,7 @@ class LocateMyselfHelper(val context: Context, val onLocationChangeListener: Loc
             Logger.e("无法获取上次的坐标")
             null
         } else {
+            Logger.e("无法定位，使用最近的坐标")
             LatLng(lat, lng)
         }
     }
@@ -61,7 +62,7 @@ class LocateMyselfHelper(val context: Context, val onLocationChangeListener: Loc
         //设置定位模式为高精度模式，Battery_Saving为低功耗模式，Device_Sensors是仅设备模式
         locationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy;
         locationOption.isOnceLocation = true // 只需要定位一次
-        locationClient.setLocationOption(locationOption);
+        locationClient.setLocationOption(locationOption)
         //启动定位
         locationClient.startLocation()
         return d.promise
