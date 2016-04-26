@@ -1,15 +1,40 @@
 package com.puzheng.region_investigation
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.amap.api.location.AMapLocation
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
 import com.amap.api.maps.LocationSource
+import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 
 class LocateMyselfHelper(val context: Context, val onLocationChangeListener: LocationSource.OnLocationChangedListener) {
+
+    companion object {
+        private const val LNG = "LNG"
+        private const val LAT = "LAT"
+    }
+
+    private val sharedPref: SharedPreferences by lazy {
+        context.getSharedPreferences(context.getString(R.string.preference_last_location),
+                Context.MODE_PRIVATE)
+    }
+
+    val lastLocation: LatLng? by lazy {
+        val (lat, lng) = {
+            sharedPref: SharedPreferences ->
+            sharedPref.getFloat(LAT, -1F).toDouble() to sharedPref.getFloat(LNG, -1F).toDouble()
+        }(sharedPref)
+        if (lat.toInt() == -1 || lng.toInt() == -1) {
+            Logger.e("无法获取上次的坐标")
+            null
+        } else {
+            LatLng(lat, lng)
+        }
+    }
 
     fun locate(): Promise<AMapLocation, Exception> {
         //初始化定位
@@ -20,6 +45,11 @@ class LocateMyselfHelper(val context: Context, val onLocationChangeListener: Loc
             if (it?.errorCode == 0) {
                 Logger.e(it.toStr())
                 onLocationChangeListener.onLocationChanged(it)
+                sharedPref.edit().apply {
+                    putFloat(LAT, it.latitude.toFloat())
+                    putFloat(LNG, it.latitude.toFloat())
+                    commit()
+                }
                 d.resolve(it)
             } else {
                 Logger.e("定位失败, ${it.errorCode}: ${it.errorInfo}");
