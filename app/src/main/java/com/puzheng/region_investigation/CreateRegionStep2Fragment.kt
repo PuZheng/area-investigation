@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
+import android.location.Location
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
@@ -12,10 +13,13 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import com.amap.api.location.AMapLocation
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.LocationSource
 import com.amap.api.maps.model.*
 import kotlinx.android.synthetic.main.fragment_create_region_step2.*
+import nl.komponents.kovenant.ui.failUi
+import nl.komponents.kovenant.ui.successUi
 
 /**
  * A simple [Fragment] subclass.
@@ -50,8 +54,6 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
 
     private val markerBitmap: Bitmap? = null
         get() = if (field == null || field.isRecycled) activity.loadBitmap(R.drawable.marker) else field
-
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,11 +130,10 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
             }
         }
 
-        activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).success {
+        activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).successUi {
             onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
         }
     }
-
 
 
     private fun violationToBoundary(screenLocation: Point): FloatArray {
@@ -165,7 +166,19 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
 
 
     override fun onPermissionGranted(permission: String, requestCode: Int) {
-        LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {  }
+        LocateMyselfHelper(activity, onLocationChangeListener!!).let {
+            helper ->
+            helper.locate().failUi {
+                // http://stackoverflow.com/questions/17983865/making-a-location-object-in-android-with-latitude-and-longitude-values
+                val lastLocation = helper.lastLocation
+                if (lastLocation != null) {
+                    onLocationChangeListener?.onLocationChanged(AMapLocation(Location("").apply {
+                        latitude = lastLocation.latitude
+                        longitude = lastLocation.latitude
+                    }))
+                }
+            }
+        }
     }
 
 

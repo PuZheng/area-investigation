@@ -43,7 +43,7 @@ private enum class MarkerType {
  *     EditRegionActivityFragment.REQUEST_ACCESS_FINE_LOCATION ->
  *          if (grantResults.isNotEmpty()
  *              && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
- *              editRegionActivityFragment.locate()
+ *              editRegionActivityFragment.onPermissionGranted(ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
  *          }
  *     }
  * }
