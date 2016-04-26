@@ -1,15 +1,20 @@
 package com.puzheng.region_investigation
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.view.View
+import com.orhanobut.logger.Logger
 import nl.komponents.kovenant.ui.promiseOnUi
 import java.io.File
 
@@ -30,10 +35,15 @@ fun Activity.loadBitmap(file: File): Bitmap = BitmapFactory.decodeStream(file.in
         })
 
 
-fun Activity.assertPermission(permission: String, requestCode: Int) = promiseOnUi {
+fun AppCompatActivity.assertPermission(permission: String, requestCode: Int, rationale: String? = null) = promiseOnUi {
     if (ContextCompat.checkSelfPermission(this@assertPermission, permission) != PackageManager.PERMISSION_GRANTED) {
         // Should we show an explanation?
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this@assertPermission, permission)) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this@assertPermission, permission) && rationale != null) {
+            Logger.v("show rationale")
+//            object : AppCompatDialogFragment() {
+//                override fun onCreateDialog(savedInstanceState: Bundle?) =
+//                        AlertDialog.Builder(context)..setMessage(rationale).create()
+//            }.show(supportFragmentManager, "")
             // TODO Show an expanation to the user *asynchronously* -- don't block
             // this thread waiting for the user's response! After the user
             // sees the explanation, try again to request the permission.

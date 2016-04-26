@@ -7,6 +7,7 @@ import android.graphics.Point
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,7 @@ import kotlinx.android.synthetic.main.fragment_create_region_step2.*
 import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
+import java.util.concurrent.atomic.AtomicInteger
 
 private enum class MarkerType {
     POI, OUTLINE_VERTEX,
@@ -253,7 +255,8 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     companion object {
-        val REQUEST_ACCESS_FINE_LOCATION = 100
+        // 必须保证全局唯一， 参考http://stackoverflow.com/questions/2178992/how-to-generate-unique-id-in-java-integer
+        val REQUEST_ACCESS_COARSE_LOCATION = AtomicInteger().incrementAndGet()
 
         enum class EditMode {
             DEFAULT, EDIT_OUTLINE, POI_RELOCATE
@@ -279,8 +282,9 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                 // 这里将获取map默认的OnLocationChangedListener, map不能直接移动中心点，要通过操作这个对象来
                 // 实现定位
                 onLocationChangeListener = p0
-                activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION) successUi {
-                    onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
+                (activity as AppCompatActivity).assertPermission(Manifest.permission.ACCESS_COARSE_LOCATION,
+                        REQUEST_ACCESS_COARSE_LOCATION) successUi {
+                    onPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_ACCESS_COARSE_LOCATION)
                 }
             }
         })

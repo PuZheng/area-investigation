@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.MotionEventCompat
+import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -130,8 +131,9 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
             }
         }
 
-        activity.assertPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION).successUi {
-            onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_ACCESS_FINE_LOCATION)
+        (activity as AppCompatActivity).assertPermission(Manifest.permission.ACCESS_COARSE_LOCATION,
+                REQUEST_ACCESS_COARSE_LOCATION).successUi {
+            onPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_ACCESS_COARSE_LOCATION)
         }
     }
 
@@ -221,7 +223,7 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
         // TODO: Rename and change types and number of parameters
         fun newInstance() = CreateRegionStep2Fragment()
 
-        val REQUEST_ACCESS_FINE_LOCATION: Int = 100
+        val REQUEST_ACCESS_COARSE_LOCATION: Int = 100
         private val INIT_ZOOM_LEVEL: Float = 16.0F
 
     }
