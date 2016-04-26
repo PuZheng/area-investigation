@@ -27,6 +27,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="@style/label"
+                    android:text="信息点ID" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="信息点ID"
+                    android:id="@+id/textViewPOIId"/>
+            </TableRow>
+
+            <TableRow
+                android:paddingTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/label"
                     android:text="信息点类型" />
 
                 <TextView

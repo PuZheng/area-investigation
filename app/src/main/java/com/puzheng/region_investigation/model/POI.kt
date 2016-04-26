@@ -8,6 +8,8 @@ import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.MyApplication
+import com.puzheng.region_investigation.store.RegionStore
+import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.task
 import java.io.File
 import java.text.SimpleDateFormat
@@ -33,7 +35,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
             dataFile.createNewFile()
         }
         dataFile.writeText(s)
-    }
+    } and RegionStore.with(MyApplication.context).touch(regionId)
 
     class Model {
         companion object {

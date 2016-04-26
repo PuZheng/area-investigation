@@ -18,6 +18,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
 import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.store.POITypeStore
+import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.failUi
@@ -88,6 +89,7 @@ class EditPOIActivity : AppCompatActivity() {
     private fun setupView() {
         findView<TextView>(R.id.textViewCreated).text =
                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi?.created)
+        findView<TextView>(R.id.textViewPOIId).text = poi?.id.toString()
         poiTypeStore.get(poi!!.poiTypeUUID) then {
             poiType = it!!
             poiType.extractPOIRawData(poi!!) then {
@@ -248,28 +250,26 @@ class EditPOIActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        android.R.id.home -> {
-            if (isDirty) {
-                ConfirmExitDialogFragment({
-                    super.onOptionsItemSelected(item)
-                }).show(supportFragmentManager, "")
-            } else {
-                super.onOptionsItemSelected(item)
-            }
+        android.R.id.home -> if (isDirty) {
+            ConfirmExitDialogFragment({
+                this@EditPOIActivity.finish()
+            }).show(supportFragmentManager, "")
             true
+        } else {
+            super.onOptionsItemSelected(item)
         }
         R.id.action_submit -> {
             if (isDirty) {
                 permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE] = {
                     collectData() then {
-                        newPOIData ->
-                        poi?.saveData(poiData.toString())?.successUi {
+                        formData ->
+                        poi?.saveData(formData.toString())?.successUi {
                             toast(R.string.poi_data_saved)
-                            val map = mutableMapOf<String, Any?>()
-                            newPOIData.keys().forEach {
-                                map[it] = newPOIData.get(it)
+                            poiData = mutableMapOf<String, Any?>().apply {
+                                formData.keys().forEach {
+                                    this@apply[it] = formData.get(it)
+                                }
                             }
-                            poiData = map
                         }
                     }
                 }
@@ -284,6 +284,7 @@ class EditPOIActivity : AppCompatActivity() {
         }
         else -> super.onOptionsItemSelected(item)
     }
+
 
     private val isDirty: Boolean
         get() = poiType.fields.any {

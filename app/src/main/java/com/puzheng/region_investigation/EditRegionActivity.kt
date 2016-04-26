@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.os.PersistableBundle
@@ -12,6 +14,9 @@ import android.support.design.widget.Snackbar
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -43,9 +48,28 @@ private val REQUEST_ACCESS_FINE_LOCATION: Int = 101
 class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
         POIFilterDialogFragment.OnFragmentInteractionListener {
 
+    override fun onPOIRemoved(poi: POI) {
+        region.updated = Date()
+        updateActionBar()
+    }
+
+    override fun onPOILocationSaved(poi: POI) {
+        region.updated = Date()
+        updateActionBar()
+    }
+
+    companion object {
+        private const val EDIT_POI = 100
+    }
+
     val fragmentEditRegion: EditRegionActivityFragment by lazy {
         findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_region)!!
     }
+
+    private val regionStore: RegionStore by lazy {
+        RegionStore.with(this)
+    }
+
 
     override fun onFilterPOI(hiddenPOITypes: Set<POIType>) {
         fragmentEditRegion.hiddenPOITypes = hiddenPOITypes
@@ -100,6 +124,10 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                     fragmentEditRegion.saveOutline({
                         // 注意， 一定要告诉Picasso清除图片缓存
                         Picasso.with(this@EditRegionActivity).invalidate(RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
+                        regionStore.get(region.id!!) successUi {
+                            region = it!!
+                            updateActionBar()
+                        }
                     })
                     dataChanged = true
                     true
@@ -177,15 +205,16 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             }
 
         }
-        updateContent()
+        updateActionBar()
         design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
             fragmentEditRegion.removeSelectedPOIMarker()
+            updateActionBar()
             onPOIMarkerSelected(null)
         }
         design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
-            startActivity(Intent(this, EditPOIActivity::class.java).apply {
+            startActivityForResult(Intent(this, EditPOIActivity::class.java).apply {
                 putExtra(EditPOIActivity.TAG_POI, fragmentEditRegion.selectedPOI)
-            })
+            }, EDIT_POI)
         }
         design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
 
@@ -265,10 +294,13 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                         R.id.action_ok -> {
                             editNameActionMode!!.finish()
                             region.name = region_name.text.toString()
-                            updateContent()
-                            RegionStore.with(this@EditRegionActivity).updateName(region.id!!, region_name.text.toString()) successUi {
+                            regionStore.updateName(region.id!!, region_name.text.toString()) successUi {
                                 toast(R.string.edit_region_name_success)
                                 dataChanged = true
+                                regionStore.get(region.id!!) successUi {
+                                    region = it!!
+                                    updateActionBar()
+                                }
                             }
                         }
                     }
@@ -299,8 +331,15 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             super.onOptionsItemSelected(item)
     }
 
-    private fun updateContent() {
-        supportActionBar?.title = region.name
+    private fun updateActionBar() {
+        supportActionBar?.title = if (region.isDirty) {
+            val title = "*" + region.name
+            SpannableString(title).apply {
+                setSpan(ForegroundColorSpan(Color.RED), 0, title.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+            }
+        } else {
+            region.name
+        }
     }
 
 
@@ -354,6 +393,15 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                     (fragment_edit_region as EditRegionActivityFragment).onPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION,
                             EditRegionActivityFragment.REQUEST_ACCESS_FINE_LOCATION)
                 }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == EDIT_POI) {
+            regionStore.get(region.id!!) successUi {
+                region = it!!
+                updateActionBar()
+            }
         }
     }
 

@@ -10,7 +10,8 @@ import org.json.JSONObject
 
 
 open class StringFieldResolver(override val name: String, val context: Context) : FieldResolver {
-    override fun changed(value: Any?) = editText.text.toString() != value
+
+    override fun changed(value: Any?) = editText.text.toString().trim() != value?.toString()?.trim() ?: ""
 
 
     open protected val layoutId = R.layout.poi_field_string

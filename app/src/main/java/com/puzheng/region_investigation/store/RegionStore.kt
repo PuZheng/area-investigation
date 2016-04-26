@@ -23,8 +23,6 @@ class RegionStore private constructor(val context: Context) {
 
     companion object {
         fun with(context: Context) = RegionStore(context)
-
-
     }
 
     fun getCoverImageFile(region: Region): File? = context.openReadableFile("/regions", "${region.id}.png")
@@ -55,11 +53,12 @@ class RegionStore private constructor(val context: Context) {
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val db = DBHelpler(context).writableDatabase
 
-        fun fakeRegion(id: Long, created: String, updated: String? = null) = Region(id, "region$id",
+        fun makeRegion(id: Long, created: String, updated: String? = null, synced: String? = null) = Region(id, "region$id",
                 // 任何三个点总能组成一个三角形
                 listOf(randomHZLatLng, randomHZLatLng, randomHZLatLng),
                 format.parse(created),
-                if (updated == null) format.parse(created) else format.parse(updated))
+                if (updated == null) format.parse(created) else format.parse(updated),
+                if (synced == null) null else format.parse(synced))
 
         fun fakeRegionImage(id: Long) {
             val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/regions", "$id.png"))
@@ -72,19 +71,19 @@ class RegionStore private constructor(val context: Context) {
 
         val random = Random()
         for (region in listOf(
-                fakeRegion(1L, "2016-03-08 17:30:31"),
-                fakeRegion(2L, "2016-03-08 14:32:31", "2016-03-10 12:12:31"),
-                fakeRegion(3L, "2016-03-08 10:32:31"),
-                fakeRegion(4L, "2016-03-01 17:32:31"),
-                fakeRegion(5L, "2016-03-01 12:32:31"),
-                fakeRegion(6L, "2016-01-01 7:32:31", "2016-03-14 14:32:31"),
-                fakeRegion(7L, "2015-09-08 17:32:31"),
-                fakeRegion(8L, "2015-09-08 10:32:31"),
-                fakeRegion(9L, "2015-03-02 9:32:31"),
-                fakeRegion(10L, "2016-03-02 17:32:31"),
-                fakeRegion(11L, "2016-03-02 12:32:31"),
-                fakeRegion(12L, "2016-03-02 10:32:31"),
-                fakeRegion(13L, "2016-03-02 8:32:31")
+                makeRegion(1L, "2016-03-08 17:30:31"),
+                makeRegion(2L, "2016-03-08 14:32:31", "2016-03-10 12:12:31", "2016-03-10 12:12:31"),
+                makeRegion(3L, "2016-03-08 10:32:31"),
+                makeRegion(4L, "2016-03-01 17:32:31"),
+                makeRegion(5L, "2016-03-01 12:32:31"),
+                makeRegion(6L, "2016-01-01 7:32:31", "2016-03-14 14:32:31", "2016-03-14 14:32:31"),
+                makeRegion(7L, "2015-09-08 17:32:31"),
+                makeRegion(8L, "2015-09-08 10:32:31"),
+                makeRegion(9L, "2015-03-02 9:32:31"),
+                makeRegion(10L, "2016-03-02 17:32:31"),
+                makeRegion(11L, "2016-03-02 12:32:31"),
+                makeRegion(12L, "2016-03-02 10:32:31"),
+                makeRegion(13L, "2016-03-02 8:32:31")
         )) {
             val regionId = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
             Logger.v("create region: ${region.name}")
@@ -152,8 +151,12 @@ class RegionStore private constructor(val context: Context) {
 
     fun updateName(id: Long, name: String) = task {
         val db = DBHelpler(context).writableDatabase
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
-            db.update(Region.Model.TABLE_NAME, ContentValues().apply { put(Region.Model.COL_NAME, name) },
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_NAME, name)
+                put(Region.Model.COL_UPDATED, format.format(Date()))
+            },
                     "${BaseColumns._ID}=$id", null)
         } finally {
             db.close()
@@ -162,8 +165,12 @@ class RegionStore private constructor(val context: Context) {
 
     fun updateOutline(id: Long, outline: List<LatLng>, bitmap: Bitmap? = null) = task {
         val db = DBHelpler(context).writableDatabase
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
-            db.update(Region.Model.TABLE_NAME, ContentValues().apply { put(Region.Model.COL_OUTLINE, Region.encodeOutline(outline)) },
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_OUTLINE, Region.encodeOutline(outline))
+                put(Region.Model.COL_UPDATED, format.format(Date()))
+            },
                     "${BaseColumns._ID}=$id", null)
             if (bitmap != null) {
                 val destFile = context.openWritableFile("/regions", "$id.png")
@@ -200,6 +207,32 @@ class RegionStore private constructor(val context: Context) {
         } catch (e: Exception) {
             Logger.e(e.toString())
             null
+        } finally {
+            db.close()
+        }
+    }
+
+    fun touch(id: Long) = task {
+        val db = DBHelpler(context).writableDatabase
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        try {
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_UPDATED, format.format(Date()))
+            },
+                    "${BaseColumns._ID}=$id", null)
+        } finally {
+            db.close()
+        }
+    }
+
+    fun sync(ids: List<Long>) = task {
+        val db = DBHelpler(context).writableDatabase
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        try {
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_SYNCED, format.format(Date()))
+            },
+                    "${BaseColumns._ID} in (${ids.joinToString()})", null)
         } finally {
             db.close()
         }
