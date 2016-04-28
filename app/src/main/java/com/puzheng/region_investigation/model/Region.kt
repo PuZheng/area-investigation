@@ -28,7 +28,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
                 get() = """
                     CREATE TABLE $TABLE_NAME (
                         ${BaseColumns._ID}  INTEGER PRIMARY KEY AUTOINCREMENT,
-                        $COL_NAME TEXT NOT NULL,
+                        $COL_NAME TEXT NOT NULL UNIQUE,
                         $COL_OUTLINE TEXT NOT NULL,
                         $COL_CREATED TEXT NOT NULL,
                         $COL_UPDATED TEXT,

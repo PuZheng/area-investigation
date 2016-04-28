@@ -18,11 +18,14 @@ import android.text.Editable
 import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.databinding.ActivityCreateRegionBinding
+import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.activity_create_region.*
 import kotlinx.android.synthetic.main.fragment_create_region_step1.*
+import nl.komponents.kovenant.ui.successUi
 
 
 class CreateRegionActivity : AppCompatActivity(),
@@ -34,8 +37,19 @@ class CreateRegionActivity : AppCompatActivity(),
         ConfirmCreateRegionDialog(createRegionStep1Fragment.name.text.toString(), latLngList).show(supportFragmentManager, "")
     }
 
-    override fun afterTextChanged(s: Editable?) {
-        next.isEnabled = s.toString().isNotBlank()
+    override fun afterTextChanged(s: Editable?, editText: EditText) {
+        if (s.toString().isBlank()) {
+            next.isEnabled = false
+            return
+        }
+        RegionStore.with(this).uniqueName(s.toString()) successUi {
+            next.isEnabled = it
+            if (!it) {
+                editText.error = getString(R.string.region_name_exists)
+            } else {
+                editText.error = null
+            }
+        }
     }
 
     private var drawingActionMode: ActionMode? = null
