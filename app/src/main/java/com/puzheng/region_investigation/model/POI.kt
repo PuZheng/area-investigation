@@ -1,13 +1,13 @@
 package com.puzheng.region_investigation.model
 
 import android.content.ContentValues
-import android.os.Environment
 import android.os.Parcel
 import android.os.Parcelable
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.MyApplication
+import com.puzheng.region_investigation.store.POIStore
 import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.task
@@ -19,7 +19,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
                val updated: Date?=null) : Parcelable {
 
     val dir: File by lazy {
-        File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName), "pois/$id")
+        File(POIStore.dir, "$id")
     }
 
     val dataFile: File by lazy {
