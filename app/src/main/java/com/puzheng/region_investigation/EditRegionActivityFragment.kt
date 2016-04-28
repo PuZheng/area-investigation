@@ -310,10 +310,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                 setupOutline()
                 setupPOIs()
                 editMode = EditMode.DEFAULT
-                Logger.v(poiMarkers.size.toString())
-                poiMarkers.forEach {
-                    Logger.v((it.`object` as POI).toString())
-                }
             }
         }
     }

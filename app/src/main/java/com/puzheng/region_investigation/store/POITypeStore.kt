@@ -11,8 +11,12 @@ import nl.komponents.kovenant.then
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.BufferedInputStream
 import java.io.File
+import java.io.IOException
 import java.util.*
+import java.util.regex.Pattern
+import java.util.zip.ZipInputStream
 
 class POITypeStore private constructor(val context: Context) {
 
@@ -68,10 +72,18 @@ class POITypeStore private constructor(val context: Context) {
         }
     }
 
+    private val zipFileRegex = Pattern.compile(".*\\.zip$", Pattern.CASE_INSENSITIVE).toRegex()
+    private val zipSuffixRegex = Pattern.compile("\\.zip$", Pattern.CASE_INSENSITIVE).toRegex()
+
     val list: Promise<List<POIType>?, Exception>
         get() = task {
+            dir.listFiles({ file -> file.name.matches(zipFileRegex) })?.map {
+                File(it.path.replace(zipSuffixRegex, "")).mkdirs()
+                unzip(it)
+                it.delete()
+            }
             dir.listFiles({ file -> file.isDirectory })?.map {
-                Logger.v("${it.path}, ${it.name}")
+                Logger.v("${it.path}")
                 val configFile = it.listFiles { file, fname -> fname == "config.json" }.getOrNull(0)
                 if (configFile?.exists() ?: false) {
                     try {
@@ -100,10 +112,42 @@ class POITypeStore private constructor(val context: Context) {
             }?.map {
                 it!!
             }
-            // TODO if met a unzipped zip file (no corresponding dir or phased out), zip it
         }
 
     fun get(uuid: String) = list then {
         it?.find { it.uuid == uuid }
     }
 }
+
+private fun unzip(file: File) =
+    try {
+        val zis = ZipInputStream(BufferedInputStream(file.inputStream()))
+        val buffer = ByteArray(1024)
+        do {
+            val ze = zis.nextEntry ?: break
+            if (ze.isDirectory) {
+                File(file.parent + File.separatorChar + ze.name).mkdirs()
+                continue
+            }
+            val out = File(file.parent + File.separatorChar + ze.name).apply {
+                if (!exists()) {
+                    createNewFile()
+                }
+            }.outputStream()
+            do {
+                val count = zis.read(buffer)
+                if (count == -1) {
+                    break
+                }
+                out.write(buffer, 0, count)
+            } while (true)
+
+            out.close();
+            zis.closeEntry();
+        } while (true)
+        zis.close()
+        true
+    } catch(e: IOException) {
+        e.printStackTrace()
+        false
+    }

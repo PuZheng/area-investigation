@@ -86,7 +86,6 @@ class RegionStore private constructor(val context: Context) {
                 makeRegion(13L, "2016-03-02 8:32:31")
         )) {
             val regionId = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
-            Logger.v("create region: ${region.name}")
             fakeRegionImage(regionId)
             for (i in 1..2 + Random().nextInt(100)) {
                 db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(POI(null,

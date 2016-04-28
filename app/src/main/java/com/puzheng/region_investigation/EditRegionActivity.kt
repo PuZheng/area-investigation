@@ -43,8 +43,6 @@ import nl.komponents.kovenant.ui.successUi
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-private val REQUEST_WRITE_EXTERNAL_STORAGE = AtomicInteger().incrementAndGet()
-private val REQUEST_ACCESS_COARSE_LOCATION = AtomicInteger().incrementAndGet()
 
 class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
         POIFilterDialogFragment.OnFragmentInteractionListener {
@@ -60,6 +58,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
     companion object {
+        private val REQUEST_ACCESS_COARSE_LOCATION = AtomicInteger().incrementAndGet()
+        private val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI = AtomicInteger().incrementAndGet()
         private const val EDIT_POI = 100
     }
 
@@ -156,37 +156,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
     override lateinit var region: Region
 
-    private val permissionRequestHandlerMap: MutableMap<String, () -> Unit> = mutableMapOf()
-
-    private fun fetchPOITypes(after: (List<POIType>) -> Unit) {
-        POITypeStore.with(this).list successUi {
-            if (it != null && it.isNotEmpty()) {
-                after(it)
-            } else {
-                val store = POITypeStore.with(this@EditRegionActivity)
-                this@EditRegionActivity.toast(resources.getString(R.string.no_poi_type_meta_info, store.dir.absolutePath),
-                        Toast.LENGTH_LONG)
-                permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE] = {
-                    mkPOITypeDir()
-                }
-                assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
-                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
-                }
-            }
-        }
-        // TODO it should be polite to show a progressbar
-
-    }
-
-    private fun mkPOITypeDir() {
-        POITypeStore.with(this).dir.apply {
-            Logger.v("poi type dir is $absolutePath")
-            if (mkdirs()) {
-                Logger.e("can't make directory $absolutePath")
-            }
-        }
-    }
+    private val permissionRequestHandlerMap: MutableMap<Int, () -> Unit> = mutableMapOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -200,11 +170,19 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         fab.setOnClickListener {
-            fetchPOITypes {
-                POITypeChooseDialog(it, { addPOI(it) })
-                        .show(supportFragmentManager, "")
+            permissionRequestHandlerMap[REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI] = {
+                POITypeStore.with(this).list successUi {
+                    if (it != null) {
+                        POITypeChooseDialog(it, { addPOI(it) })
+                                .show(supportFragmentManager, "")
+                    } else {
+                        toast(R.string.no_poi_type_meta_info)
+                    }
+                }
             }
-
+            assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI) successUi {
+                permissionRequestHandlerMap[REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI]?.invoke()
+            }
         }
         updateActionBar()
         design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
@@ -345,7 +323,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
 
     fun addPOI(poiType: POIType) {
-        permissionRequestHandlerMap[Manifest.permission.ACCESS_COARSE_LOCATION] = {
+        permissionRequestHandlerMap[REQUEST_ACCESS_COARSE_LOCATION] = {
             getLocation(AMapLocation(Location("").apply {
                 latitude = center.latitude
                 longitude = center.longitude
@@ -370,23 +348,19 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             }
         }
         assertPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_ACCESS_COARSE_LOCATION).successUi {
-            permissionRequestHandlerMap[Manifest.permission.ACCESS_COARSE_LOCATION]?.invoke()
+            permissionRequestHandlerMap[REQUEST_ACCESS_COARSE_LOCATION]?.invoke()
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
-            REQUEST_WRITE_EXTERNAL_STORAGE ->
+            REQUEST_ACCESS_COARSE_LOCATION,
+            REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    permissionRequestHandlerMap[Manifest.permission.WRITE_EXTERNAL_STORAGE]?.invoke()
+                    permissionRequestHandlerMap[requestCode]?.invoke()
                 } else {
                     toast("why not fake some poi types?")
-                }
-            REQUEST_ACCESS_COARSE_LOCATION ->
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    permissionRequestHandlerMap[Manifest.permission.ACCESS_COARSE_LOCATION]?.invoke()
                 }
             EditRegionActivityFragment.REQUEST_ACCESS_COARSE_LOCATION ->
                 if (grantResults.isNotEmpty()
