@@ -49,4 +49,6 @@
     <string name="poi_not_changed">信息点数据没有变化</string>
     <string name="confirm_poi_no_save">信息点数据已经修改,确认退出?</string>
     <string name="preference_last_location">com.puzheng.region_investigation.last_location</string>
+    <string name="region_name_exists">该重点区域名称已经存在</string>
+    <string name="name_must_not_empty">名称不能为空</string>
 </resources>

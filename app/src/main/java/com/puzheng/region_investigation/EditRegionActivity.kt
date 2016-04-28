@@ -14,13 +14,16 @@ import android.support.design.widget.Snackbar
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
 import com.amap.api.location.AMapLocation
@@ -64,7 +67,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
     val fragmentEditRegion: EditRegionActivityFragment by lazy {
-        findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_region)!!
+        findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_region)
     }
 
     private val regionStore: RegionStore by lazy {
@@ -258,27 +261,56 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         R.id.action_edit_name -> {
             editNameActionMode = startSupportActionMode(object : ActionMode.Callback {
                 override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                    mode?.customView = layoutInflater.inflate(R.layout.app_bar_edit_region_name, null, false)
-                    region_name.apply {
-                        setText(region.name)
-                        requestFocus()
-                        (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(currentFocus, 0)
-                        setSelection(region.name.length)
+                    mode?.customView = layoutInflater.inflate(R.layout.app_bar_edit_region_name, null, false).apply {
+                        findView<EditText>(R.id.region_name).let {
+                            regionName ->
+                            regionName.setText(region.name)
+                            regionName.requestFocus()
+                            regionName.setSelection(region.name.length)
+                            regionName.addTextChangedListener(object : TextWatcher {
+                                override fun afterTextChanged(p0: Editable?) {
+                                    regionName.error = null
+                                    if (p0.toString().isBlank()) {
+                                        regionName.error = getString(R.string.name_must_not_empty)
+                                        return
+                                    }
+                                    // 当然可以恢复为原来的名字
+                                    if (p0.toString() != region.name) {
+                                        regionStore.uniqueName(p0.toString()) successUi {
+                                            if (!it) {
+                                                regionName.error = getString(R.string.region_name_exists)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                                }
+
+                                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                                }
+                            })
+                        }
                     }
+                    (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(currentFocus, 0)
+
                     return true
                 }
 
                 override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                     when (item?.itemId) {
                         R.id.action_ok -> {
-                            editNameActionMode!!.finish()
-                            region.name = region_name.text.toString()
-                            regionStore.updateName(region.id!!, region_name.text.toString()) successUi {
-                                toast(R.string.edit_region_name_success)
-                                dataChanged = true
-                                regionStore.get(region.id!!) successUi {
-                                    region = it!!
-                                    updateActionBar()
+                            if (mode!!.customView.findView<EditText>(R.id.
+                                    region_name).error == null) {
+                                editNameActionMode!!.finish()
+                                region.name = region_name.text.toString()
+                                regionStore.updateName(region.id!!, region_name.text.toString()) successUi {
+                                    toast(R.string.edit_region_name_success)
+                                    dataChanged = true
+                                    regionStore.get(region.id!!) successUi {
+                                        region = it!!
+                                        updateActionBar()
+                                    }
                                 }
                             }
                         }

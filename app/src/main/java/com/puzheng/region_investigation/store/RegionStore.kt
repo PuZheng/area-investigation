@@ -236,4 +236,15 @@ class RegionStore private constructor(val context: Context) {
             db.close()
         }
     }
+
+    fun uniqueName(name: String) = task {
+        val db = DBHelpler(context).readableDatabase
+        try {
+            val cursor = db.query(Region.Model.TABLE_NAME, null, "${Region.Model.COL_NAME}=?", arrayOf(name), null, null,
+                    null)
+            cursor.count == 0
+        } finally {
+            db.close()
+        }
+    }
 }

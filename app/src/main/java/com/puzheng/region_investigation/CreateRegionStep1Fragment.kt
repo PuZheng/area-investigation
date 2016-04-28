@@ -8,6 +8,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import kotlinx.android.synthetic.main.fragment_create_region_step1.*
 
 
@@ -29,7 +30,7 @@ class CreateRegionStep1Fragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         name.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                mListener?.afterTextChanged(s)
+                mListener?.afterTextChanged(s, name)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -38,7 +39,7 @@ class CreateRegionStep1Fragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
             }
         })
-        mListener?.afterTextChanged(name.editableText)
+        mListener?.afterTextChanged(name.editableText, name)
 
 
     }
@@ -70,6 +71,6 @@ class CreateRegionStep1Fragment : Fragment() {
 
     interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        fun afterTextChanged(s: Editable?)
+        fun afterTextChanged(s: Editable?, editText: EditText)
     }
 }
