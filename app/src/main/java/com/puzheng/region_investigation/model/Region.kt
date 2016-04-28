@@ -48,9 +48,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     }
 
     val isDirty: Boolean
-        get() = (synced == null || synced!! < updated).apply {
-            Logger.v("$id $synced, $updated")
-        }
+        get() = (synced == null || synced!! < updated)
 
 
     constructor(source: Parcel) : this(

@@ -92,7 +92,6 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
             if (region.isDirty) {
                 holder.markAsDirty()
             }
-            Logger.v("bind ${region.name}")
         }
     }
 
