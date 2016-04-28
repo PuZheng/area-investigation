@@ -2,16 +2,23 @@ package com.puzheng.region_investigation.store
 
 import android.content.ContentValues
 import android.content.Context
+import android.os.Environment
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.puzheng.region_investigation.DBHelpler
+import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.model.POI
 import nl.komponents.kovenant.task
+import java.io.File
 
 class POIStore private constructor(val context: Context) {
 
     companion object {
         fun with(context: Context) = POIStore(context)
+        val dir: File by lazy {
+            File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
+                    "pois")
+        }
     }
 
     fun create(poi: POI) = task {

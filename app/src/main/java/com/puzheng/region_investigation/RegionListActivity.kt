@@ -102,8 +102,10 @@ class RegionListActivity : AppCompatActivity(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.action_settings ->
-                true
+        R.id.action_settings -> {
+            startActivity(Intent(this, InfoActivity::class.java))
+            true
+        }
         else -> super.onOptionsItemSelected(item)
     }
 
