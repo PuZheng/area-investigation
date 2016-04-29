@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.bignerdranch.android.multiselector.MultiSelector
+import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.databinding.FragmentRegionListBinding
 import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.store.POITypeStore
@@ -133,10 +134,12 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun removeSelectedRegions() {
+        Logger.v("""selected regions: ${selectedRegions.map { "${it.id}:${it.name}" }.joinToString(",")}""")
         val adapter = (list.adapter as RegionRecyclerViewAdapter)
-        adapter.removeSelectedRegions()
         RegionStore.with(activity).removeRegions(adapter.selectedRegions) successUi {
             Toast.makeText(activity, "区域已被删除!", Toast.LENGTH_SHORT).show()
+            adapter.removeSelectedRegions()
+            multiSelector.clearSelections()
         }
     }
 }
