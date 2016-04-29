@@ -15,16 +15,12 @@ import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.Region
-import com.puzheng.region_investigation.store.LogStore
 import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.activity_region_list.*
 import kotlinx.android.synthetic.main.content_region_list.*
 import nl.komponents.kovenant.ui.successUi
-import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.logging.FileHandler
-import java.util.logging.Level
 
 class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnRegionListFragmentInteractionListener {
@@ -42,13 +38,19 @@ class RegionListActivity : AppCompatActivity(),
             return false
         }
 
-        actionMode = startSupportActionMode(object : ModalMultiSelectorCallback((fragmentRegionList as RegionListFragment).multiSelector) {
+        actionMode = startSupportActionMode(object : ModalMultiSelectorCallback(
+                (fragmentRegionList as RegionListFragment).multiSelector) {
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                 when (item?.itemId) {
-                    R.id.action_trash ->
-                        TrashAlertDialogFragment().show(supportFragmentManager, "")
+                    R.id.action_trash -> {
+                        if (regionListFragment.selectedRegions.isNotEmpty()) {
+                            TrashAlertDialogFragment().show(supportFragmentManager, "")
+                        } else {
+                            toast(R.string.select_at_least_one_region)
+                        }
+                    }
                     R.id.action_upload ->
                         RegionStore.with(this@RegionListActivity).sync(regionListFragment.selectedRegions.map { it.id!! }) successUi {
                             regionListFragment.selectedRegions.forEach {
@@ -132,20 +134,20 @@ class RegionListActivity : AppCompatActivity(),
         val TAG_REGION = "REGION"
         private val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOGGING = AtomicInteger().andDecrement
     }
+
+
 }
 
 private class TrashAlertDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(activity)
-
         builder.setTitle(R.string.warning).setMessage(R.string.trash_confirm_msg)
                 .setPositiveButton(R.string.confirm, {
                     dialog, v ->
                     val fragment = (activity as RegionListActivity).fragmentRegionList as RegionListFragment
                     fragment.removeSelectedRegions()
                 }).setNegativeButton(R.string.cancel, null)
-        // Create the AlertDialog object and return it
         return builder.create();
     }
 }
