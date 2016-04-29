@@ -31,7 +31,7 @@ class ConfirmSaveRegionOutlineDialog(val region: Region, val afterSaved: () -> U
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener({
             map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
-                    RegionStore.with(activity).updateOutline(region.id!!, region.outline, p0) successUi {
+                    RegionStore.with(activity).updateOutline(region, region.outline, p0) successUi {
                         afterSaved()
                         activity.toast(R.string.update_outline_success)
                         dialog.dismiss()

@@ -303,8 +303,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                             if (mode!!.customView.findView<EditText>(R.id.
                                     region_name).error == null) {
                                 editNameActionMode!!.finish()
-                                region.name = region_name.text.toString()
-                                regionStore.updateName(region.id!!, region_name.text.toString()) successUi {
+                                regionStore.updateName(region, region_name.text.toString()) successUi {
                                     toast(R.string.edit_region_name_success)
                                     dataChanged = true
                                     regionStore.get(region.id!!) successUi {

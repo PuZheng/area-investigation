@@ -263,7 +263,7 @@ class EditPOIActivity : AppCompatActivity() {
                 permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE] = {
                     collectData() then {
                         formData ->
-                        poi?.saveData(formData.toString())?.successUi {
+                        poi?.saveData(formData)?.successUi {
                             toast(R.string.poi_data_saved)
                             poiData = mutableMapOf<String, Any?>().apply {
                                 formData.keys().forEach {

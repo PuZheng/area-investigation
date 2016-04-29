@@ -7,13 +7,16 @@ import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.MyApplication
+import com.puzheng.region_investigation.store.EventType
 import com.puzheng.region_investigation.store.POIStore
 import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.task
+import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.logging.Level
 
 data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val latLng: LatLng, val created: Date,
                val updated: Date?=null) : Parcelable {
@@ -26,15 +29,20 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
         File(dir, "data.json")
     }
 
-    fun saveData(s: String) = task {
-        Logger.json(s)
+    fun saveData(json: JSONObject) = task {
         if (!dir.exists()) {
             dir.mkdirs()
         }
         if (!dataFile.exists()) {
             dataFile.createNewFile()
         }
-        dataFile.writeText(s)
+        dataFile.writeText(json.toString())
+        MyApplication.eventLogger.log(Level.INFO, "修改信息点附属信息", JSONObject().apply {
+            put("type", EventType.UPDATE_POI)
+            put("id", id)
+            put("data", json.toString())
+        })
+
     } and RegionStore.with(MyApplication.context).touch(regionId)
 
     class Model {

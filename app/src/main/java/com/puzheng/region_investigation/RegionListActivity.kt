@@ -1,26 +1,30 @@
 package com.puzheng.region_investigation
 
+import android.Manifest
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
-import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.Region
+import com.puzheng.region_investigation.store.LogStore
 import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.activity_region_list.*
 import kotlinx.android.synthetic.main.content_region_list.*
 import nl.komponents.kovenant.ui.successUi
+import org.json.JSONObject
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.logging.FileHandler
+import java.util.logging.Level
 
 class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnRegionListFragmentInteractionListener {
@@ -93,6 +97,8 @@ class RegionListActivity : AppCompatActivity(),
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
+        assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOGGING) success {
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -124,6 +130,7 @@ class RegionListActivity : AppCompatActivity(),
 
     companion object {
         val TAG_REGION = "REGION"
+        private val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOGGING = AtomicInteger().andDecrement
     }
 }
 
@@ -137,7 +144,6 @@ private class TrashAlertDialogFragment : DialogFragment() {
                     dialog, v ->
                     val fragment = (activity as RegionListActivity).fragmentRegionList as RegionListFragment
                     fragment.removeSelectedRegions()
-                    fragment.multiSelector.clearSelections()
                 }).setNegativeButton(R.string.cancel, null)
         // Create the AlertDialog object and return it
         return builder.create();

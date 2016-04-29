@@ -9,7 +9,11 @@ import com.puzheng.region_investigation.DBHelpler
 import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.model.POI
 import nl.komponents.kovenant.task
+import nl.komponents.kovenant.then
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
+import java.util.logging.Level
 
 class POIStore private constructor(val context: Context) {
 
@@ -28,6 +32,13 @@ class POIStore private constructor(val context: Context) {
         } finally {
             db.close()
         }
+    } then {
+        MyApplication.eventLogger.log(Level.INFO, "创建信息点", JSONObject().apply {
+            put("type", EventType.CREATE_POI)
+            put("id", it)
+            put("regionId", poi.regionId)
+        })
+        it
     }
 
     fun remove(poi: POI) = task {
@@ -37,6 +48,12 @@ class POIStore private constructor(val context: Context) {
         } finally {
             db.close()
         }
+
+        MyApplication.eventLogger.log(Level.INFO, "删除信息点", JSONObject().apply {
+            put("type", EventType.DELETE_POI)
+            put("id", poi.id)
+            put("regionId", poi.regionId)
+        })
     }
 
     fun update(poi: POI, value: Map<String, Any?>) = task {
@@ -51,12 +68,30 @@ class POIStore private constructor(val context: Context) {
                             (v as LatLng).let {
                                 put(k, "${it.latitude},${it.longitude}")
                             }
-                        else -> {}
+                        else -> {
+                        }
                     }
                 }
             }, "${BaseColumns._ID}=?", arrayOf(poi.id.toString()))
         } finally {
             db.close()
         }
+        MyApplication.eventLogger.log(Level.INFO, "修改信息点", JSONObject().apply {
+            put("type", EventType.UPDATE_POI)
+            put("id", poi.id)
+            put("fields", JSONObject().apply {
+                value.forEach {
+                    val (k, v) = it
+                    when (k) {
+                        POI.Model.COL_LAT_LNG ->
+                            put("lnglat", JSONObject().apply {
+                                put("old", "${poi.latLng.latitude},${poi.latLng.longitude}")
+                                put("new", "${(v as LatLng).latitude},${v.longitude}")
+                            })
+                        else -> {}
+                    }
+                }
+            })
+        })
     }
 }

@@ -119,7 +119,6 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
         }
 
     fun removeSelectedRegions() {
-        Logger.v("""selected regions: ${selectedRegions.map { it.name }.joinToString(",")}""")
         regions = regions?.filter { it?.id !in selectedRegions.map { it.id } }
         Logger.v("""remained regions: ${regions?.map { it?.name }?.joinToString(",")}""")
         setupItems()
