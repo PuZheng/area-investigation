@@ -129,9 +129,8 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
 
     data class Args(val loading: ObservableField<Boolean>, val itemNo: ObservableField<Int>)
 
-    val selectedRegions: List<Region> by lazy {
-        (list.adapter as RegionRecyclerViewAdapter).selectedRegions
-    }
+    val selectedRegions: List<Region>
+        get() = (list.adapter as RegionRecyclerViewAdapter).selectedRegions
 
     fun removeSelectedRegions() {
         Logger.v("""selected regions: ${selectedRegions.map { "${it.id}:${it.name}" }.joinToString(",")}""")
