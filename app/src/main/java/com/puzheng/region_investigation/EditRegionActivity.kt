@@ -58,6 +58,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     override fun onPOILocationSaved(poi: POI) {
         region.updated = Date()
         updateActionBar()
+        poiRelocateActionMode?.finish()
     }
 
     companion object {
