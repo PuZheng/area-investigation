@@ -4,11 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.design.widget.BottomSheetBehavior
 import android.support.design.widget.Snackbar
 import android.support.v4.content.ContextCompat
@@ -25,7 +23,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.Toast
 import com.amap.api.location.AMapLocation
 import com.amap.api.maps.model.LatLng
 import com.amap.api.maps.model.Marker
@@ -128,11 +125,13 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 R.id.action_submit -> {
                     fragmentEditRegion.saveOutline({
                         // 注意， 一定要告诉Picasso清除图片缓存
-                        Picasso.with(this@EditRegionActivity).invalidate(RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
+                        Picasso.with(this@EditRegionActivity).invalidate(
+                                RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
                         regionStore.get(region.id!!) successUi {
                             region = it!!
                             updateActionBar()
                         }
+                        editOutlineActionMode?.finish()
                     })
                     dataChanged = true
                     true

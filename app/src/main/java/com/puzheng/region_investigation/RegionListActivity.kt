@@ -99,8 +99,6 @@ class RegionListActivity : AppCompatActivity(),
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
-        assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOGGING) success {
-        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -126,6 +124,14 @@ class RegionListActivity : AppCompatActivity(),
                             RegionListFragment.REQUEST_WRITE_EXTERNAL_STORAGE)
                 } else {
                     toast("why not fake some poi types?")
+                }
+            MyApplication.REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    (application as MyApplication).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            MyApplication.REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG)
+                } else {
+                    toast("why not write log?")
                 }
         }
     }

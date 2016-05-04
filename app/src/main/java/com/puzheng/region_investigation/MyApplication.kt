@@ -1,17 +1,30 @@
 package com.puzheng.region_investigation
 
+import android.Manifest
+import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import com.puzheng.region_investigation.store.LogStore
 import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
+import nl.komponents.kovenant.ui.successUi
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.*
 import java.util.logging.Formatter
 
-class MyApplication : Application() {
+class MyApplication : Application(), OnPermissionGrantedListener {
+    override fun onPermissionGranted(permission: String, requestCode: Int) {
+        if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG) {
+            eventLogger.addHandler(FileHandler(LogStore.dir.absolutePath + "/%u.log", true).apply {
+                formatter = EventLogFormatter()
+            })
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -23,9 +36,38 @@ class MyApplication : Application() {
         startKovenant()
         MyApplication.context = applicationContext
         eventLogger = Logger.getLogger("com.puzheng.region_investigation.event")
-        eventLogger.addHandler(FileHandler(LogStore.dir.absolutePath + "/%u.log", true).apply {
-            formatter = EventLogFormatter()
+        registerActivityLifecycleCallbacks(object: Application.ActivityLifecycleCallbacks {
+            override fun onActivityPaused(activity: Activity?) {
+
+            }
+
+            override fun onActivityStarted(activity: Activity?) {
+            }
+
+            override fun onActivityDestroyed(activity: Activity?) {
+            }
+
+            override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
+            }
+
+            override fun onActivityStopped(activity: Activity?) {
+            }
+
+            override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
+                if (eventLogger.handlers.isEmpty()) {
+                    (activity as AppCompatActivity).assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG) successUi {
+                        onPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG)
+                    }
+                }
+            }
+
+            override fun onActivityResumed(activity: Activity?) {
+            }
+
         })
+
     }
 
     override fun onTerminate() {
@@ -40,6 +82,7 @@ class MyApplication : Application() {
     companion object {
         lateinit var context: Context
         lateinit var eventLogger: Logger
+        val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG = AtomicInteger().andDecrement
     }
 }
 

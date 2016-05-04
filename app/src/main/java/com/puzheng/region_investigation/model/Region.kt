@@ -59,29 +59,29 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
             source.readSerializable() as Date,
             source.readSerializable() as Date?,
             source.readSerializable() as Date?)
-    /**
-    * 计算区域面积， 参考http://www.mathopenref.com/heronsformula.html
-     */
-    val area: Double
-        get() = (1..outline.size - 2).map {
-            val a = AMapUtils.calculateLineDistance(outline[it], outline[0])
-            val b = AMapUtils.calculateLineDistance(outline[it + 1], outline[0])
-            val c = AMapUtils.calculateLineDistance(outline[it], outline[it + 1])
-            val p = (a + b + c) / 2
-            Math.sqrt((p * (p - a) * (p - b) * (p - c)).toDouble())
-        }.sum()
 
     /**
      * 区域面积， 参考http://www.wikihow.com/Calculate-the-Area-of-a-Polygon
      */
-    val area1: Double
+    val area: Double
         get() {
-            val t = outline.map {
-                it.xy
+            if (outline.isEmpty()) {
+                return 0.0
             }
-            return Math.abs(((0..outline.size - 2).map {
+            // 以出发点作为(0, 0), 注意，由于火星坐标系的原因，这里不能直接采用mercator投影
+            val start = outline[0]
+            val t = listOf(Pair(0.0, 0.0)) + outline.subList(1, outline.size).map {
+                Pair(
+                        (if (it.latitude > start.latitude) 1 else -1) *
+                                AMapUtils.calculateLineDistance(start, LatLng(it.latitude, start.longitude)).toDouble(),
+                        (if (it.longitude > start.longitude) 1 else -1) *
+                                AMapUtils.calculateLineDistance(start, LatLng(start.latitude, it.longitude)).toDouble()
+                )
+            } + listOf(Pair(0.0, 0.0))
+            Logger.v(t.toString())
+            return Math.abs(((0..t.size - 2).map {
                 t[it].first * t[it + 1].second
-            }.sum() - (0..outline.size - 2).map {
+            }.sum() - (0..t.size - 2).map {
                 t[it].second * t[it + 1].first
             }.sum())) / 2
         }
