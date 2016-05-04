@@ -7,6 +7,7 @@ import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.xy
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -69,6 +70,21 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
             val p = (a + b + c) / 2
             Math.sqrt((p * (p - a) * (p - b) * (p - c)).toDouble())
         }.sum()
+
+    /**
+     * 区域面积， 参考http://www.wikihow.com/Calculate-the-Area-of-a-Polygon
+     */
+    val area1: Double
+        get() {
+            val t = outline.map {
+                it.xy
+            }
+            return Math.abs(((0..outline.size - 2).map {
+                t[it].first * t[it + 1].second
+            }.sum() - (0..outline.size - 2).map {
+                t[it].second * t[it + 1].first
+            }.sum())) / 2
+        }
 
     override fun describeContents(): Int {
         return 0
