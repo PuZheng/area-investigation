@@ -74,63 +74,65 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
         super.onViewCreated(view, savedInstanceState)
 
         map.onCreate(savedInstanceState)
-        // 不要被SET迷惑，这里实际的意义是GET
-        map.map.setLocationSource(object : LocationSource {
-            override fun deactivate() {
-                onLocationChangeListener = null
-            }
+        map.map.apply {
+            // 不要被SET迷惑，这里实际的意义是GET
+            setLocationSource(object : LocationSource {
+                override fun deactivate() {
+                    onLocationChangeListener = null
+                }
 
-            override fun activate(p0: LocationSource.OnLocationChangedListener?) {
-                // 这里将获取map默认的OnLocationChangedListener, map不能直接移动中心点，要通过操作这个对象来
-                // 实现定位
-                onLocationChangeListener = p0
+                override fun activate(p0: LocationSource.OnLocationChangedListener?) {
+                    // 这里将获取map默认的OnLocationChangedListener, map不能直接移动中心点，要通过操作这个对象来
+                    // 实现定位
+                    onLocationChangeListener = p0
+                }
+            })
+            isMyLocationEnabled = true
+            uiSettings.isMyLocationButtonEnabled = true
+            moveCamera(CameraUpdateFactory.zoomTo(INIT_ZOOM_LEVEL))
+            setOnMapLongClickListener {
+                listener?.onMapLongClick(this@CreateRegionStep2Fragment, it)
             }
-        })
-        map.map.isMyLocationEnabled = true
-        map.map.moveCamera(CameraUpdateFactory.zoomTo(INIT_ZOOM_LEVEL))
-        map.map.setOnMapLongClickListener {
-            listener?.onMapLongClick(this, it)
-        }
-        var lastScreenLocation: Point? = null
-        map.map.setOnMapTouchListener {
-            if (!map.map.uiSettings.isScrollGesturesEnabled) {
-                when (MotionEventCompat.getActionMasked(it)) {
-                    MotionEvent.ACTION_UP -> {
-                        activeMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
-                        activePolyline.color = ContextCompat.getColor(activity, R.color.colorAccent)
-                        startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
-                        if (isRegionClosed) {
-                            listener?.onDrawDone(markers.map {
-                                it.position
-                            })
-                            stopDraw()
-                        }
-                    }
-                    MotionEvent.ACTION_DOWN -> {
-                        addMarker(it.latLng)
-                        lastScreenLocation = it.screenLocation
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        activeMarker?.position = it.latLng
-                        // 一定要构成多边形
-                        if (markers.size > 2) {
-                            if (isApproachingToStartMarker(it.screenLocation, lastScreenLocation)) {
-                                startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(closingMarkerBitmap))
-                                // 自动吸附到出发点
-                                activeMarker?.position = startMarker!!.position
-                            } else {
-                                startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
+            var lastScreenLocation: Point? = null
+            setOnMapTouchListener {
+                if (!uiSettings.isScrollGesturesEnabled) {
+                    when (MotionEventCompat.getActionMasked(it)) {
+                        MotionEvent.ACTION_UP -> {
+                            activeMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
+                            activePolyline.color = ContextCompat.getColor(activity, R.color.colorAccent)
+                            startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
+                            if (isRegionClosed) {
+                                listener?.onDrawDone(markers.map {
+                                    it.position
+                                })
+                                stopDraw()
                             }
                         }
-                        val (scrollX, scrollY) = violationToBoundary(it.screenLocation)
-                        map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
-                        activePolyline.points = listOf(activeMarker?.position, markers[markers.lastIndex - 1].position)
-                        lastScreenLocation = it.screenLocation
+                        MotionEvent.ACTION_DOWN -> {
+                            addMarker(it.latLng)
+                            lastScreenLocation = it.screenLocation
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            activeMarker?.position = it.latLng
+                            // 一定要构成多边形
+                            if (markers.size > 2) {
+                                if (isApproachingToStartMarker(it.screenLocation, lastScreenLocation)) {
+                                    startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(closingMarkerBitmap))
+                                    // 自动吸附到出发点
+                                    activeMarker?.position = startMarker!!.position
+                                } else {
+                                    startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
+                                }
+                            }
+                            val (scrollX, scrollY) = violationToBoundary(it.screenLocation)
+                            moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
+                            activePolyline.points = listOf(activeMarker?.position, markers[markers.lastIndex - 1].position)
+                            lastScreenLocation = it.screenLocation
+                        }
                     }
                 }
             }
         }
-
         (activity as AppCompatActivity).assertPermission(Manifest.permission.ACCESS_COARSE_LOCATION,
                 REQUEST_ACCESS_COARSE_LOCATION).successUi {
             onPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_ACCESS_COARSE_LOCATION)
