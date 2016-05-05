@@ -53,7 +53,6 @@ class CarouselActivity : AppCompatActivity() {
         supportActionBar!!.setDisplayShowTitleEnabled(false)
         pos = intent.getIntExtra(TAG_POS, 0)
         images = intent.getStringArrayListExtra(TAG_IMAGES)
-        Logger.v(images.toString())
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -65,22 +64,33 @@ class CarouselActivity : AppCompatActivity() {
         findView<FloatingActionButton>(R.id.fab).setOnClickListener {
             Picasso.with(this).invalidate(images[viewPager.currentItem])
             images = images.filterIndexed { i, s -> i != viewPager.currentItem }
-            (viewPager.adapter as SectionsPagerAdapter).apply {
-                fragments = fragments.filterIndexed { i, fragment -> i != viewPager.currentItem }
-                viewPager.adapter = viewPager.adapter
+            if (images.isEmpty()) {
+                setResult(RESULT_OK, Intent().apply {
+                    putExtra(TAG_IMAGES, ArrayList(images))
+                })
+                finish()
+            } else {
+                (viewPager.adapter as SectionsPagerAdapter).apply {
+                    fragments = fragments.filterIndexed { i, fragment -> i != viewPager.currentItem }
+                    viewPager.adapter = viewPager.adapter
+                }
             }
-
         }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        setResult(RESULT_OK, Intent().apply {
-            putExtra(TAG_IMAGES, ArrayList(images))
-        })
+        if (item.itemId == android.R.id.home) {
+            setResult(RESULT_OK, Intent().apply {
+                putExtra(TAG_IMAGES, ArrayList(images))
+            })
+        }
         return super.onOptionsItemSelected(item)
     }
 
     override fun onBackPressed() {
+        setResult(RESULT_OK, Intent().apply {
+            putExtra(TAG_IMAGES, ArrayList(images))
+        })
         super.onBackPressed()
     }
 
