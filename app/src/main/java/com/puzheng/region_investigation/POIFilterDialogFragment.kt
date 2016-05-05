@@ -77,7 +77,7 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View? =
                 (convertView ?: View.inflate(context, R.layout.item_poi_filter, null)).apply {
                     if (tag == null) {
-                        tag = ViewHolder(findTextViewById(R.id.textView), findImageViewById(R.id.imageButton),
+                        tag = ViewHolder(findTextViewById(R.id.textView), findImageViewById(R.id.imageView),
                                 findCheckBoxById(R.id.checkBox))
                     }
                     val vh = tag as ViewHolder
