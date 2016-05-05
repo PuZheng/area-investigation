@@ -22,7 +22,11 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
                val updated: Date?=null) : Parcelable {
 
     val dir: File by lazy {
-        File(POIStore.dir, "$id")
+        File(POIStore.dir, "$id").apply {
+            if (!exists()) {
+                mkdirs()
+            }
+        }
     }
 
     val dataFile: File by lazy {

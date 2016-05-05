@@ -116,22 +116,17 @@ class RegionListActivity : AppCompatActivity(),
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        // 有两个OnPermissionGranted都要请求REQUEST_WRITE_EXTERNAL_STORAGE权限，那么只要赋予一次权限，就可以允许
+        // 这两者都执行callback
         when (requestCode) {
-            RegionListFragment.REQUEST_WRITE_EXTERNAL_STORAGE ->
+            RegionListFragment.REQUEST_WRITE_EXTERNAL_STORAGE,
+            MyApplication.REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     (fragmentRegionList as RegionListFragment).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             RegionListFragment.REQUEST_WRITE_EXTERNAL_STORAGE)
-                } else {
-                    toast("why not fake some poi types?")
-                }
-            MyApplication.REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG ->
-                if (grantResults.isNotEmpty()
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     (application as MyApplication).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             MyApplication.REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG)
-                } else {
-                    toast("why not write log?")
                 }
         }
     }

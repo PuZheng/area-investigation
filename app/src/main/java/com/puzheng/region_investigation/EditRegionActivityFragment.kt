@@ -26,6 +26,7 @@ import kotlinx.android.synthetic.main.fragment_create_region_step2.*
 import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
 private enum class MarkerType {
@@ -53,9 +54,9 @@ private enum class MarkerType {
  */
 class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
-    val selectedPOI: POI? by lazy {
-        selectedPOIMarker?.`object` as POI
-    }
+    val selectedPOI: POI?
+        get() = selectedPOIMarker?.`object` as POI
+
     lateinit private var hotCopyRegion: Region // 用于保存编辑状态下的区域信息
     private val outlineMarkerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
@@ -436,11 +437,23 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         selectedPOIMarker?.position = (selectedPOIMarker?.`object` as POI).latLng
     }
 
+    private val defaultIconBitmap: Bitmap
+        get() = activity.loadBitmap(R.drawable.ic_place_pink_a400_24dp)
+
+    private val defaultActiveIconBitmap: Bitmap
+        get() = activity.loadBitmap(R.drawable.ic_place_pink_a100_24dp)
+
+
     private fun getIconBitmap(poi: POI): Bitmap? {
-        val poiType = poiTypeMap[poi.poiTypeUUID] ?: return null
+        val poiType = poiTypeMap[poi.poiTypeUUID] ?: return defaultIconBitmap
+        val bitmap = try {
+            activity.loadBitmap(poiTypeStore.getPOITypeIcon(poiType))
+        } catch(e: IOException) {
+            null
+        } ?: return defaultIconBitmap
         if (!poiTypeIconMap.containsKey(poiType.uuid)) {
             poiTypeIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
-                    activity.loadBitmap(poiTypeStore.getPOITypeIcon(poiType)),
+                    bitmap,
                     (24 * pixelsPerDp).toInt(),
                     (24 * pixelsPerDp).toInt(),
                     false
@@ -450,10 +463,15 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     private fun getActiveIconBitmap(poi: POI): Bitmap? {
-        val poiType = poiTypeMap[poi.poiTypeUUID] ?: return null
+        val poiType = poiTypeMap[poi.poiTypeUUID] ?: return defaultActiveIconBitmap
+        val bitmap = try {
+            activity.loadBitmap(poiTypeStore.getPOITypeActiveIcon(poiType))
+        } catch (e: IOException) {
+            null
+        } ?: return defaultActiveIconBitmap
         if (!poiTypeActiveIconMap.containsKey(poiType.uuid)) {
             poiTypeActiveIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
-                    activity.loadBitmap(poiTypeStore.getPOITypeActiveIcon(poiType)),
+                    bitmap,
                     (28 * pixelsPerDp).toInt(),
                     (28 * pixelsPerDp).toInt(),
                     false

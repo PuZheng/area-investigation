@@ -61,10 +61,9 @@ class EditPOIActivity : AppCompatActivity() {
         setSupportActionBar(findView<Toolbar>(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        poi = if (savedInstanceState == null) {
-            intent.getParcelableExtra<POI>(TAG_POI)
-        } else {
-            savedInstanceState.getParcelable(TAG_POI)
+        poi = intent.getParcelableExtra<POI>(TAG_POI)
+        if (poi == null) {
+            poi = savedInstanceState?.getParcelable(TAG_POI)
         }
         if (poi == null && BuildConfig.DEBUG) {
 
@@ -87,8 +86,8 @@ class EditPOIActivity : AppCompatActivity() {
     lateinit private var poiType: POIType
 
     private fun setupView() {
-        findView<TextView>(R.id.textViewCreated).text =
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi?.created)
+        findView<TextView>(R.id.textViewCreated).text = if (poi == null) "" else
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi!!.created)
         findView<TextView>(R.id.textViewPOIId).text = poi?.id.toString()
         poiTypeStore.get(poi!!.poiTypeUUID) then {
             poiType = it!!

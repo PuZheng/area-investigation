@@ -33,7 +33,6 @@ open class StringFieldResolver(override val name: String, val context: Context) 
     private var text: String? = null
 
     override fun bind(value: Any?): View {
-        Logger.v("bind with `$value`")
         text = value as String?
         editText.setText(value)
         return view

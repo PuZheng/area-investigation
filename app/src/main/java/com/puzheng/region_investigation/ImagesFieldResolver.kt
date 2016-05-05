@@ -49,7 +49,6 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
     }
 
     override fun bind(value: Any?): View {
-        Logger.e("bind with `$value`")
         if (value != null) {
             val jsonArray = value as JSONArray
             (0..jsonArray.length() - 1).forEach {

@@ -7,7 +7,6 @@ import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
-import com.puzheng.region_investigation.xy
 import java.text.SimpleDateFormat
 import java.util.*
 

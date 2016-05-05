@@ -195,6 +195,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         }
         design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
             startActivityForResult(Intent(this, EditPOIActivity::class.java).apply {
+                Logger.v(fragmentEditRegion.selectedPOI.toString())
                 putExtra(EditPOIActivity.TAG_POI, fragmentEditRegion.selectedPOI)
             }, EDIT_POI)
         }
@@ -233,7 +234,6 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
-        Logger.v("save instance state")
         outState?.putParcelable(RegionListActivity.TAG_REGION, region)
         super.onSaveInstanceState(outState)
     }

@@ -71,7 +71,6 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
         }
 
     override fun bind(value: Any?): View {
-        Logger.v("bind with `$value`")
         path = value as String?
         imageButton.setOnClickListener {
             onClick.invoke(this, path)

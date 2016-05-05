@@ -83,7 +83,6 @@ class POITypeStore private constructor(val context: Context) {
                 it.delete()
             }
             dir.listFiles({ file -> file.isDirectory })?.map {
-                Logger.v("${it.path}")
                 val configFile = it.listFiles { file, fname -> fname == "config.json" }.getOrNull(0)
                 if (configFile?.exists() ?: false) {
                     try {
