@@ -1,6 +1,5 @@
 package com.puzheng.region_investigation
 
-import android.Manifest
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager

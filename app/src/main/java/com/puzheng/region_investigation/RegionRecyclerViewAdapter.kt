@@ -2,6 +2,7 @@ package com.puzheng.region_investigation
 
 import android.content.Context
 import android.graphics.Color
+import android.support.v4.content.ContextCompat
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -129,7 +130,7 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
 
 
     private fun RegionViewHolder.markAsDirty() {
-        imageView.background = imageView.context.getDrawable(R.drawable.dirty_region_image)
+        imageView.background = ContextCompat.getDrawable(imageView.context, R.drawable.dirty_region_image)
         textView.text = "*" + textView.text
         textView.setTextColor(Color.RED)
     }
