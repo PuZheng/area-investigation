@@ -153,7 +153,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                 }
             }
             setOnMarkerClickListener {
-                Logger.v("clicked ${it.type.toString()}")
                 if (it.selectable) {
                     it.selected = true
                     listener?.onOutlineMarkerSelected(it.position)
@@ -181,6 +180,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                     map.map.moveCamera(CameraUpdateFactory.scrollBy(scrollX, scrollY))
                 }
             })
+            resetCamera()
         }
     }
 
@@ -333,15 +333,26 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         return floatArrayOf(scrollX, scrollY)
     }
 
+    private val invoked = mutableSetOf<String>()
+    private fun once(fn: () -> Unit, key: String): () -> Unit {
+        return {
+            if (!invoked.contains(key)) {
+                invoked.add(key)
+                fn()
+            }
+        }
+    }
 
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         LocateMyselfHelper(activity, onLocationChangeListener!!).locate().always {
-            map.postDelayed({
-                // 注意，由于是delayed操作，activity可能为空
-                if (activity != null) {
-                    map.map.resetCamera()
-                }
-            }, 1000)
+            once({
+                map.postDelayed({
+                    // 注意，由于是delayed操作，activity可能为空
+                    if (activity != null) {
+                        map.map.resetCamera()
+                    }
+                }, 1000)
+            }, "RESET_CAMERA_AFTER_LOCATE_MYSELF")()
         }
     }
 

@@ -85,7 +85,9 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
         } else {
             (holder as RegionViewHolder).item = items[position]
             holder.textView.text = region.name
+            // restore to default mode
             holder.textView.setTextColor(R.color.abc_primary_text_material_light)
+            holder.imageView.background = null
             val context = holder.textView.context
             val coverFile = RegionStore.with(context).getCoverImageFile(region)
             picasso.load(coverFile).into(holder.imageView)
@@ -127,6 +129,7 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
 
 
     private fun RegionViewHolder.markAsDirty() {
+        imageView.background = imageView.context.getDrawable(R.drawable.dirty_region_image)
         textView.text = "*" + textView.text
         textView.setTextColor(Color.RED)
     }
