@@ -27,20 +27,23 @@ import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
 
 class EditPOIActivity : AppCompatActivity() {
 
     companion object {
         const val TAG_POI = "TAG_POI"
-        const val REQUEST_WRITE_EXTERNAL_STORAGE = 100
-        const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = 101
-        const val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO = 102
-        const val REQUEST_READ_EXTERNAL_STORAGE = 103
-        const val REQUEST_CAMERA = 102
-        const val REQUEST_VIDEO_CAPTURE = 103
-        const val SELECT_IMAGE = 998
-        const val VIEW_CAROUSEL = 999
-        const val TAKE_VIDEO = 1000
+        val REQUEST_WRITE_EXTERNAL_STORAGE = AtomicInteger().andDecrement
+        val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = AtomicInteger().andDecrement
+        val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO = AtomicInteger().andDecrement
+        val REQUEST_READ_EXTERNAL_STORAGE = AtomicInteger().andDecrement
+        val REQUEST_CAMERA = AtomicInteger().andDecrement
+        val REQUEST_VIDEO_CAPTURE = AtomicInteger().andDecrement
+        val SELECT_IMAGE = AtomicInteger().andDecrement
+        val VIEW_CAROUSEL = AtomicInteger().andDecrement
+        val TAKE_VIDEO = AtomicInteger().andDecrement
+        private val jpegRegex = Pattern.compile(".*\\.jpe*g$", Pattern.CASE_INSENSITIVE).toRegex()
     }
 
     private var poi: POI? = null
@@ -158,7 +161,6 @@ class EditPOIActivity : AppCompatActivity() {
                     assertPermission(Manifest.permission.CAMERA, REQUEST_CAMERA).successUi {
                         permissionHandlers[REQUEST_CAMERA]?.invoke()
                     }
-
                 }
                 assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE) successUi {
                     permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE]?.invoke()
@@ -269,6 +271,14 @@ class EditPOIActivity : AppCompatActivity() {
                                     this@apply[it] = formData.get(it)
                                 }
                             }
+                            fieldResolvers.forEach {
+                                when (it is ImagesFieldResolver) {
+                                    val haystack = it.
+                                    poi!!.dir.list { file, s -> s.matches(jpegRegex) }.forEach {
+
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -318,10 +328,8 @@ class EditPOIActivity : AppCompatActivity() {
                     //                if (!isCamera) {
                     //                    contentResolver.openInputStream(data?.data).copyTo(File(outputFileUri!!.path))
                     //                }
-                    // TODO should connect with field name
                     targetImagesFieldResolver?.add(File(photoOutputFileUri!!.path).relativeTo(poi!!.dir.absoluteFile).path)
                 } else if (resultCode == RESULT_CANCELED) {
-                    Logger.v(photoOutputFileUri!!.path)
                     File(photoOutputFileUri!!.path).delete()
                 }
             }
