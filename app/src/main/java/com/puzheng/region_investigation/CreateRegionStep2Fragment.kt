@@ -114,7 +114,7 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
                         activeMarker?.position = it.latLng
                         // 一定要构成多边形
                         if (markers.size > 2) {
-                            if (isCloseToStartMarker(it.screenLocation, lastScreenLocation)) {
+                            if (isApproachingToStartMarker(it.screenLocation, lastScreenLocation)) {
                                 startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(closingMarkerBitmap))
                                 // 自动吸附到出发点
                                 activeMarker?.position = startMarker!!.position
@@ -156,14 +156,16 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
         return floatArrayOf(scrollX, scrollY)
     }
 
-    private fun isCloseToStartMarker(screenLocation: Point, lastScreenLocation: Point?): Boolean {
+    private fun isApproachingToStartMarker(screenLocation: Point, lastScreenLocation: Point?): Boolean {
         if (startMarker == null) {
             return false
         }
         val isApproaching = lastScreenLocation == null || (
                 lastScreenLocation.distanceTo(startMarker!!.screenLocation) >
                         screenLocation.distanceTo(startMarker!!.screenLocation))
-        return isApproaching && startMarker!!.screenLocation.distanceTo(screenLocation) < closeToLimit
+
+        return if (isApproaching) startMarker!!.screenLocation.distanceTo(screenLocation) < closeToLimit else
+            startMarker!!.screenLocation.distanceTo(screenLocation) < 8 * pixelsPerDp
     }
 
 
