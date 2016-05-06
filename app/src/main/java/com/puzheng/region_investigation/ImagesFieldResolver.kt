@@ -42,7 +42,10 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
         }
     }
 
-    private var images = mutableListOf<String>()
+    /**
+     * 图片列表， 注意是信息点目录的相对目录
+     */
+    var images = mutableListOf<String>()
 
     private val recyclerView: RecyclerView by lazy {
         view.findView<RecyclerView>(R.id.recyclerView)

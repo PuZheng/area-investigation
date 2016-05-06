@@ -27,7 +27,6 @@ import nl.komponents.kovenant.combine.and
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicInteger
 
 private enum class MarkerType {
     POI, OUTLINE_VERTEX,
@@ -256,8 +255,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     companion object {
-        // 必须保证全局唯一， 参考http://stackoverflow.com/questions/2178992/how-to-generate-unique-id-in-java-integer
-        val REQUEST_ACCESS_COARSE_LOCATION = AtomicInteger().incrementAndGet()
+        val REQUEST_ACCESS_COARSE_LOCATION = uniqueId()
 
         enum class EditMode {
             DEFAULT, EDIT_OUTLINE, POI_RELOCATE

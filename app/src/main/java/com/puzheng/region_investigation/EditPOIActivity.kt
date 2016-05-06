@@ -18,7 +18,6 @@ import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POI
 import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.store.POITypeStore
-import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.failUi
@@ -27,23 +26,23 @@ import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 class EditPOIActivity : AppCompatActivity() {
 
     companion object {
         const val TAG_POI = "TAG_POI"
-        val REQUEST_WRITE_EXTERNAL_STORAGE = AtomicInteger().andDecrement
-        val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = AtomicInteger().andDecrement
-        val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO = AtomicInteger().andDecrement
-        val REQUEST_READ_EXTERNAL_STORAGE = AtomicInteger().andDecrement
-        val REQUEST_CAMERA = AtomicInteger().andDecrement
-        val REQUEST_VIDEO_CAPTURE = AtomicInteger().andDecrement
-        val SELECT_IMAGE = AtomicInteger().andDecrement
-        val VIEW_CAROUSEL = AtomicInteger().andDecrement
-        val TAKE_VIDEO = AtomicInteger().andDecrement
+        val REQUEST_WRITE_EXTERNAL_STORAGE = uniqueId()
+        val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_IMAGE = uniqueId()
+        val REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO = uniqueId()
+        val REQUEST_READ_EXTERNAL_STORAGE = uniqueId()
+        val REQUEST_CAMERA = uniqueId()
+        val REQUEST_VIDEO_CAPTURE = uniqueId()
+        val SELECT_IMAGE = uniqueId()
+        val VIEW_CAROUSEL = uniqueId()
+        val TAKE_VIDEO = uniqueId()
         private val jpegRegex = Pattern.compile(".*\\.jpe*g$", Pattern.CASE_INSENSITIVE).toRegex()
+        private val mpegRegex = Pattern.compile(".*\\.mp(eg|4)$", Pattern.CASE_INSENSITIVE).toRegex()
     }
 
     private var poi: POI? = null
@@ -139,7 +138,11 @@ class EditPOIActivity : AppCompatActivity() {
                         photoOutputFileUri = Uri.fromFile(File.createTempFile(
                                 SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
                                 ".jpg",
-                                poi!!.dir
+                                File(poi!!.dir, fieldResolver.name).apply {
+                                    if (!exists()) {
+                                        mkdirs()
+                                    }
+                                }
                         ))
                         Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
                             if (resolveActivity(packageManager) != null) {
@@ -177,18 +180,22 @@ class EditPOIActivity : AppCompatActivity() {
             })
         POIType.FieldType.VIDEO ->
             VideoFieldResolver(field.name, this, poi!!, {
-                fieldResolvers, path ->
+                fieldResolver, path ->
                 if (path == null) {
                     permissionHandlers[REQUEST_WRITE_EXTERNAL_STORAGE_SAVE_VIDEO] = {
                         permissionHandlers[REQUEST_VIDEO_CAPTURE] = {
                             videoOutputFileUri = Uri.fromFile(File.createTempFile(
                                     SimpleDateFormat("yyyyMMdd_HHmmss").format(Date()),
                                     ".mp4",
-                                    poi!!.dir
+                                    File(poi!!.dir, fieldResolver.name).apply {
+                                        if (!exists()) {
+                                            mkdirs()
+                                        }
+                                    }
                             ))
                             val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
                             if (takeVideoIntent.resolveActivity(packageManager) != null) {
-                                targetVideoFieldResolver = fieldResolvers
+                                targetVideoFieldResolver = fieldResolver
                                 takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoOutputFileUri)
                                 startActivityForResult(takeVideoIntent, TAKE_VIDEO)
                             }
@@ -225,7 +232,7 @@ class EditPOIActivity : AppCompatActivity() {
                                         })
                                         .setNeutralButton("删除", {
                                             dialog, which ->
-                                            fieldResolvers.path = null
+                                            fieldResolver.path = null
                                         })
                                         .setNegativeButton(R.string.cancel, null)
                                         .create()
@@ -272,10 +279,35 @@ class EditPOIActivity : AppCompatActivity() {
                                 }
                             }
                             fieldResolvers.forEach {
-                                when (it is ImagesFieldResolver) {
-                                    val haystack = it.
-                                    poi!!.dir.list { file, s -> s.matches(jpegRegex) }.forEach {
-
+                                when (it) {
+                                    is ImagesFieldResolver -> {
+                                        val haystack = setOf(*it.images.toTypedArray())
+                                        File(poi!!.dir, it.name).let {
+                                            if (it.exists()) {
+                                                it.listFiles { file, s ->
+                                                    true.apply {
+                                                        Logger.v(s)
+                                                    } and s.matches(jpegRegex) and
+                                                            !haystack.contains(file.relativeTo(poi!!.dir).path)
+                                                }.forEach {
+                                                        Logger.v("${it.path} will be removed")
+                                                }
+                                            }
+                                        }
+                                    }
+                                    is VideoFieldResolver -> {
+                                        val resolver = it
+                                        Logger.v(resolver.path)
+                                        File(poi!!.dir, it.name).let {
+                                            if (it.exists()) {
+                                                it.listFiles { file, s ->
+                                                    s.matches(mpegRegex) and (file.relativeTo(poi!!.dir).path != resolver.path)
+                                                }.forEach {
+                                                    Logger.v((it.relativeTo(poi!!.dir).path != resolver.path).toString())
+                                                    Logger.v("${it.relativeTo(poi!!.dir).path} will be removed")
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -342,7 +374,8 @@ class EditPOIActivity : AppCompatActivity() {
             }
             TAKE_VIDEO ->
                 if (resultCode == RESULT_OK) {
-                    targetVideoFieldResolver?.path = File(videoOutputFileUri!!.path).relativeTo(poi!!.dir.absoluteFile).path
+                    targetVideoFieldResolver?.path = File(videoOutputFileUri!!.path).relativeTo(poi!!.dir).path
+                    Logger.v(targetVideoFieldResolver?.path)
                 } else if (resultCode == RESULT_CANCELED) {
                     File(videoOutputFileUri!!.path).delete()
                 }
