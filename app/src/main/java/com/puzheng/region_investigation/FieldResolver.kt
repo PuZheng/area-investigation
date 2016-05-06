@@ -9,5 +9,4 @@ interface FieldResolver {
     fun populate(jsonObject: JSONObject, poi: POI)
     fun changed(value: Any?): Boolean
     val name: String
-
 }

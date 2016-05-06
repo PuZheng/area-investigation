@@ -56,7 +56,9 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
         }
     }
 
-    // 注意，是相对路径
+    /**
+     * 视频路径注意，是相对路径
+     */
     var path: String? = null
         set(value) {
             field = value

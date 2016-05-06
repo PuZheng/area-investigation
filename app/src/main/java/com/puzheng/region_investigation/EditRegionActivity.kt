@@ -41,7 +41,6 @@ import kotlinx.android.synthetic.main.fragment_edit_region.*
 import kotlinx.android.synthetic.main.poi_bottom_sheet.*
 import nl.komponents.kovenant.ui.successUi
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
 
 class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFragmentInteractionListener,
@@ -59,8 +58,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
     companion object {
-        private val REQUEST_ACCESS_COARSE_LOCATION = AtomicInteger().incrementAndGet()
-        private val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI = AtomicInteger().incrementAndGet()
+        private val REQUEST_ACCESS_COARSE_LOCATION = uniqueId()
+        private val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI = uniqueId()
         private const val EDIT_POI = 100
     }
 

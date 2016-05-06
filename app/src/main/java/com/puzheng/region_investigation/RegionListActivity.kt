@@ -132,10 +132,7 @@ class RegionListActivity : AppCompatActivity(),
 
     companion object {
         val TAG_REGION = "REGION"
-        private val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOGGING = AtomicInteger().andDecrement
     }
-
-
 }
 
 private class TrashAlertDialogFragment : DialogFragment() {

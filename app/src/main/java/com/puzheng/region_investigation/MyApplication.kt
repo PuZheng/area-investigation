@@ -18,6 +18,7 @@ import java.util.logging.*
 import java.util.logging.Formatter
 
 class MyApplication : Application(), OnPermissionGrantedListener {
+
     override fun onPermissionGranted(permission: String, requestCode: Int) {
         if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG) {
             eventLogger.addHandler(FileHandler(LogStore.dir.absolutePath + "/%u.log", true).apply {
