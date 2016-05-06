@@ -89,7 +89,7 @@ class EditPOIActivity : AppCompatActivity() {
 
     private fun setupView() {
         findView<TextView>(R.id.textViewCreated).text = if (poi == null) "" else
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi!!.created)
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi!!.created)
         findView<TextView>(R.id.textViewPOIId).text = poi?.id.toString()
         poiTypeStore.get(poi!!.poiTypeUUID) then {
             poiType = it!!
@@ -284,13 +284,12 @@ class EditPOIActivity : AppCompatActivity() {
                                         val haystack = setOf(*it.images.toTypedArray())
                                         File(poi!!.dir, it.name).let {
                                             if (it.exists()) {
-                                                it.listFiles { file, s ->
-                                                    true.apply {
-                                                        Logger.v(s)
-                                                    } and s.matches(jpegRegex) and
+                                                it.listFiles { file ->
+                                                    file.name.matches(jpegRegex) and
                                                             !haystack.contains(file.relativeTo(poi!!.dir).path)
                                                 }.forEach {
-                                                        Logger.v("${it.path} will be removed")
+                                                    Logger.v("${it.path} will be removed")
+                                                    it.delete()
                                                 }
                                             }
                                         }
@@ -300,11 +299,12 @@ class EditPOIActivity : AppCompatActivity() {
                                         Logger.v(resolver.path)
                                         File(poi!!.dir, it.name).let {
                                             if (it.exists()) {
-                                                it.listFiles { file, s ->
-                                                    s.matches(mpegRegex) and (file.relativeTo(poi!!.dir).path != resolver.path)
+                                                it.listFiles { file ->
+                                                    file.name.matches(mpegRegex) and (file.relativeTo(poi!!.dir).path
+                                                            != resolver.path)
                                                 }.forEach {
-                                                    Logger.v((it.relativeTo(poi!!.dir).path != resolver.path).toString())
-                                                    Logger.v("${it.relativeTo(poi!!.dir).path} will be removed")
+                                                    Logger.v("${it.path} will be removed")
+                                                    it.delete()
                                                 }
                                             }
                                         }
