@@ -98,6 +98,8 @@ class RegionListActivity : AppCompatActivity(),
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
+
+        startService(Intent(this, UploadIntentService::class.java));
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -109,6 +111,10 @@ class RegionListActivity : AppCompatActivity(),
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_settings -> {
             startActivity(Intent(this, InfoActivity::class.java))
+            true
+        }
+        R.id.action_upload_list -> {
+            startActivity(Intent(this, UploadListActivity::class.java))
             true
         }
         else -> super.onOptionsItemSelected(item)
