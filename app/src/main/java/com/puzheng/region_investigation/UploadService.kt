@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Intent
 import android.content.Context
 import android.os.*
+import com.github.kittinunf.fuel.Fuel
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
@@ -69,7 +70,8 @@ class UploadService : IntentService("UploadIntentService") {
                     val jsonObject = JSONObject().apply {
                         region.jsonizeSync(this)
                     }
-                    ZipOutputStream(BufferedOutputStream(FileOutputStream(File(dir, "$regionId.zip")))).apply {
+                    val zipFile = File(dir, "$regionId.zip")
+                    ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
                         putNextEntry(ZipEntry("region.json"))
                         write(jsonObject.toString().toByteArray())
                         region.poiListSync?.forEach {
@@ -78,9 +80,18 @@ class UploadService : IntentService("UploadIntentService") {
                         }
                         close()
                     }
-                    Thread.sleep(5000)
+                    val result = Fuel.upload(ConfigUtil.with(baseContext).uploadBackend!!).source { request, url ->
+                        zipFile
+                    }.progress { readBytes, totalBytes ->
+                        Logger.v("upload progress: $readBytes, $totalBytes")
+                    }.responseString()
+                    Logger.v(result.first.toString())
+                    Logger.v(result.third.toString())
+                    val (bytes, error) = result.third
+                    if (error != null) {
+                        throw error
+                    }
                     Logger.v("uploading done")
-
                 } catch(e: Exception) {
                     e.printStackTrace();
                 } finally {
