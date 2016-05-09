@@ -92,7 +92,7 @@
         <activity android:name=".InfoActivity" />
 
         <service
-            android:name=".UploadIntentService"
+            android:name=".UploadService"
             android:exported="false" />
 
         <activity android:name=".UploadListActivity"></activity>

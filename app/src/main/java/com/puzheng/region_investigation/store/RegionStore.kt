@@ -2,6 +2,7 @@ package com.puzheng.region_investigation.store
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
@@ -88,6 +89,7 @@ class RegionStore private constructor(val context: Context) {
                 makeRegion(12L, "2016-03-02 10:32:31"),
                 makeRegion(13L, "2016-03-02 8:32:31")
         )) {
+            Logger.v("fake region ${region.name}")
             val regionId = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
             fakeRegionImage(regionId)
             for (i in 1..2 + Random().nextInt(100)) {
@@ -151,7 +153,11 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun get(id: Long) = task {
-        val db = DBHelpler(context).readableDatabase
+        getSync(id)
+    }
+
+    fun getSync(id: Long) = DBHelpler(context).withDb {
+        db ->
         try {
             val cursor = db.query(Region.Model.TABLE_NAME, null, "${BaseColumns._ID}=?", arrayOf(id.toString()), null,
                     null, null)
@@ -161,13 +167,14 @@ class RegionStore private constructor(val context: Context) {
                 null
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             Logger.e(e.toString())
             null
         } finally {
             db.close()
         }
-
     }
+
 
     fun updateName(region: Region, name: String) = task {
         val db = DBHelpler(context).writableDatabase

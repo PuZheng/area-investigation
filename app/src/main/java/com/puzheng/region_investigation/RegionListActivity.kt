@@ -1,9 +1,13 @@
 package com.puzheng.region_investigation
 
 import android.app.Dialog
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.IBinder
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -31,12 +35,25 @@ class RegionListActivity : AppCompatActivity(),
         findFragmentById<RegionListFragment>(R.id.fragmentRegionList)
     }
 
+    private var uploadService: UploadService? = null
+
+    private val connection: ServiceConnection by lazy {
+        object: ServiceConnection {
+            override fun onServiceDisconnected(p0: ComponentName?) {
+                throw UnsupportedOperationException()
+            }
+
+            override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+                Logger.v("upload service connected")
+                uploadService = (p1 as UploadService.LocalBinder).service
+            }
+        }
+    }
 
     override fun onLongClickItem(region: Region): Boolean {
         if (actionMode != null) {
             return false
         }
-
         actionMode = startSupportActionMode(object : ModalMultiSelectorCallback(
                 (fragmentRegionList as RegionListFragment).multiSelector) {
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
@@ -50,14 +67,16 @@ class RegionListActivity : AppCompatActivity(),
                             toast(R.string.select_at_least_one_region)
                         }
                     }
-                    R.id.action_upload ->
-                        RegionStore.with(this@RegionListActivity).sync(regionListFragment.selectedRegions.map { it.id!! }) successUi {
-                            regionListFragment.selectedRegions.forEach {
-                                it.synced = Date()
-                            }
-                            regionListFragment.setupRegions()
-                            toast("synced")
-                        }
+                    R.id.action_upload -> {
+                        uploadService?.upload(regionListFragment.selectedRegions.map { it.id!! })
+                    }
+//                        RegionStore.with(this@RegionListActivity).sync(regionListFragment.selectedRegions.map { it.id!! }) successUi {
+//                            regionListFragment.selectedRegions.forEach {
+//                                it.synced = Date()
+//                            }
+//                            regionListFragment.setupRegions()
+//                            toast("synced")
+//                        }
                 }
                 return false
             }
@@ -98,8 +117,19 @@ class RegionListActivity : AppCompatActivity(),
         Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
                 "org name: ${intent.getStringExtra("ORG_NAME")}",
                 "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
+    }
 
-        startService(Intent(this, UploadIntentService::class.java));
+    override fun onStart() {
+        super.onStart()
+        bindService(Intent(this@RegionListActivity, UploadService::class.java), connection,
+                Context.BIND_AUTO_CREATE)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (uploadService != null) {
+            unbindService(connection)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

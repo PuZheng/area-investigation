@@ -8,7 +8,7 @@ import android.support.v4.content.LocalBroadcastManager
 
 class UploadListActivity : AppCompatActivity() {
 
-    private var uploadService: UploadIntentService? = null
+    private var uploadService: UploadService? = null
 
     private val connection: ServiceConnection by lazy {
         object : ServiceConnection {
@@ -18,7 +18,7 @@ class UploadListActivity : AppCompatActivity() {
 
 
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                uploadService = (service as UploadIntentService.LocalBinder).service
+                uploadService = (service as UploadService.LocalBinder).service
             }
 
         }
@@ -32,9 +32,9 @@ class UploadListActivity : AppCompatActivity() {
     private val uploadServiceReceiver: BroadcastReceiver by lazy {
         object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                val resultCode = intent.getIntExtra("resultCode", RESULT_CANCELED);
+                val resultCode = intent?.getIntExtra("resultCode", RESULT_CANCELED);
                 if (resultCode == RESULT_OK) {
-                    val progress = intent.getFloatExtra("progress", 0.0F);
+                    val progress = intent?.getFloatExtra("progress", 0.0F);
                     toast(progress.toString())
                 }
             }
@@ -45,9 +45,9 @@ class UploadListActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        bindService(Intent(this, UploadIntentService::class.java), connection,
+        bindService(Intent(this, UploadService::class.java), connection,
                 Context.BIND_AUTO_CREATE)
-        val filter = IntentFilter(UploadIntentService.PROGRESS);
+        val filter = IntentFilter(UploadService.PROGRESS);
         LocalBroadcastManager.getInstance(this).registerReceiver(uploadServiceReceiver, filter)
     }
 

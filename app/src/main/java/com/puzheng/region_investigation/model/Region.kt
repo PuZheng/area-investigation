@@ -7,6 +7,12 @@ import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.DBHelpler
+import com.puzheng.region_investigation.MyApplication
+import com.puzheng.region_investigation.getPOIRow
+import nl.komponents.kovenant.task
+import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -119,4 +125,51 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         fun encodeOutline(outline: List<LatLng>) =
                 outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
     }
+
+    fun jsonizeSync(jsonObject: JSONObject) {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        jsonObject.apply {
+            put("id", id)
+            put("name", name)
+            put("outline", encodeOutline(outline))
+            put("created", format.format(created))
+            put("updated", format.format(updated))
+            put("pois", JSONArray().apply {
+                poiListSync?.forEach {
+                    put(JSONObject().apply {
+                        it.jsonize(this)
+                    })
+                }
+            })
+        }
+    }
+
+    val poiListSync: List<POI>?
+        get() = DBHelpler(MyApplication.context).withDb {
+            db ->
+            try {
+                val cursor = db.query(POI.Model.TABLE_NAME, null, "${POI.Model.COL_REGION_ID}=?", arrayOf(id.toString()),
+                        null, null, null)
+                var rows: List<POI>? = null
+                if (cursor.moveToFirst()) {
+                    rows = mutableListOf()
+                    do {
+                        rows.add(cursor.getPOIRow())
+                    } while (cursor.moveToNext())
+                }
+                cursor.close()
+                rows
+            } catch (e: Exception) {
+                Logger.e(e.toString())
+                null
+            } finally {
+                db.close()
+            }
+        }
+
+
+    fun loadPOIList() = task {
+        poiListSync
+    }
+
 }

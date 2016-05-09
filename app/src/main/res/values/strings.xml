@@ -52,4 +52,5 @@
     <string name="region_name_exists">该重点区域名称已经存在</string>
     <string name="name_must_not_empty">名称不能为空</string>
     <string name="select_at_least_one_region">请至少选择一个重点区域</string>
+    <string name="add_to_upload_list">区域加入上传队列</string>
 </resources>
