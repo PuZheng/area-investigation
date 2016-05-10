@@ -1,21 +1,21 @@
 package com.puzheng.region_investigation
 
+import android.app.Activity
 import android.app.IntentService
 import android.content.ContentValues
-import android.content.Intent
 import android.content.Context
+import android.content.Intent
 import android.os.*
+import android.support.v4.content.LocalBroadcastManager
 import android.widget.Toast
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.store.AccountStore
 import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.successUi
 import okhttp3.*
-import okhttp3.internal.Util
 import okio.BufferedSink
-import okio.Okio
-import okio.Source
 import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
@@ -65,7 +65,6 @@ class UploadService : IntentService("UploadIntentService") {
         AccountStore.with(baseContext)
     }
 
-
     private val handler: Handler by lazy {
         val thread = HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND)
         thread.start()
@@ -106,6 +105,12 @@ class UploadService : IntentService("UploadIntentService") {
                                 }
                                 sent += count
                                 sink.write(buf, 0, count)
+                                LocalBroadcastManager.getInstance(this@UploadService).sendBroadcast(Intent(PROGRESS).apply {
+                                    putExtra("sent", sent)
+                                    putExtra("total", zipFile.length())
+                                    putExtra("regionId", regionId)
+                                    putExtra("resultCode", Activity.RESULT_OK)
+                                })
                             }
                             src.close()
                         }
@@ -191,6 +196,30 @@ class UploadService : IntentService("UploadIntentService") {
             }
         } successUi {
             toast(R.string.add_to_upload_list)
+        }
+    }
+
+    val uploadList = task {
+        dbHelpler.withDb {
+            db->
+            val cursor = db.query(UploadTaskModel.TABLE_NAME, null, null, null, null, null, null, null)
+            try {
+                var rows: List<Region?>? = null
+                if (cursor.moveToFirst()) {
+                    rows = mutableListOf()
+                    do {
+                        rows.add(regionStore.getSync(cursor.getLong(UploadTaskModel.COL_REGION_ID)!!))
+                    } while (cursor.moveToNext())
+                }
+                rows?.filter {
+                    it != null
+                }?.map {
+                    it!!
+                }
+            } finally {
+                cursor.close()
+                db.close()
+            }
         }
     }
 
