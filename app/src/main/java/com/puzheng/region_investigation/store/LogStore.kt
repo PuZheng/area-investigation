@@ -55,11 +55,6 @@ class LogStore private constructor(val context: Context) {
         }
     }
 
-    // 日志文件的生命周期， 单位是秒
-    private val logFileTimeSpan: Int by lazy {
-        ConfigUtil.with(context).logFileLifeSpan ?: DEFAULT_LOG_FILE_TIME_SPAN
-    }
-
     // Mr. Extensions
     private fun File.archive() {
 

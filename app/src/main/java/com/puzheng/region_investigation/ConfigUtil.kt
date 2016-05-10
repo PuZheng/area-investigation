@@ -31,7 +31,7 @@ class ConfigUtil private constructor(context: Context) {
                 sb.append(line)
             }
             val jsonObject = JSONObject(sb.toString())
-            Config(jsonObject.getInt("logFileLifeSpan"))
+            Config(jsonObject.getString("uploadBackend"))
         } catch (e: IOException) {
             e.printStackTrace()
             null
@@ -41,12 +41,8 @@ class ConfigUtil private constructor(context: Context) {
         }
     }
 
-    val logFileLifeSpan: Int?
-        get() = config?.logFileTimeSpan.apply {
-            if (this != null && 24 * 3600 % this != 0) {
-//                Logger.e(')
-            }
-        }
+    val uploadBackend: String?
+        get() = config?.uploadBackend
 
-    private class Config(val logFileTimeSpan: Int)
+    private class Config(val uploadBackend: String)
 }
