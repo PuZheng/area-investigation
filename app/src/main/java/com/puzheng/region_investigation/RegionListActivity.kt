@@ -17,10 +17,13 @@ import android.view.MenuItem
 import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.model.Account
 import com.puzheng.region_investigation.model.Region
+import com.puzheng.region_investigation.store.AccountStore
 import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.activity_region_list.*
 import kotlinx.android.synthetic.main.content_region_list.*
+import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.successUi
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -114,9 +117,19 @@ class RegionListActivity : AppCompatActivity(),
         fab.setOnClickListener {
             startActivity(Intent(this, CreateRegionActivity::class.java))
         }
-        Logger.i(listOf("username: ${intent.getStringExtra("USERNAME")}",
-                "org name: ${intent.getStringExtra("ORG_NAME")}",
-                "org code: ${intent.getStringExtra("ORG_CODE")}").joinToString())
+        var username = intent.getStringExtra("USERNAME")
+        var orgCode = intent.getStringExtra("ORG_CODE")
+        var orgName = intent.getStringExtra("ORG_NAME")
+
+        if (BuildConfig.DEBUG && username == null) {
+            username = "fooUser"
+            orgCode = "fooOrgCode"
+            orgName = "fooOrgName"
+        }
+        Logger.i(listOf("username: $username",
+                "org name: $orgName",
+                "org code: $orgCode").joinToString())
+        AccountStore.with(this).account = Account(username, orgCode, orgName)
     }
 
     override fun onStart() {

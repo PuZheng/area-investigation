@@ -5,11 +5,13 @@ import android.content.ContentValues
 import android.content.Intent
 import android.content.Context
 import android.os.*
-import com.github.kittinunf.fuel.Fuel
+import android.widget.Toast
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.store.AccountStore
 import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.successUi
+import okhttp3.*
 import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
@@ -35,7 +37,7 @@ class UploadService : IntentService("UploadIntentService") {
         return binder
     }
 
-    inner class LocalBinder: Binder() {
+    inner class LocalBinder : Binder() {
         val service: UploadService by lazy {
             this@UploadService
         }
@@ -44,7 +46,6 @@ class UploadService : IntentService("UploadIntentService") {
     private val dir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
             ".cache").apply {
         if (!exists()) {
-            mkdirs()
         }
     }
 
@@ -56,16 +57,20 @@ class UploadService : IntentService("UploadIntentService") {
         RegionStore.with(baseContext)
     }
 
+    private val accountStore: AccountStore by lazy {
+        AccountStore.with(baseContext)
+    }
+
 
     private val handler: Handler by lazy {
         val thread = HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND)
         thread.start()
-        object: Handler(thread.looper) {
+        object : Handler(thread.looper) {
             override fun handleMessage(msg: Message) {
                 Logger.v("uploading will begin: ${msg.toString()}")
                 val regionId = (msg.obj as Long)
 
-                try  {
+                try {
                     val region = regionStore.getSync(regionId) ?: return
                     val jsonObject = JSONObject().apply {
                         region.jsonizeSync(this)
@@ -80,23 +85,30 @@ class UploadService : IntentService("UploadIntentService") {
                         }
                         close()
                     }
-                    val result = Fuel.upload(ConfigUtil.with(baseContext).uploadBackend!!).source { request, url ->
-                        zipFile
-                    }.progress { readBytes, totalBytes ->
-                        Logger.v("upload progress: $readBytes, $totalBytes")
-                    }.responseString()
-                    Logger.v(result.first.toString())
-                    Logger.v(result.third.toString())
-                    val (bytes, error) = result.third
-                    if (error != null) {
-                        throw error
+                    val response = OkHttpClient().newCall(
+                            Request.Builder()
+                                    .url(ConfigUtil.with(baseContext).uploadBackend)
+                                    .post(MultipartBody.Builder()
+                                            .setType(MultipartBody.FORM)
+                                            .addFormDataPart("username", accountStore.account?.username)
+                                            .addFormDataPart("orgCode", accountStore.account?.orgCode)
+                                            .addFormDataPart("zip", zipFile.name,
+                                                    RequestBody.create(MediaType.parse("application/zip"),
+                                                            zipFile)).build())
+                                    .build()
+                    ).execute()
+                    if (!response.isSuccessful) {
+                        throw IOException("Unexpected code " + response)
                     }
-                    Logger.v("uploading done")
+                    response.body().close()
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(baseContext, R.string.upload_task_completed, Toast.LENGTH_SHORT).show()
+                    }
                 } catch(e: Exception) {
                     e.printStackTrace();
                 } finally {
                     dbHelpler.withWritableDb {
-                        db->
+                        db ->
                         try {
                             db.delete(UploadTaskModel.TABLE_NAME, "${UploadTaskModel.COL_REGION_ID}=?",
                                     arrayOf(regionId.toString()))
@@ -232,7 +244,7 @@ class UploadService : IntentService("UploadIntentService") {
             when {
                 it.isFile -> {
                     putNextEntry(ZipEntry(File(prefix, it.relativeTo(dir).path).path))
-                    try  {
+                    try {
                         BufferedInputStream(FileInputStream(it)).let {
                             src ->
                             while (true) {

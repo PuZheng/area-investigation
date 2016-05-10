@@ -53,9 +53,8 @@ dependencies {
     compile 'nl.komponents.kovenant:kovenant:3.2.2'
     compile 'nl.komponents.kovenant:kovenant-android:3.2.2'
     compile 'nl.komponents.kovenant:kovenant-combine:3.2.2'
-    compile 'com.github.kittinunf.fuel:fuel:1.2.1' //for JVM
-    compile 'com.github.kittinunf.fuel:fuel-android:1.2.1' //for Android
-
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+    
     kapt 'com.android.databinding:compiler:1.0-rc4'
 }
 

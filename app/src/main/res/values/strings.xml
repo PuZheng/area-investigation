@@ -53,4 +53,6 @@
     <string name="name_must_not_empty">名称不能为空</string>
     <string name="select_at_least_one_region">请至少选择一个重点区域</string>
     <string name="add_to_upload_list">区域加入上传队列</string>
+    <string name="preference_account">com.puzheng.region_investigation.preerenceAccount</string>
+    <string name="upload_task_completed">上传任务完成!</string>
 </resources>
