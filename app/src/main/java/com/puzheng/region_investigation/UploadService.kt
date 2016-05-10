@@ -12,6 +12,10 @@ import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.successUi
 import okhttp3.*
+import okhttp3.internal.Util
+import okio.BufferedSink
+import okio.Okio
+import okio.Source
 import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
@@ -85,18 +89,37 @@ class UploadService : IntentService("UploadIntentService") {
                         }
                         close()
                     }
-                    val response = OkHttpClient().newCall(
-                            Request.Builder()
-                                    .url(ConfigUtil.with(baseContext).uploadBackend)
-                                    .post(MultipartBody.Builder()
+                    var sent = 0
+                    val progressingRequestBody = object: RequestBody() {
+                        override fun contentType(): MediaType? = MediaType.parse("application/zip")
+
+                        override fun contentLength() = zipFile.length()
+
+                        override fun writeTo(sink: BufferedSink) {
+                            val buf = ByteArray(4096)
+                            val src = BufferedInputStream(FileInputStream(zipFile))
+                            while (true) {
+                                val count = src.read(buf, 0, buf.size)
+                                if (count == -1) {
+                                    break
+                                }
+                                sent += count
+                                Logger.v("sent: $sent bytes")
+                                sink.write(buf, 0, count)
+                            }
+                            src.close()
+                        }
+                    }
+                    val body = MultipartBody.Builder()
                                             .setType(MultipartBody.FORM)
                                             .addFormDataPart("username", accountStore.account?.username)
                                             .addFormDataPart("orgCode", accountStore.account?.orgCode)
-                                            .addFormDataPart("zip", zipFile.name,
-                                                    RequestBody.create(MediaType.parse("application/zip"),
-                                                            zipFile)).build())
-                                    .build()
-                    ).execute()
+                                            .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
+                    val response = OkHttpClient().newCall(
+                            Request.Builder()
+                                    .url(ConfigUtil.with(baseContext).uploadBackend)
+                                    .post(body)
+                                    .build()).execute()
                     if (!response.isSuccessful) {
                         throw IOException("Unexpected code " + response)
                     }
