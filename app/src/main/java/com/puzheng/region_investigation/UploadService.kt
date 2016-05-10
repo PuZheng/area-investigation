@@ -83,6 +83,7 @@ class UploadService : IntentService("UploadIntentService") {
                     ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
                         putNextEntry(ZipEntry("region.json"))
                         write(jsonObject.toString().toByteArray())
+                        closeEntry()
                         region.poiListSync?.forEach {
                             poi ->
                             addDir(poi.dir, "pois")
@@ -104,7 +105,6 @@ class UploadService : IntentService("UploadIntentService") {
                                     break
                                 }
                                 sent += count
-                                Logger.v("sent: $sent bytes")
                                 sink.write(buf, 0, count)
                             }
                             src.close()
@@ -266,7 +266,9 @@ class UploadService : IntentService("UploadIntentService") {
         dir.listFiles().forEach {
             when {
                 it.isFile -> {
-                    putNextEntry(ZipEntry(File(prefix, it.relativeTo(dir).path).path))
+                    putNextEntry(ZipEntry(File(prefix, it.relativeTo(dir).path).path.apply {
+                        Logger.v("put entry $this into zip")
+                    }))
                     try {
                         BufferedInputStream(FileInputStream(it)).let {
                             src ->
@@ -275,13 +277,14 @@ class UploadService : IntentService("UploadIntentService") {
                                 if (count == -1) {
                                     break
                                 }
-                                write(buf, 0, buf.size)
+                                write(buf, 0, count)
                             }
                             src.close()
                         }
                     } catch(e: Exception) {
                         e.printStackTrace()
                     }
+                    closeEntry()
                 }
                 it.isDirectory -> {
                     addDir(File(dir, it.name), File(prefix, it.name).path)
