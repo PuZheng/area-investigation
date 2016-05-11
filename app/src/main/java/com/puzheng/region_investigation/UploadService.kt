@@ -12,6 +12,7 @@ import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.store.AccountStore
 import com.puzheng.region_investigation.store.RegionStore
+import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.successUi
 import okhttp3.*
@@ -71,6 +72,8 @@ class UploadService : IntentService("UploadIntentService") {
         object : Handler(thread.looper) {
             override fun handleMessage(msg: Message) {
                 Logger.v("uploading will begin: ${msg.toString()}")
+                Thread.sleep(50000)
+                Logger.v("wawa")
                 val regionId = (msg.obj as Long)
 
                 try {
@@ -90,7 +93,7 @@ class UploadService : IntentService("UploadIntentService") {
                         close()
                     }
                     var sent = 0
-                    val progressingRequestBody = object: RequestBody() {
+                    val progressingRequestBody = object : RequestBody() {
                         override fun contentType(): MediaType? = MediaType.parse("application/zip")
 
                         override fun contentLength() = zipFile.length()
@@ -116,10 +119,10 @@ class UploadService : IntentService("UploadIntentService") {
                         }
                     }
                     val body = MultipartBody.Builder()
-                                            .setType(MultipartBody.FORM)
-                                            .addFormDataPart("username", accountStore.account?.username)
-                                            .addFormDataPart("orgCode", accountStore.account?.orgCode)
-                                            .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
+                            .setType(MultipartBody.FORM)
+                            .addFormDataPart("username", accountStore.account?.username)
+                            .addFormDataPart("orgCode", accountStore.account?.orgCode)
+                            .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
                     val response = OkHttpClient().newCall(
                             Request.Builder()
                                     .url(ConfigUtil.with(baseContext).uploadBackend)
@@ -129,6 +132,7 @@ class UploadService : IntentService("UploadIntentService") {
                         throw IOException("Unexpected code " + response)
                     }
                     response.body().close()
+                    Logger.v("upload done")
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(baseContext, R.string.upload_task_completed, Toast.LENGTH_SHORT).show()
                     }
@@ -199,29 +203,32 @@ class UploadService : IntentService("UploadIntentService") {
         }
     }
 
-    val uploadList = task {
-        dbHelpler.withDb {
-            db->
-            val cursor = db.query(UploadTaskModel.TABLE_NAME, null, null, null, null, null, null, null)
-            try {
-                var rows: List<Region?>? = null
-                if (cursor.moveToFirst()) {
-                    rows = mutableListOf()
-                    do {
-                        rows.add(regionStore.getSync(cursor.getLong(UploadTaskModel.COL_REGION_ID)!!))
-                    } while (cursor.moveToNext())
+    val uploadList: Promise<List<Region>?, Exception>
+        get() = task {
+            Logger.v("ok")
+            dbHelpler.withDb {
+                db ->
+                val cursor = db.query(UploadTaskModel.TABLE_NAME, null, null, null, null, null, null, null)
+                Logger.v(cursor.count.toString())
+                try {
+                    var rows: List<Region?>? = null
+                    if (cursor.moveToFirst()) {
+                        rows = mutableListOf()
+                        do {
+                            rows.add(regionStore.getSync(cursor.getLong(UploadTaskModel.COL_REGION_ID)!!))
+                        } while (cursor.moveToNext())
+                    }
+                    rows?.filter {
+                        it != null
+                    }?.map {
+                        it!!
+                    }
+                } finally {
+                    cursor.close()
+                    db.close()
                 }
-                rows?.filter {
-                    it != null
-                }?.map {
-                    it!!
-                }
-            } finally {
-                cursor.close()
-                db.close()
             }
         }
-    }
 
     /**
      * Handle action Foo in the provided background thread with the provided
