@@ -2,25 +2,24 @@ package com.puzheng.region_investigation
 
 import android.app.Activity
 import android.app.IntentService
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.os.*
 import android.support.v4.content.LocalBroadcastManager
 import android.widget.Toast
 import com.orhanobut.logger.Logger
-import com.puzheng.region_investigation.model.Region
+import com.puzheng.region_investigation.model.UploadTask
 import com.puzheng.region_investigation.store.AccountStore
 import com.puzheng.region_investigation.store.RegionStore
+import com.puzheng.region_investigation.store.UploadTaskStore
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
+import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.successUi
 import okhttp3.*
 import okio.BufferedSink
 import org.json.JSONObject
 import java.io.*
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -54,8 +53,8 @@ class UploadService : IntentService("UploadIntentService") {
         }
     }
 
-    private val dbHelpler: DBHelpler by lazy {
-        DBHelpler(baseContext)
+    private val dbHelper: DBHelper by lazy {
+        DBHelper(baseContext)
     }
 
     private val regionStore: RegionStore by lazy {
@@ -72,16 +71,14 @@ class UploadService : IntentService("UploadIntentService") {
         object : Handler(thread.looper) {
             override fun handleMessage(msg: Message) {
                 Logger.v("uploading will begin: ${msg.toString()}")
-                Thread.sleep(50000)
-                Logger.v("wawa")
-                val regionId = (msg.obj as Long)
+                val task = (msg.obj as UploadTask)
 
                 try {
-                    val region = regionStore.getSync(regionId) ?: return
+                    val region = regionStore.getSync(task.regionId) ?: return
                     val jsonObject = JSONObject().apply {
                         region.jsonizeSync(this)
                     }
-                    val zipFile = File(dir, "$regionId.zip")
+                    val zipFile = File(dir, "${task.regionId}.zip")
                     ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
                         putNextEntry(ZipEntry("region.json"))
                         write(jsonObject.toString().toByteArray())
@@ -92,7 +89,7 @@ class UploadService : IntentService("UploadIntentService") {
                         }
                         close()
                     }
-                    var sent = 0
+                    var sent = 0L
                     val progressingRequestBody = object : RequestBody() {
                         override fun contentType(): MediaType? = MediaType.parse("application/zip")
 
@@ -111,7 +108,7 @@ class UploadService : IntentService("UploadIntentService") {
                                 LocalBroadcastManager.getInstance(this@UploadService).sendBroadcast(Intent(PROGRESS).apply {
                                     putExtra("sent", sent)
                                     putExtra("total", zipFile.length())
-                                    putExtra("regionId", regionId)
+                                    putExtra("regionId", task.regionId)
                                     putExtra("resultCode", Activity.RESULT_OK)
                                 })
                             }
@@ -133,26 +130,27 @@ class UploadService : IntentService("UploadIntentService") {
                     }
                     response.body().close()
                     Logger.v("upload done")
+                    task.isFinished = true
+                    region.setSyncedSync()
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(baseContext, R.string.upload_task_completed, Toast.LENGTH_SHORT).show()
                     }
                 } catch(e: Exception) {
                     e.printStackTrace();
                 } finally {
-                    dbHelpler.withWritableDb {
-                        db ->
-                        try {
-                            db.delete(UploadTaskModel.TABLE_NAME, "${UploadTaskModel.COL_REGION_ID}=?",
-                                    arrayOf(regionId.toString()))
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
+
                 }
             }
         }
     }
 
+    private val uploadTaskStore: UploadTaskStore by lazy {
+        UploadTaskStore.with(baseContext)
+    }
+
+
+    val uploadList: Promise<List<UploadTask>?, Exception>
+        get() = uploadTaskStore.list
 
     override fun onCreate() {
         super.onCreate()
@@ -181,20 +179,20 @@ class UploadService : IntentService("UploadIntentService") {
 
     fun upload(regionIds: List<Long>) {
         Logger.v("upload regions: $regionIds")
-        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         // save in db
-        task {
-            dbHelpler.withWritableDb {
+
+        uploadTaskStore.list then {
+            tasks ->
+            dbHelper.withWritableDb {
                 db ->
                 regionIds.forEach {
-                    val cursor = db.query(UploadTaskModel.TABLE_NAME, null, "${UploadTaskModel.COL_REGION_ID}=?",
-                            arrayOf(it.toString()), null, null, null, null)
-                    if (cursor.count == 0) {
-                        db.insert(UploadTaskModel.TABLE_NAME, null, ContentValues().apply {
-                            put(UploadTaskModel.COL_REGION_ID, it)
-                            put(UploadTaskModel.COL_CREATED, format.format(Date()))
-                        })
-                        handler.sendMessage(handler.obtainMessage(UPLOAD_REGION, it))
+                    regionId ->
+                    if (tasks == null || tasks.all {
+                        it.regionId != regionId
+                    }) {
+                        handler.sendMessage(handler.obtainMessage(UPLOAD_REGION, uploadTaskStore.newSync(regionId)))
+                    } else {
+                        Logger.v("region $regionId is uploading, so it won't be uploaded")
                     }
                 }
             }
@@ -203,32 +201,6 @@ class UploadService : IntentService("UploadIntentService") {
         }
     }
 
-    val uploadList: Promise<List<Region>?, Exception>
-        get() = task {
-            Logger.v("ok")
-            dbHelpler.withDb {
-                db ->
-                val cursor = db.query(UploadTaskModel.TABLE_NAME, null, null, null, null, null, null, null)
-                Logger.v(cursor.count.toString())
-                try {
-                    var rows: List<Region?>? = null
-                    if (cursor.moveToFirst()) {
-                        rows = mutableListOf()
-                        do {
-                            rows.add(regionStore.getSync(cursor.getLong(UploadTaskModel.COL_REGION_ID)!!))
-                        } while (cursor.moveToNext())
-                    }
-                    rows?.filter {
-                        it != null
-                    }?.map {
-                        it!!
-                    }
-                } finally {
-                    cursor.close()
-                    db.close()
-                }
-            }
-        }
 
     /**
      * Handle action Foo in the provided background thread with the provided

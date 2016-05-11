@@ -95,7 +95,14 @@
             android:name=".UploadService"
             android:exported="false" />
 
-        <activity android:name=".UploadListActivity"></activity>
+        <activity android:name=".UploadListActivity"
+            android:parentActivityName=".RegionListActivity"
+            android:label="@string/upload_list">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.puzheng.region_investigation.RegionListActivity" />
+        </activity>
     </application>
 
 </manifest>

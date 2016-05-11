@@ -7,7 +7,7 @@ import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
-import com.puzheng.region_investigation.DBHelpler
+import com.puzheng.region_investigation.DBHelper
 import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.getPOIRow
 import nl.komponents.kovenant.task
@@ -106,6 +106,8 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
 
 
     companion object {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
         @JvmField final val CREATOR: Parcelable.Creator<Region> = object : Parcelable.Creator<Region> {
             override fun createFromParcel(source: Parcel): Region {
                 return Region(source)
@@ -127,7 +129,6 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     }
 
     fun jsonizeSync(jsonObject: JSONObject) {
-        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         jsonObject.apply {
             put("id", id)
             put("name", name)
@@ -144,8 +145,12 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         }
     }
 
+    private val dbHelper: DBHelper by lazy {
+        DBHelper(MyApplication.context)
+    }
+
     val poiListSync: List<POI>?
-        get() = DBHelpler(MyApplication.context).withDb {
+        get() = dbHelper.withDb {
             db ->
             try {
                 val cursor = db.query(POI.Model.TABLE_NAME, null, "${POI.Model.COL_REGION_ID}=?", arrayOf(id.toString()),
@@ -170,6 +175,19 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
 
     fun loadPOIList() = task {
         poiListSync
+    }
+
+    fun setSyncedSync() {
+        dbHelper.withWritableDb {
+            db ->
+            try {
+                db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                    put(Region.Model.COL_SYNCED, format.format(Date()))
+                }, "${BaseColumns._ID}=?", arrayOf(id.toString()))
+            } finally {
+                db.close()
+            }
+        }
     }
 
 }

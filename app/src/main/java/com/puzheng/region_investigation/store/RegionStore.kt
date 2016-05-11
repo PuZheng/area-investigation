@@ -34,7 +34,7 @@ class RegionStore private constructor(val context: Context) {
     // a list of regions ordered by `created` in descending order
     val list: Promise<List<Region>?, Exception>
         get() = task {
-            val db = DBHelpler(context).readableDatabase
+            val db = DBHelper(context).readableDatabase
             val cursor = db.query(Region.Model.TABLE_NAME, null, null, null, null, null,
                     "${Region.Model.COL_CREATED} DESC")
             try {
@@ -55,7 +55,7 @@ class RegionStore private constructor(val context: Context) {
     fun fakeRegion() = POITypeStore.with(context).list then {
         poiTypes ->
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
 
         fun makeRegion(id: Long, created: String, updated: String? = null, synced: String? = null) = Region(id, "region$id",
                 // 任何三个点总能组成一个三角形
@@ -71,7 +71,6 @@ class RegionStore private constructor(val context: Context) {
             outputStream.close()
             inputStream.close()
         }
-
 
         val random = Random()
         for (region in listOf(
@@ -101,7 +100,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun removeRegions(regions: List<Region>) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             db.delete(Region.Model.TABLE_NAME, """${BaseColumns._ID} IN (${regions.map { it.id.toString() }.joinToString(",")})""", null)
         } finally {
@@ -126,7 +125,7 @@ class RegionStore private constructor(val context: Context) {
 
 
     fun create(region: Region, bitmap: Bitmap? = null) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             val id = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
             if (bitmap != null) {
@@ -156,7 +155,7 @@ class RegionStore private constructor(val context: Context) {
         getSync(id)
     }
 
-    fun getSync(id: Long) = DBHelpler(context).withDb {
+    fun getSync(id: Long) = DBHelper(context).withDb {
         db ->
         try {
             val cursor = db.query(Region.Model.TABLE_NAME, null, "${BaseColumns._ID}=?", arrayOf(id.toString()), null,
@@ -177,7 +176,7 @@ class RegionStore private constructor(val context: Context) {
 
 
     fun updateName(region: Region, name: String) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
             db.update(Region.Model.TABLE_NAME, ContentValues().apply {
@@ -201,7 +200,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun updateOutline(region: Region, outline: List<LatLng>, bitmap: Bitmap? = null) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
             db.update(Region.Model.TABLE_NAME, ContentValues().apply {
@@ -238,7 +237,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun getPOIList(region: Region) = task {
-        val db = DBHelpler(context).readableDatabase
+        val db = DBHelper(context).readableDatabase
 
         try {
             val cursor = db.query(POI.Model.TABLE_NAME, null, "${POI.Model.COL_REGION_ID}=?", arrayOf(region.id.toString()),
@@ -261,7 +260,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun touch(id: Long) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
             db.update(Region.Model.TABLE_NAME, ContentValues().apply {
@@ -273,21 +272,8 @@ class RegionStore private constructor(val context: Context) {
         }
     }
 
-    fun sync(ids: List<Long>) = task {
-        val db = DBHelpler(context).writableDatabase
-        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        try {
-            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
-                put(Region.Model.COL_SYNCED, format.format(Date()))
-            },
-                    "${BaseColumns._ID} in (${ids.joinToString()})", null)
-        } finally {
-            db.close()
-        }
-    }
-
     fun uniqueName(name: String) = task {
-        val db = DBHelpler(context).readableDatabase
+        val db = DBHelper(context).readableDatabase
         try {
             val cursor = db.query(Region.Model.TABLE_NAME, null, "${Region.Model.COL_NAME}=?", arrayOf(name), null, null,
                     null)

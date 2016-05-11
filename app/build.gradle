@@ -54,7 +54,8 @@ dependencies {
     compile 'nl.komponents.kovenant:kovenant-android:3.2.2'
     compile 'nl.komponents.kovenant:kovenant-combine:3.2.2'
     compile 'com.squareup.okhttp3:okhttp:3.2.0'
-    
+    compile 'com.mikhaellopez:circularprogressbar:1.1.1'
+
     kapt 'com.android.databinding:compiler:1.0-rc4'
 }
 

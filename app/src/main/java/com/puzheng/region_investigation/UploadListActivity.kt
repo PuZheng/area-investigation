@@ -5,13 +5,20 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.content.LocalBroadcastManager
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.store.RegionStore
+import nl.komponents.kovenant.all
 import nl.komponents.kovenant.ui.successUi
 
 class UploadListActivity : AppCompatActivity() {
 
     private var uploadService: UploadService? = null
+
+    private val regionStore: RegionStore by lazy {
+        RegionStore.with(this)
+    }
 
     private val connection: ServiceConnection by lazy {
         object : ServiceConnection {
@@ -22,15 +29,27 @@ class UploadListActivity : AppCompatActivity() {
 
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                 uploadService = (service as UploadService.LocalBinder).service
-                Logger.v("service connected")
+                Logger.v("upload service connected")
                 uploadService!!.uploadList.successUi {
-                    Logger.v(it.toString())
-                    //                    (recyclerView.adapter as UploadRecyclerViewAdapter).apply {
-                    //                        tasks = it?.map {
-                    //                            Triple(it, 0, 0)
-                    //                        }
-                    //                        notifyDataSetChanged()
-                    //                    }
+                    tasks ->
+                    if (tasks != null && tasks.isNotEmpty()) {
+                        Logger.v("add tasks $tasks")
+                        val adapter = (recyclerView.adapter as UploadRecyclerViewAdapter)
+                        // 将region加载进task
+                        all(tasks.map {
+                            regionStore.get(it.regionId)
+                        }) successUi {
+                            regions->
+                            adapter.tasks = tasks.zip(regions, {
+                                task, region ->
+                                task.region = region
+                                task
+                            }).map {
+                                Triple(it, 0L, 0L)
+                            }
+                            adapter.notifyDataSetChanged()
+                        }
+                    }
 
                 }
             }
@@ -46,6 +65,8 @@ class UploadListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Logger.init("UploadListActivity")
         setContentView(R.layout.activity_upload_list)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = UploadRecyclerViewAdapter()
     }
 
@@ -54,32 +75,28 @@ class UploadListActivity : AppCompatActivity() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 val resultCode = intent?.getIntExtra("resultCode", RESULT_CANCELED);
                 if (resultCode == RESULT_OK) {
-                    val sent = intent!!.getIntExtra("sent", 0)
-                    val total = intent!!.getLongExtra("total", 0)
+                    val sent = intent!!.getLongExtra("sent", 0L)
+                    val total = intent!!.getLongExtra("total", 0L)
                     val regionId = intent!!.getLongExtra("regionId", 0L)
                     Logger.v("sent: $sent, total: $total, regionId: $regionId")
-                    //                    (recyclerView.adapter as UploadRecyclerViewAdapter).apply {
-                    //                        if (tasks != null && tasks!!.isNotEmpty())  {
-                    //                            // 删除掉已经完成的任务
-                    //                            var dropCnt = 0
-                    //                            for (task in tasks!!) {
-                    //                                if (task.first.id != regionId) {
-                    //                                    dropCnt++
-                    //                                } else {
-                    //                                    break
-                    //                                }
-                    //                            }
-                    //                            tasks = tasks!!.subList(dropCnt, tasks!!.size)
-                    //                            if (tasks!!.isNotEmpty()) {
-                    //                                tasks = listOf(Triple(tasks!![0].first, sent, total)) + tasks!!.subList(1, tasks!!.size)
-                    //                                if (dropCnt == 0) {
-                    //                                    notifyItemChanged(0)
-                    //                                } else {
-                    //                                    notifyDataSetChanged()
-                    //                                }
-                    //                            }
-                    //                        }
-                    //                    }
+                    (recyclerView.adapter as UploadRecyclerViewAdapter).apply {
+                        if (tasks != null && tasks!!.isNotEmpty()) {
+                            // 删除掉已经完成的任务
+                            var dropCnt = 0
+                            for (task in tasks!!) {
+                                if (task.first.regionId != regionId) {
+                                    dropCnt++
+                                } else {
+                                    break
+                                }
+                            }
+                            tasks = tasks!!.subList(dropCnt, tasks!!.size)
+                            if (tasks!!.isNotEmpty()) {
+                                tasks = listOf(Triple(tasks!![0].first, sent, total)) + tasks!!.subList(1, tasks!!.size)
+                            }
+                            notifyDataSetChanged()
+                        }
+                    }
 
                 }
             }

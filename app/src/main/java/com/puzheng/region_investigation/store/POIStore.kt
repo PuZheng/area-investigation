@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.Environment
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
-import com.puzheng.region_investigation.DBHelpler
+import com.puzheng.region_investigation.DBHelper
 import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.model.POI
 import nl.komponents.kovenant.task
@@ -26,7 +26,7 @@ class POIStore private constructor(val context: Context) {
     }
 
     fun create(poi: POI) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(poi))
         } finally {
@@ -42,7 +42,7 @@ class POIStore private constructor(val context: Context) {
     }
 
     fun remove(poi: POI) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             db.delete(POI.Model.TABLE_NAME, "${BaseColumns._ID}=?", arrayOf(poi.id.toString()))
         } finally {
@@ -57,7 +57,7 @@ class POIStore private constructor(val context: Context) {
     }
 
     fun update(poi: POI, value: Map<String, Any?>) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             db.update(POI.Model.TABLE_NAME, ContentValues().apply {
                 value.forEach {

@@ -19,11 +19,11 @@ fun Cursor.getLong(colName: String): Long? {
     return if (isNull(index)) null else getLong(index)
 }
 
-fun Cursor.getDate(colName: String): Date? {
+fun Cursor.getDate(colName: String, format: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")): Date? {
     val index = getColumnIndexOrThrow(colName)
     return if (isNull(index)) null else {
         val s = getString(colName)
-        SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(s)
+        format.parse(s)
     }
 }
 
