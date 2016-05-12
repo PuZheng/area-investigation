@@ -12,9 +12,8 @@ class InfoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_info)
-
         findView<TextView>(R.id.textViewPOITypeDir).text = POITypeStore.with(this).dir.absolutePath
         findView<TextView>(R.id.textViewPOIDir).text = POIStore.dir.absolutePath
-        findView<TextView>(R.id.textViewPOITypeDir).text = LogStore.dir.absolutePath
+        findView<TextView>(R.id.textViewLogDir).text = LogStore.dir.absolutePath
     }
 }

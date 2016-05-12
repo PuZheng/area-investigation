@@ -2,7 +2,9 @@ package com.puzheng.region_investigation.store
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
+import android.os.Environment
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
@@ -12,15 +14,16 @@ import com.puzheng.region_investigation.model.POI
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
+import okhttp3.*
+import okio.BufferedSink
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.logging.Level
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class RegionStore private constructor(val context: Context) {
 
@@ -33,7 +36,7 @@ class RegionStore private constructor(val context: Context) {
     // a list of regions ordered by `created` in descending order
     val list: Promise<List<Region>?, Exception>
         get() = task {
-            val db = DBHelpler(context).readableDatabase
+            val db = DBHelper(context).readableDatabase
             val cursor = db.query(Region.Model.TABLE_NAME, null, null, null, null, null,
                     "${Region.Model.COL_CREATED} DESC")
             try {
@@ -54,7 +57,7 @@ class RegionStore private constructor(val context: Context) {
     fun fakeRegion() = POITypeStore.with(context).list then {
         poiTypes ->
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
 
         fun makeRegion(id: Long, created: String, updated: String? = null, synced: String? = null) = Region(id, "region$id",
                 // 任何三个点总能组成一个三角形
@@ -70,7 +73,6 @@ class RegionStore private constructor(val context: Context) {
             outputStream.close()
             inputStream.close()
         }
-
 
         val random = Random()
         for (region in listOf(
@@ -88,6 +90,7 @@ class RegionStore private constructor(val context: Context) {
                 makeRegion(12L, "2016-03-02 10:32:31"),
                 makeRegion(13L, "2016-03-02 8:32:31")
         )) {
+            Logger.v("fake region ${region.name}")
             val regionId = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
             fakeRegionImage(regionId)
             for (i in 1..2 + Random().nextInt(100)) {
@@ -99,7 +102,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun removeRegions(regions: List<Region>) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             db.delete(Region.Model.TABLE_NAME, """${BaseColumns._ID} IN (${regions.map { it.id.toString() }.joinToString(",")})""", null)
         } finally {
@@ -124,7 +127,7 @@ class RegionStore private constructor(val context: Context) {
 
 
     fun create(region: Region, bitmap: Bitmap? = null) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         try {
             val id = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
             if (bitmap != null) {
@@ -151,7 +154,11 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun get(id: Long) = task {
-        val db = DBHelpler(context).readableDatabase
+        getSync(id)
+    }
+
+    fun getSync(id: Long) = DBHelper(context).withDb {
+        db ->
         try {
             val cursor = db.query(Region.Model.TABLE_NAME, null, "${BaseColumns._ID}=?", arrayOf(id.toString()), null,
                     null, null)
@@ -161,16 +168,17 @@ class RegionStore private constructor(val context: Context) {
                 null
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             Logger.e(e.toString())
             null
         } finally {
             db.close()
         }
-
     }
 
+
     fun updateName(region: Region, name: String) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
             db.update(Region.Model.TABLE_NAME, ContentValues().apply {
@@ -194,7 +202,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun updateOutline(region: Region, outline: List<LatLng>, bitmap: Bitmap? = null) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
             db.update(Region.Model.TABLE_NAME, ContentValues().apply {
@@ -231,7 +239,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun getPOIList(region: Region) = task {
-        val db = DBHelpler(context).readableDatabase
+        val db = DBHelper(context).readableDatabase
 
         try {
             val cursor = db.query(POI.Model.TABLE_NAME, null, "${POI.Model.COL_REGION_ID}=?", arrayOf(region.id.toString()),
@@ -254,7 +262,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun touch(id: Long) = task {
-        val db = DBHelpler(context).writableDatabase
+        val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         try {
             db.update(Region.Model.TABLE_NAME, ContentValues().apply {
@@ -266,21 +274,8 @@ class RegionStore private constructor(val context: Context) {
         }
     }
 
-    fun sync(ids: List<Long>) = task {
-        val db = DBHelpler(context).writableDatabase
-        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        try {
-            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
-                put(Region.Model.COL_SYNCED, format.format(Date()))
-            },
-                    "${BaseColumns._ID} in (${ids.joinToString()})", null)
-        } finally {
-            db.close()
-        }
-    }
-
     fun uniqueName(name: String) = task {
-        val db = DBHelpler(context).readableDatabase
+        val db = DBHelper(context).readableDatabase
         try {
             val cursor = db.query(Region.Model.TABLE_NAME, null, "${Region.Model.COL_NAME}=?", arrayOf(name), null, null,
                     null)
@@ -288,5 +283,111 @@ class RegionStore private constructor(val context: Context) {
         } finally {
             db.close()
         }
+    }
+
+    val zipDir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
+            ".cache").apply {
+        if (!exists()) {
+        }
+    }
+
+    fun generateZipSync(region: Region) {
+        try {
+            val jsonObject = JSONObject().apply {
+                region.jsonizeSync(this)
+            }
+            val zipFile = File(zipDir, "${region.id}.zip")
+            ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
+                putNextEntry(ZipEntry("region.json"))
+                write(jsonObject.toString().toByteArray())
+                closeEntry()
+                region.poiListSync?.forEach {
+                    poi ->
+                    addDir(poi.dir, "pois")
+                }
+                close()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun ZipOutputStream.addDir(dir: File, prefix: String = "") {
+        val buf = ByteArray(4096)
+        dir.listFiles().forEach {
+            when {
+                it.isFile -> {
+                    putNextEntry(ZipEntry(File(prefix, it.relativeTo(dir).path).path.apply {
+                        Logger.v("put entry $this into zip")
+                    }))
+                    try {
+                        BufferedInputStream(FileInputStream(it)).let {
+                            src ->
+                            while (true) {
+                                val count = src.read(buf, 0, buf.size)
+                                if (count == -1) {
+                                    break
+                                }
+                                write(buf, 0, count)
+                            }
+                            src.close()
+                        }
+                    } catch(e: Exception) {
+                        e.printStackTrace()
+                    }
+                    closeEntry()
+                }
+                it.isDirectory -> {
+                    addDir(File(dir, it.name), File(prefix, it.name).path)
+                }
+            }
+        }
+    }
+
+    fun uploadSync(region: Region, onProgress: (sent: Long) -> Unit) {
+        val zipFile = File(zipDir, "${region.id}.zip")
+        var sent = 0L
+        val accountStore = AccountStore.with(context)
+        val progressingRequestBody = object : RequestBody() {
+            override fun contentType(): MediaType? = MediaType.parse("application/zip")
+
+            override fun contentLength() = zipFile.length()
+
+            override fun writeTo(sink: BufferedSink) {
+                val buf = ByteArray(4096)
+                val src = BufferedInputStream(FileInputStream(zipFile))
+                while (true) {
+                    val count = src.read(buf, 0, buf.size)
+                    if (count == -1) {
+                        break
+                    }
+                    sent += count
+                    onProgress(sent)
+                    sink.write(buf, 0, count)
+                }
+                src.close()
+            }
+        }
+        val body = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("username", accountStore.account?.username)
+                .addFormDataPart("orgCode", accountStore.account?.orgCode)
+                .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
+        val response = OkHttpClient().newCall(
+                Request.Builder()
+                        .url(ConfigUtil.with(context).uploadBackend)
+                        .post(body)
+                        .build()).execute()
+        if (!response.isSuccessful) {
+            throw IOException("Unexpected code " + response)
+        }
+        response.body().close()
+        MyApplication.eventLogger.log(Level.INFO, "上传重点区域", JSONObject().apply {
+            put("type", EventType.DELETE_REGION)
+            put("region", JSONObject().apply {
+                put("id", region.id)
+                put("name", region.name)
+            })
+        })
     }
 }

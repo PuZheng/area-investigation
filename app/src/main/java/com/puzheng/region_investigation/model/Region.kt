@@ -7,6 +7,12 @@ import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.DBHelper
+import com.puzheng.region_investigation.MyApplication
+import com.puzheng.region_investigation.getPOIRow
+import nl.komponents.kovenant.task
+import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -100,6 +106,8 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
 
 
     companion object {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
         @JvmField final val CREATOR: Parcelable.Creator<Region> = object : Parcelable.Creator<Region> {
             override fun createFromParcel(source: Parcel): Region {
                 return Region(source)
@@ -119,4 +127,67 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         fun encodeOutline(outline: List<LatLng>) =
                 outline.map { "${it.latitude},${it.longitude}" }.joinToString(":")
     }
+
+    fun jsonizeSync(jsonObject: JSONObject) {
+        jsonObject.apply {
+            put("id", id)
+            put("name", name)
+            put("outline", encodeOutline(outline))
+            put("created", format.format(created))
+            put("updated", format.format(updated))
+            put("pois", JSONArray().apply {
+                poiListSync?.forEach {
+                    put(JSONObject().apply {
+                        it.jsonize(this)
+                    })
+                }
+            })
+        }
+    }
+
+    private val dbHelper: DBHelper by lazy {
+        DBHelper(MyApplication.context)
+    }
+
+    val poiListSync: List<POI>?
+        get() = dbHelper.withDb {
+            db ->
+            try {
+                val cursor = db.query(POI.Model.TABLE_NAME, null, "${POI.Model.COL_REGION_ID}=?", arrayOf(id.toString()),
+                        null, null, null)
+                var rows: List<POI>? = null
+                if (cursor.moveToFirst()) {
+                    rows = mutableListOf()
+                    do {
+                        rows.add(cursor.getPOIRow())
+                    } while (cursor.moveToNext())
+                }
+                cursor.close()
+                rows
+            } catch (e: Exception) {
+                Logger.e(e.toString())
+                null
+            } finally {
+                db.close()
+            }
+        }
+
+
+    fun loadPOIList() = task {
+        poiListSync
+    }
+
+    fun setSyncedSync() {
+        dbHelper.withWritableDb {
+            db ->
+            try {
+                db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                    put(Region.Model.COL_SYNCED, format.format(Date()))
+                }, "${BaseColumns._ID}=?", arrayOf(id.toString()))
+            } finally {
+                db.close()
+            }
+        }
+    }
+
 }

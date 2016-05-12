@@ -118,4 +118,23 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
             return LatLng(lat, lng)
         }
     }
+
+    fun jsonize(jsonObject: JSONObject) {
+        jsonObject.apply {
+            put("id", id)
+            put("poiType", JSONObject().apply {
+                put("uuid", poiTypeUUID)
+            })
+            put("regionId", regionId)
+            put("latLng", JSONObject().apply {
+                put("lat", latLng.latitude)
+                put("lng", latLng.longitude)
+            })
+            val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            put("created", format.format(created))
+            if (updated != null) {
+                put("updated", format.format(updated))
+            }
+        }
+    }
 }
