@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
@@ -119,9 +120,20 @@ class RegionListActivity : AppCompatActivity(),
                                     throw e
                                 }
                             } failUi {
-                                toast("上传出错了, 请重试!")
+                                object: AppCompatDialogFragment() {
+                                    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                                        return AlertDialog.Builder(context).setIcon(R.drawable.ic_error_outline_red_300_18dp)
+                                                .setTitle("上传错误").setMessage("上传失败，请重试!").create()
+                                    }
+                                }.show(supportFragmentManager, "")
                             } successUi {
-                                toast(R.string.upload_task_completed)
+                                object: AppCompatDialogFragment() {
+                                    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                                        return AlertDialog.Builder(context)
+                                                .setTitle(R.string.success)
+                                                .setMessage(R.string.upload_task_completed).create()
+                                    }
+                                }.show(supportFragmentManager, "")
                                 regionListFragment.setupRegions()
                             } alwaysUi {
                                 mask.visibility = View.GONE
