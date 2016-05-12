@@ -13,6 +13,27 @@
         android:name="com.puzheng.region_investigation.RegionListFragment"
         android:id="@+id/fragmentRegionList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></fragment>
+        android:layout_height="match_parent"
+        tools:layout="@layout/fragment_region_list"></fragment>
 
+    <LinearLayout
+        android:id="@+id/mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99ffffff"
+        android:gravity="center"
+        android:visibility="gone">
+        <com.github.lzyzsd.circleprogress.ArcProgress
+            android:id="@+id/arcProgress"
+            android:layout_gravity="center"
+            app:arc_unfinished_color="@color/colorPrimary"
+            app:arc_finished_color="@color/colorAccent"
+            app:arc_max="100"
+            app:arc_text_size="12sp"
+            app:arc_bottom_text="Hello"
+            app:arc_angle="240.0"
+            android:layout_width="100dp"
+            android:padding="8dp"
+            android:layout_height="100dp"/>
+    </LinearLayout>
 </RelativeLayout>

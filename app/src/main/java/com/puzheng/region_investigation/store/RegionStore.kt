@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
+import android.os.Environment
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
@@ -13,15 +14,16 @@ import com.puzheng.region_investigation.model.POI
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
+import okhttp3.*
+import okio.BufferedSink
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.logging.Level
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class RegionStore private constructor(val context: Context) {
 
@@ -281,5 +283,111 @@ class RegionStore private constructor(val context: Context) {
         } finally {
             db.close()
         }
+    }
+
+    val zipDir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
+            ".cache").apply {
+        if (!exists()) {
+        }
+    }
+
+    fun generateZipSync(region: Region) {
+        try {
+            val jsonObject = JSONObject().apply {
+                region.jsonizeSync(this)
+            }
+            val zipFile = File(zipDir, "${region.id}.zip")
+            ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
+                putNextEntry(ZipEntry("region.json"))
+                write(jsonObject.toString().toByteArray())
+                closeEntry()
+                region.poiListSync?.forEach {
+                    poi ->
+                    addDir(poi.dir, "pois")
+                }
+                close()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun ZipOutputStream.addDir(dir: File, prefix: String = "") {
+        val buf = ByteArray(4096)
+        dir.listFiles().forEach {
+            when {
+                it.isFile -> {
+                    putNextEntry(ZipEntry(File(prefix, it.relativeTo(dir).path).path.apply {
+                        Logger.v("put entry $this into zip")
+                    }))
+                    try {
+                        BufferedInputStream(FileInputStream(it)).let {
+                            src ->
+                            while (true) {
+                                val count = src.read(buf, 0, buf.size)
+                                if (count == -1) {
+                                    break
+                                }
+                                write(buf, 0, count)
+                            }
+                            src.close()
+                        }
+                    } catch(e: Exception) {
+                        e.printStackTrace()
+                    }
+                    closeEntry()
+                }
+                it.isDirectory -> {
+                    addDir(File(dir, it.name), File(prefix, it.name).path)
+                }
+            }
+        }
+    }
+
+    fun uploadSync(region: Region, onProgress: (sent: Long) -> Unit) {
+        val zipFile = File(zipDir, "${region.id}.zip")
+        var sent = 0L
+        val accountStore = AccountStore.with(context)
+        val progressingRequestBody = object : RequestBody() {
+            override fun contentType(): MediaType? = MediaType.parse("application/zip")
+
+            override fun contentLength() = zipFile.length()
+
+            override fun writeTo(sink: BufferedSink) {
+                val buf = ByteArray(4096)
+                val src = BufferedInputStream(FileInputStream(zipFile))
+                while (true) {
+                    val count = src.read(buf, 0, buf.size)
+                    if (count == -1) {
+                        break
+                    }
+                    sent += count
+                    onProgress(sent)
+                    sink.write(buf, 0, count)
+                }
+                src.close()
+            }
+        }
+        val body = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("username", accountStore.account?.username)
+                .addFormDataPart("orgCode", accountStore.account?.orgCode)
+                .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
+        val response = OkHttpClient().newCall(
+                Request.Builder()
+                        .url(ConfigUtil.with(context).uploadBackend)
+                        .post(body)
+                        .build()).execute()
+        if (!response.isSuccessful) {
+            throw IOException("Unexpected code " + response)
+        }
+        response.body().close()
+        MyApplication.eventLogger.log(Level.INFO, "上传重点区域", JSONObject().apply {
+            put("type", EventType.DELETE_REGION)
+            put("region", JSONObject().apply {
+                put("id", region.id)
+                put("name", region.name)
+            })
+        })
     }
 }

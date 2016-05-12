@@ -56,5 +56,6 @@
     <string name="preference_account">com.puzheng.region_investigation.preerenceAccount</string>
     <string name="upload_task_completed">上传任务完成!</string>
     <string name="upload_list">上传任务列表</string>
+    <string name="generate_zip">正在压缩数据</string>
 
 </resources>

@@ -1,13 +1,9 @@
 package com.puzheng.region_investigation
 
 import android.app.Dialog
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.IBinder
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -16,6 +12,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import com.bignerdranch.android.multiselector.ModalMultiSelectorCallback
+import com.github.lzyzsd.circleprogress.ArcProgress
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.Account
 import com.puzheng.region_investigation.model.Region
@@ -24,40 +21,39 @@ import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.activity_region_list.*
 import kotlinx.android.synthetic.main.content_region_list.*
 import nl.komponents.kovenant.task
+import nl.komponents.kovenant.then
+import nl.komponents.kovenant.ui.alwaysUi
+import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
-import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
+import java.io.File
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnRegionListFragmentInteractionListener {
 
 
     private var actionMode: ActionMode? = null
+    private val regionStore: RegionStore by lazy {
+        RegionStore.with(this)
+    }
+
 
     private val regionListFragment: RegionListFragment by lazy {
         findFragmentById<RegionListFragment>(R.id.fragmentRegionList)
-    }
-
-    private var uploadService: UploadService? = null
-
-    private val connection: ServiceConnection by lazy {
-        object: ServiceConnection {
-            override fun onServiceDisconnected(p0: ComponentName?) {
-                throw UnsupportedOperationException()
-            }
-
-            override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
-                Logger.v("upload service connected")
-                uploadService = (p1 as UploadService.LocalBinder).service
-            }
-        }
     }
 
     override fun onLongClickItem(region: Region): Boolean {
         if (actionMode != null) {
             return false
         }
-        actionMode = startSupportActionMode(object : ModalMultiSelectorCallback(
+        actionMode = startSupportActionMode(supportActionMode)
+        return true;
+    }
+
+
+    private val supportActionMode: ModalMultiSelectorCallback by lazy {
+        object : ModalMultiSelectorCallback(
                 (fragmentRegionList as RegionListFragment).multiSelector) {
             override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
@@ -71,15 +67,65 @@ class RegionListActivity : AppCompatActivity(),
                         }
                     }
                     R.id.action_upload -> {
-                        uploadService?.upload(regionListFragment.selectedRegions.map { it.id!! })
+                        val arcProgress = (findViewById(R.id.arcProgress) as ArcProgress).apply {
+                            progress = 0
+                            bottomText = getString(R.string.generate_zip)
+                        }
+                        val mask = (findViewById(R.id.mask) as View).apply {
+                            visibility = View.VISIBLE
+                        }
+                        val selectRegions = regionListFragment.selectedRegions
+                        task {
+                            selectRegions.withIndex().forEach {
+                                val (index, region) = it
+                                Logger.v("zip region ${region.id}")
+                                regionStore.generateZipSync(region)
+                                this@RegionListActivity.runOnUiThread {
+                                    arcProgress.progress = (index + 1) * 100 / selectRegions.size
+                                }
+                            }
+                        } successUi {
+                            val total = selectRegions.map {
+                                File(regionStore.zipDir, "${it.id}.zip").length()
+                            }.sum()
+                            val df = DecimalFormat("#.#");
+                            df.roundingMode = RoundingMode.CEILING;
+                            arcProgress.bottomText = "正在上传(" + if (total < 1000) {
+                                "${df.format(total.toFloat()/1000)}K"
+                            } else {
+                                "${df.format(total.toFloat()/1000000)}M"
+                            } + ")"
+                            arcProgress.progress = 0
+                            total.toLong()
+                        } then {
+                            val total = selectRegions.map {
+                                File(regionStore.zipDir, "${it.id}.zip").length()
+                            }.sum()
+                            Logger.v("total bytes: $total")
+                            var sent = 0L
+                            try {
+                                selectRegions.forEach {
+                                    regionStore.uploadSync(it) {
+                                        this@RegionListActivity.runOnUiThread {
+                                            arcProgress.progress = ((it + sent) * 100 / total).toInt()
+                                        }
+                                    }
+                                    sent += File(regionStore.zipDir, "${it.id}.zip").length()
+                                    it.setSyncedSync()
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                throw e
+                            }
+                        } failUi {
+                            toast("上传出错了, 请重试!")
+                        } successUi {
+                            toast(R.string.upload_task_completed)
+                            regionListFragment.setupRegions()
+                        } alwaysUi {
+                            mask.visibility = View.GONE
+                        }
                     }
-//                        RegionStore.with(this@RegionListActivity).sync(regionListFragment.selectedRegions.map { it.id!! }) successUi {
-//                            regionListFragment.selectedRegions.forEach {
-//                                it.synced = Date()
-//                            }
-//                            regionListFragment.setupRegions()
-//                            toast("synced")
-//                        }
                 }
                 return false
             }
@@ -98,8 +144,7 @@ class RegionListActivity : AppCompatActivity(),
                 actionMode = null;
             }
 
-        });
-        return true;
+        }
     }
 
     override fun onClickItem(region: Region) {
@@ -132,19 +177,6 @@ class RegionListActivity : AppCompatActivity(),
         AccountStore.with(this).account = Account(username, orgCode, orgName)
     }
 
-    override fun onStart() {
-        super.onStart()
-        bindService(Intent(this@RegionListActivity, UploadService::class.java), connection,
-                Context.BIND_AUTO_CREATE)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (uploadService != null) {
-            unbindService(connection)
-        }
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_region_list, menu)
@@ -154,10 +186,6 @@ class RegionListActivity : AppCompatActivity(),
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_settings -> {
             startActivity(Intent(this, InfoActivity::class.java))
-            true
-        }
-        R.id.action_upload_list -> {
-            startActivity(Intent(this, UploadListActivity::class.java))
             true
         }
         else -> super.onOptionsItemSelected(item)

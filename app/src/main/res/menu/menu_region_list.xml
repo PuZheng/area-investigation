@@ -4,13 +4,6 @@
     tools:context="com.puzheng.region_investigation.RegionListActivity">
 
     <item
-        android:id="@+id/action_upload_list"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        android:icon="@drawable/ic_upload_list"
-        app:showAsAction="always" />
-
-    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"
