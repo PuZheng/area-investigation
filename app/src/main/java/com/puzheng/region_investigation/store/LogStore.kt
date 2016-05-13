@@ -2,7 +2,7 @@ package com.puzheng.region_investigation.store
 
 import android.content.Context
 import android.os.Environment
-import com.puzheng.region_investigation.ConfigUtil
+import com.puzheng.region_investigation.store.ConfigStore
 import com.puzheng.region_investigation.MyApplication
 import org.json.JSONObject
 import java.io.File
