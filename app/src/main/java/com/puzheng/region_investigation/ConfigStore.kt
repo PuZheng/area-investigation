@@ -13,11 +13,11 @@ import java.io.InputStreamReader
 /**
  * Created by xc on 16-1-13.
  */
-class ConfigUtil private constructor(context: Context) {
+class ConfigStore private constructor(context: Context) {
 
     companion object {
-        fun with(context: Context): ConfigUtil {
-            return ConfigUtil(context)
+        fun with(context: Context): ConfigStore {
+            return ConfigStore(context)
         }
     }
 

@@ -375,7 +375,7 @@ class RegionStore private constructor(val context: Context) {
                 .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
         val response = OkHttpClient().newCall(
                 Request.Builder()
-                        .url(ConfigUtil.with(context).uploadBackend)
+                        .url(ConfigStore.with(context).uploadBackend)
                         .post(body)
                         .build()).execute()
         if (!response.isSuccessful) {
@@ -391,3 +391,4 @@ class RegionStore private constructor(val context: Context) {
         })
     }
 }
+
