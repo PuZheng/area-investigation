@@ -383,7 +383,7 @@ class RegionStore private constructor(val context: Context) {
         }
         response.body().close()
         MyApplication.eventLogger.log(Level.INFO, "上传重点区域", JSONObject().apply {
-            put("type", EventType.DELETE_REGION)
+            put("type", EventType.UPLOAD_REGION)
             put("region", JSONObject().apply {
                 put("id", region.id)
                 put("name", region.name)
