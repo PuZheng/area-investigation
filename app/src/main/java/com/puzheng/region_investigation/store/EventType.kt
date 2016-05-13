@@ -8,6 +8,6 @@ class EventType {
         const val CREATE_POI = "CREATE_POI"
         const val UPDATE_POI = "UPDATE_POI"
         const val DELETE_POI = "DELETE_POI"
-        const val UPLOAD_REGION = "UPLOAD_POI"
+        const val UPLOAD_REGION = "UPLOAD_REGION"
     }
 }
