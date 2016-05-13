@@ -68,75 +68,79 @@ class RegionListActivity : AppCompatActivity(),
                         }
                     }
                     R.id.action_upload -> {
-                        assertNetwork() successUi {
-                            val arcProgress = (findViewById(R.id.arcProgress) as ArcProgress).apply {
-                                progress = 0
-                                bottomText = getString(R.string.generate_zip)
-                            }
-                            val mask = (findViewById(R.id.mask) as View).apply {
-                                visibility = View.VISIBLE
-                            }
-                            val selectRegions = regionListFragment.selectedRegions
-                            task {
-                                selectRegions.withIndex().forEach {
-                                    val (index, region) = it
-                                    Logger.v("zip region ${region.id}")
-                                    regionStore.generateZipSync(region)
-                                    this@RegionListActivity.runOnUiThread {
-                                        arcProgress.progress = (index + 1) * 100 / selectRegions.size
-                                    }
+                        if (regionListFragment.selectedRegions.isEmpty()) {
+                            toast(R.string.select_at_least_one_region)
+                        } else {
+                            assertNetwork() successUi {
+                                val arcProgress = (findViewById(R.id.arcProgress) as ArcProgress).apply {
+                                    progress = 0
+                                    bottomText = getString(R.string.generate_zip)
                                 }
-                            } successUi {
-                                val total = selectRegions.map {
-                                    File(regionStore.zipDir, "${it.id}.zip").length()
-                                }.sum()
-                                val df = DecimalFormat("#.#");
-                                df.roundingMode = RoundingMode.CEILING;
-                                arcProgress.bottomText = "正在上传(" + if (total < 1000) {
-                                    "${df.format(total.toFloat()/1000)}K"
-                                } else {
-                                    "${df.format(total.toFloat()/1000000)}M"
-                                } + ")"
-                                arcProgress.progress = 0
-                                total.toLong()
-                            } then {
-                                val total = selectRegions.map {
-                                    File(regionStore.zipDir, "${it.id}.zip").length()
-                                }.sum()
-                                Logger.v("total bytes: $total")
-                                var sent = 0L
-                                try {
-                                    selectRegions.forEach {
-                                        regionStore.uploadSync(it) {
-                                            this@RegionListActivity.runOnUiThread {
-                                                arcProgress.progress = ((it + sent) * 100 / total).toInt()
-                                            }
+                                val mask = (findViewById(R.id.mask) as View).apply {
+                                    visibility = View.VISIBLE
+                                }
+                                val selectRegions = regionListFragment.selectedRegions
+                                task {
+                                    selectRegions.withIndex().forEach {
+                                        val (index, region) = it
+                                        Logger.v("zip region ${region.id}")
+                                        regionStore.generateZipSync(region)
+                                        this@RegionListActivity.runOnUiThread {
+                                            arcProgress.progress = (index + 1) * 100 / selectRegions.size
                                         }
-                                        sent += File(regionStore.zipDir, "${it.id}.zip").length()
-                                        it.setSyncedSync()
                                     }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                    throw e
+                                } successUi {
+                                    val total = selectRegions.map {
+                                        File(regionStore.zipDir, "${it.id}.zip").length()
+                                    }.sum()
+                                    val df = DecimalFormat("#.#");
+                                    df.roundingMode = RoundingMode.CEILING;
+                                    arcProgress.bottomText = "正在上传(" + if (total < 1000) {
+                                        "${df.format(total.toFloat()/1000)}K"
+                                    } else {
+                                        "${df.format(total.toFloat()/1000000)}M"
+                                    } + ")"
+                                    arcProgress.progress = 0
+                                    total.toLong()
+                                } then {
+                                    val total = selectRegions.map {
+                                        File(regionStore.zipDir, "${it.id}.zip").length()
+                                    }.sum()
+                                    Logger.v("total bytes: $total")
+                                    var sent = 0L
+                                    try {
+                                        selectRegions.forEach {
+                                            regionStore.uploadSync(it) {
+                                                this@RegionListActivity.runOnUiThread {
+                                                    arcProgress.progress = ((it + sent) * 100 / total).toInt()
+                                                }
+                                            }
+                                            sent += File(regionStore.zipDir, "${it.id}.zip").length()
+                                            it.setSyncedSync()
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        throw e
+                                    }
+                                } failUi {
+                                    object: AppCompatDialogFragment() {
+                                        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                                            return AlertDialog.Builder(context).setIcon(R.drawable.ic_error_outline_red_300_18dp)
+                                                    .setTitle("上传错误").setMessage("上传失败，请重试!").create()
+                                        }
+                                    }.show(supportFragmentManager, "")
+                                } successUi {
+                                    object: AppCompatDialogFragment() {
+                                        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                                            return AlertDialog.Builder(context)
+                                                    .setTitle(R.string.success)
+                                                    .setMessage(R.string.upload_task_completed).create()
+                                        }
+                                    }.show(supportFragmentManager, "")
+                                    regionListFragment.setupRegions()
+                                } alwaysUi {
+                                    mask.visibility = View.GONE
                                 }
-                            } failUi {
-                                object: AppCompatDialogFragment() {
-                                    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-                                        return AlertDialog.Builder(context).setIcon(R.drawable.ic_error_outline_red_300_18dp)
-                                                .setTitle("上传错误").setMessage("上传失败，请重试!").create()
-                                    }
-                                }.show(supportFragmentManager, "")
-                            } successUi {
-                                object: AppCompatDialogFragment() {
-                                    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-                                        return AlertDialog.Builder(context)
-                                                .setTitle(R.string.success)
-                                                .setMessage(R.string.upload_task_completed).create()
-                                    }
-                                }.show(supportFragmentManager, "")
-                                regionListFragment.setupRegions()
-                            } alwaysUi {
-                                mask.visibility = View.GONE
                             }
                         }
                     }

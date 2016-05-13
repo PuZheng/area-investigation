@@ -288,6 +288,7 @@ class RegionStore private constructor(val context: Context) {
     val zipDir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
             ".cache").apply {
         if (!exists()) {
+            mkdirs()
         }
     }
 
@@ -391,4 +392,5 @@ class RegionStore private constructor(val context: Context) {
         })
     }
 }
+
 

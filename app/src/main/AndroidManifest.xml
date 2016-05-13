@@ -89,20 +89,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.puzheng.region_investigation.EditPOIActivity" />
         </activity>
-        <activity android:name=".InfoActivity" />
-
-        <service
-            android:name=".UploadService"
-            android:exported="false" />
-
-        <activity android:name=".UploadListActivity"
+        <activity android:name=".InfoActivity"
+            android:label="应用信息"
             android:parentActivityName=".RegionListActivity"
-            android:label="@string/upload_list">
-
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.puzheng.region_investigation.RegionListActivity" />
         </activity>
+
     </application>
 
 </manifest>
