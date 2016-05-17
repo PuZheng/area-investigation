@@ -12,25 +12,9 @@ private const val version = 1
 
 class DBHelper(context: Context) : SQLiteOpenHelper(context, dbName, null, version) {
 
-    fun <T> withDb(func: (db: SQLiteDatabase) -> T): T {
-        readableDatabase.let {
-            try {
-                return func(it)
-            } finally {
-                it.close()
-            }
-        }
-    }
+    fun <T> withDb(func: (db: SQLiteDatabase) -> T): T = func(readableDatabase)
 
-    fun <T> withWritableDb(func: (db: SQLiteDatabase) -> T): T {
-        writableDatabase.let {
-            try {
-                return func(it)
-            } finally {
-                it.close()
-            }
-        }
-    }
+    fun <T> withWritableDb(func: (db: SQLiteDatabase) -> T): T = func(writableDatabase)
 
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {

@@ -53,8 +53,11 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         }
     }
 
+    /**
+     * 是否为脏数据，如果从来没有同步过；同步时间早于更新时间
+     */
     val isDirty: Boolean
-        get() = (synced == null || synced!! < updated)
+        get() = (synced == null || (updated != null && synced!! < updated))
 
 
     constructor(source: Parcel) : this(
@@ -134,7 +137,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
             put("name", name)
             put("outline", encodeOutline(outline))
             put("created", format.format(created))
-            put("updated", format.format(updated))
+            put("updated", if (updated != null) format.format(updated) else null)
             put("pois", JSONArray().apply {
                 poiListSync?.forEach {
                     put(JSONObject().apply {

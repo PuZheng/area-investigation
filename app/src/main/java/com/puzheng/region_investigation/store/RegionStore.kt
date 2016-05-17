@@ -103,11 +103,7 @@ class RegionStore private constructor(val context: Context) {
 
     fun removeRegions(regions: List<Region>) = task {
         val db = DBHelper(context).writableDatabase
-        try {
-            db.delete(Region.Model.TABLE_NAME, """${BaseColumns._ID} IN (${regions.map { it.id.toString() }.joinToString(",")})""", null)
-        } finally {
-            db.close()
-        }
+        db.delete(Region.Model.TABLE_NAME, """${BaseColumns._ID} IN (${regions.map { it.id.toString() }.joinToString(",")})""", null)
         regions.forEach {
             with(context).getCoverImageFile(it)?.delete()
             // TODO remove related pois
@@ -171,8 +167,6 @@ class RegionStore private constructor(val context: Context) {
             e.printStackTrace()
             Logger.e(e.toString())
             null
-        } finally {
-            db.close()
         }
     }
 
