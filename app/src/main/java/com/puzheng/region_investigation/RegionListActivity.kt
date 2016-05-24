@@ -26,9 +26,13 @@ import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.alwaysUi
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import java.io.File
 import java.math.RoundingMode
 import java.text.DecimalFormat
+import java.util.regex.Pattern
 
 class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnRegionListFragmentInteractionListener {
@@ -193,6 +197,50 @@ class RegionListActivity : AppCompatActivity(),
                 "org name: $orgName",
                 "org code: $orgCode").joinToString())
         AccountStore.with(this).account = Account(username, orgCode, orgName)
+        task {
+            val response = OkHttpClient().newCall(
+                    Request.Builder()
+                            .url(ConfigStore.with(this).updateBackend + "/app/latest-version")
+                            .build()).execute()
+            Logger.i(response.isSuccessful.toString())
+            if (response.isSuccessful) {
+                JSONObject(response.body().string())
+            } else {
+                null
+            }
+        } successUi {
+            json ->
+            val versionRegex = Pattern.compile("\\d+\\.\\d+.\\d+$", Pattern.CASE_INSENSITIVE).toRegex()
+            if (json != null) {
+                val latestVersion = json.getString("version")
+                if (latestVersion.matches(versionRegex)) {
+                    Logger.i("current version: ${BuildConfig.VERSION_NAME} latest version: $latestVersion")
+                    if (compareVersion(BuildConfig.VERSION_NAME, json.getString("version")) == -1) {
+                        Logger.v("should update to $latestVersion")
+                        ConfirmUpgradeDialogFragment(BuildConfig.VERSION_NAME, latestVersion).show(supportFragmentManager, "")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun compareVersion(version1: String, version2: String): Int {
+        val vals1 = version1.split(".")
+        val vals2 = version2.split(".")
+        var i = 0
+        // set index to first non-equal ordinal or length of shortest version string
+        while (i < vals1.size && i < vals2.size && vals1[i] == vals2[i]) {
+            i++
+        }
+        // compare first non-equal ordinal number
+        return if (i < vals1.size && i < vals2.size) {
+            val diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]))
+            Integer.signum(diff)
+        } else {
+            // the strings are equal or one string is a substring of the other
+            // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+            Integer.signum(vals1.size - vals2.size)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -31,7 +31,7 @@ class ConfigStore private constructor(context: Context) {
                 sb.append(line)
             }
             val jsonObject = JSONObject(sb.toString())
-            Config(jsonObject.getString("uploadBackend"))
+            Config(jsonObject.getString("uploadBackend"), jsonObject.getString("updateBackend"))
         } catch (e: IOException) {
             e.printStackTrace()
             null
@@ -44,5 +44,8 @@ class ConfigStore private constructor(context: Context) {
     val uploadBackend: String?
         get() = config?.uploadBackend
 
-    private class Config(val uploadBackend: String)
+    val updateBackend: String?
+        get() = config?.updateBackend
+
+    private class Config(val uploadBackend: String, val updateBackend: String)
 }

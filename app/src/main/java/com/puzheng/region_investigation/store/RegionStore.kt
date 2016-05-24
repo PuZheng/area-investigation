@@ -2,15 +2,14 @@ package com.puzheng.region_investigation.store
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.os.Environment
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.*
-import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.model.POI
+import com.puzheng.region_investigation.model.Region
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
