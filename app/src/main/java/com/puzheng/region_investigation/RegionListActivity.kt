@@ -3,8 +3,11 @@ package com.puzheng.region_investigation
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.support.v4.app.DialogFragment
+import android.support.v4.os.EnvironmentCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
@@ -26,12 +29,44 @@ import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.alwaysUi
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import java.io.File
 import java.math.RoundingMode
 import java.text.DecimalFormat
+import java.util.regex.Pattern
 
 class RegionListActivity : AppCompatActivity(),
-        RegionListFragment.OnRegionListFragmentInteractionListener {
+        RegionListFragment.OnRegionListFragmentInteractionListener,
+        ConfirmUpgradeDialogFragment.OnFragmentInteractionListener {
+
+    override fun onConfirmUpgrade(latestVersion: String, path: String) {
+        arcProgress.apply {
+            progress = 0
+            bottomText = "升级应用"
+        }
+        mask.visibility = View.VISIBLE
+
+        UpgradeUtil.with(this).download(latestVersion, path) {
+            downloaded, total ->
+            this@RegionListActivity.runOnUiThread {
+                arcProgress.progress = (downloaded * 100 / total).toInt()
+            }
+        } successUi {
+            apkFile ->
+            startActivity(Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK; // without this flag android returned a intent error!
+            })
+        } failUi {
+            it.printStackTrace()
+            toast("下载失败")
+        } alwaysUi {
+            mask.visibility = View.GONE
+        }
+    }
+
 
 
     private var actionMode: ActionMode? = null
@@ -39,6 +74,13 @@ class RegionListActivity : AppCompatActivity(),
         RegionStore.with(this)
     }
 
+    private val arcProgress: ArcProgress by lazy {
+        findViewById(R.id.arcProgress) as ArcProgress
+    }
+
+    private val mask: View by lazy {
+        findViewById(R.id.mask) as View
+    }
 
     private val regionListFragment: RegionListFragment by lazy {
         findFragmentById<RegionListFragment>(R.id.fragmentRegionList)
@@ -71,14 +113,12 @@ class RegionListActivity : AppCompatActivity(),
                         if (regionListFragment.selectedRegions.isEmpty()) {
                             toast(R.string.select_at_least_one_region)
                         } else {
+                            arcProgress.apply {
+                                progress = 0
+                                bottomText = getString(R.string.generate_zip)
+                            }
+                            mask.visibility = View.VISIBLE
                             assertNetwork() successUi {
-                                val arcProgress = (findViewById(R.id.arcProgress) as ArcProgress).apply {
-                                    progress = 0
-                                    bottomText = getString(R.string.generate_zip)
-                                }
-                                val mask = (findViewById(R.id.mask) as View).apply {
-                                    visibility = View.VISIBLE
-                                }
                                 val selectRegions = regionListFragment.selectedRegions
                                 task {
                                     selectRegions.withIndex().forEach {
@@ -193,6 +233,52 @@ class RegionListActivity : AppCompatActivity(),
                 "org name: $orgName",
                 "org code: $orgCode").joinToString())
         AccountStore.with(this).account = Account(username, orgCode, orgName)
+        task {
+            val response = OkHttpClient().newCall(
+                    Request.Builder()
+                            .url(ConfigStore.with(this).updateBackend + "/app/latest-version")
+                            .build()).execute()
+            Logger.i(response.isSuccessful.toString())
+            if (response.isSuccessful) {
+                JSONObject(response.body().string())
+            } else {
+                null
+            }
+        } successUi {
+            json ->
+            val versionRegex = Pattern.compile("\\d+\\.\\d+.\\d+$", Pattern.CASE_INSENSITIVE).toRegex()
+            if (json != null) {
+                val latestVersion = json.getString("version")
+                if (latestVersion.matches(versionRegex)) {
+                    Logger.i("current version: ${BuildConfig.VERSION_NAME} latest version: $latestVersion")
+                    if (compareVersion(BuildConfig.VERSION_NAME, json.getString("version")) == -1) {
+                        Logger.v("should update to $latestVersion")
+                        ConfirmUpgradeDialogFragment.newInstance(BuildConfig.VERSION_NAME, latestVersion,
+                                json.getString("path"))
+                                .show(supportFragmentManager, "")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun compareVersion(version1: String, version2: String): Int {
+        val vals1 = version1.split(".")
+        val vals2 = version2.split(".")
+        var i = 0
+        // set index to first non-equal ordinal or length of shortest version string
+        while (i < vals1.size && i < vals2.size && vals1[i] == vals2[i]) {
+            i++
+        }
+        // compare first non-equal ordinal number
+        return if (i < vals1.size && i < vals2.size) {
+            val diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]))
+            Integer.signum(diff)
+        } else {
+            // the strings are equal or one string is a substring of the other
+            // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+            Integer.signum(vals1.size - vals2.size)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
