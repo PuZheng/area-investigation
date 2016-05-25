@@ -23,6 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service android:name="com.amap.api.location.APSService" />
+        <service android:name=".UpgradePOITypeService" android:exported="false"/>
 
         <meta-data
             android:name="com.amap.api.v2.apikey"

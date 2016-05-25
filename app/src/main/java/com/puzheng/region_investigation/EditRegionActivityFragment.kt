@@ -290,7 +290,10 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         map.map.uiSettings.isMyLocationButtonEnabled = true
 
         RegionStore.with(activity).getPOIList(listener?.region!!) successUi  {
-            it?.forEach {
+            it?.filter {
+                //过滤掉没有关联类型的信息点
+                poiTypeMap[it.poiTypeUUID] != null
+            }?.forEach {
                 pois.add(it)
             }
         } failUi {

@@ -55,6 +55,7 @@ class MyApplication : Application(), OnPermissionGrantedListener {
             }
 
             override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
+                MyApplication.currentActivity = activity as AppCompatActivity
                 if (eventLogger.handlers.isEmpty()) {
                     (activity as AppCompatActivity).assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG) successUi {
@@ -83,6 +84,7 @@ class MyApplication : Application(), OnPermissionGrantedListener {
     companion object {
         lateinit var context: Context
         lateinit var eventLogger: Logger
+        lateinit var currentActivity: AppCompatActivity
         val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG = AtomicInteger().andDecrement
     }
 }
@@ -95,11 +97,11 @@ private class EventLogFormatter: Formatter() {
 
 
     override fun format(record: LogRecord?): String? {
-        var s = "${record!!.level.name}: [${fmt.format(Date())}] - ${record.message}${System.lineSeparator()}"
+        var s = "${record!!.level.name}: [${fmt.format(Date())}] - ${record.message}\n"
         if (record.parameters != null && record.parameters.size > 0) {
-            s += JSON_SEP + System.lineSeparator()
-            s += (record.parameters[0] as JSONObject).toString(4) + System.lineSeparator()
-            s += JSON_SEP + System.lineSeparator()
+            s += JSON_SEP + "\n"
+            s += (record.parameters[0] as JSONObject).toString(4) + "\n"
+            s += JSON_SEP + "\n"
         }
         return s
     }
