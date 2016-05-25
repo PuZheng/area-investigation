@@ -10,9 +10,6 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 
-/**
- * Created by xc on 16-1-13.
- */
 class ConfigStore private constructor(context: Context) {
 
     companion object {
@@ -31,7 +28,9 @@ class ConfigStore private constructor(context: Context) {
                 sb.append(line)
             }
             val jsonObject = JSONObject(sb.toString())
-            Config(jsonObject.getString("uploadBackend"), jsonObject.getString("updateBackend"))
+            Config(jsonObject.getString("uploadBackend"),
+                    jsonObject.getString("updateBackend"),
+                    jsonObject.getString("assetsBackend"))
         } catch (e: IOException) {
             e.printStackTrace()
             null
@@ -47,5 +46,9 @@ class ConfigStore private constructor(context: Context) {
     val updateBackend: String?
         get() = config?.updateBackend
 
-    private class Config(val uploadBackend: String, val updateBackend: String)
+    val assetsBackend: String?
+        get() = config?.assetsBackend
+
+    private class Config(val uploadBackend: String, val updateBackend: String,
+                         val assetsBackend: String)
 }

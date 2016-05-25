@@ -3,8 +3,11 @@ package com.puzheng.region_investigation
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.support.v4.app.DialogFragment
+import android.support.v4.os.EnvironmentCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
@@ -35,7 +38,35 @@ import java.text.DecimalFormat
 import java.util.regex.Pattern
 
 class RegionListActivity : AppCompatActivity(),
-        RegionListFragment.OnRegionListFragmentInteractionListener {
+        RegionListFragment.OnRegionListFragmentInteractionListener,
+        ConfirmUpgradeDialogFragment.OnFragmentInteractionListener {
+
+    override fun onConfirmUpgrade(latestVersion: String, path: String) {
+        arcProgress.apply {
+            progress = 0
+            bottomText = "升级应用"
+        }
+        mask.visibility = View.VISIBLE
+
+        UpgradeUtil.with(this).download(latestVersion, path) {
+            downloaded, total ->
+            this@RegionListActivity.runOnUiThread {
+                arcProgress.progress = (downloaded * 100 / total).toInt()
+            }
+        } successUi {
+            apkFile ->
+            startActivity(Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK; // without this flag android returned a intent error!
+            })
+        } failUi {
+            it.printStackTrace()
+            toast("下载失败")
+        } alwaysUi {
+            mask.visibility = View.GONE
+        }
+    }
+
 
 
     private var actionMode: ActionMode? = null
@@ -43,6 +74,13 @@ class RegionListActivity : AppCompatActivity(),
         RegionStore.with(this)
     }
 
+    private val arcProgress: ArcProgress by lazy {
+        findViewById(R.id.arcProgress) as ArcProgress
+    }
+
+    private val mask: View by lazy {
+        findViewById(R.id.mask) as View
+    }
 
     private val regionListFragment: RegionListFragment by lazy {
         findFragmentById<RegionListFragment>(R.id.fragmentRegionList)
@@ -75,14 +113,12 @@ class RegionListActivity : AppCompatActivity(),
                         if (regionListFragment.selectedRegions.isEmpty()) {
                             toast(R.string.select_at_least_one_region)
                         } else {
+                            arcProgress.apply {
+                                progress = 0
+                                bottomText = getString(R.string.generate_zip)
+                            }
+                            mask.visibility = View.VISIBLE
                             assertNetwork() successUi {
-                                val arcProgress = (findViewById(R.id.arcProgress) as ArcProgress).apply {
-                                    progress = 0
-                                    bottomText = getString(R.string.generate_zip)
-                                }
-                                val mask = (findViewById(R.id.mask) as View).apply {
-                                    visibility = View.VISIBLE
-                                }
                                 val selectRegions = regionListFragment.selectedRegions
                                 task {
                                     selectRegions.withIndex().forEach {
@@ -217,7 +253,9 @@ class RegionListActivity : AppCompatActivity(),
                     Logger.i("current version: ${BuildConfig.VERSION_NAME} latest version: $latestVersion")
                     if (compareVersion(BuildConfig.VERSION_NAME, json.getString("version")) == -1) {
                         Logger.v("should update to $latestVersion")
-                        ConfirmUpgradeDialogFragment(BuildConfig.VERSION_NAME, latestVersion).show(supportFragmentManager, "")
+                        ConfirmUpgradeDialogFragment.newInstance(BuildConfig.VERSION_NAME, latestVersion,
+                                json.getString("path"))
+                                .show(supportFragmentManager, "")
                     }
                 }
             }

@@ -44,6 +44,10 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     kapt 'com.android.databinding:compiler:1.0-rc4'
+    compile files('libs/AMap_Location_V2.4.0_20160308.jar')
+    compile files('libs/AMap_3DMap_V3.2.1_20160225.jar')
+
+    kapt 'com.android.databinding:compiler:1.0-rc4'
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
     compile 'com.github.orhanobut:logger:1.12'
@@ -51,15 +55,11 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:23.3.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.bignerdranch.android:recyclerview-multiselect:0.2'
-    compile files('libs/AMap_Location_V2.4.0_20160308.jar')
-    compile files('libs/AMap_3DMap_V3.2.1_20160225.jar')
     compile 'nl.komponents.kovenant:kovenant:3.2.2'
     compile 'nl.komponents.kovenant:kovenant-android:3.2.2'
     compile 'nl.komponents.kovenant:kovenant-combine:3.2.2'
     compile 'com.squareup.okhttp3:okhttp:3.2.0'
     compile 'com.github.lzyzsd:circleprogress:1.2.0@aar'
-
-    kapt 'com.android.databinding:compiler:1.0-rc4'
 }
 
 buildscript {
