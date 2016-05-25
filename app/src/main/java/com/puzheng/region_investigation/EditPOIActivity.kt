@@ -151,15 +151,6 @@ class EditPOIActivity : AppCompatActivity() {
                                 startActivityForResult(this, SELECT_IMAGE)
                             }
                         }
-
-                        // TODO select from galleries
-                        //                        val galleryIntent = Intent()
-                        //                        galleryIntent.type = "image/*"
-                        //                        galleryIntent.action = Intent.ACTION_GET_CONTENT
-                        //                        val chooserIntent = Intent.createChooser(galleryIntent, "选择图片来源")
-                        //                        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS,
-                        //                                cameraIntents.toTypedArray())
-                        //                        startActivityForResult(chooserIntent, SELECT_IMAGE)
                     }
                     assertPermission(Manifest.permission.CAMERA, REQUEST_CAMERA).successUi {
                         permissionHandlers[REQUEST_CAMERA]?.invoke()
