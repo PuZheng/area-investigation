@@ -13,26 +13,23 @@ class ConfirmUpgradeDialogFragment : AppCompatDialogFragment() {
         const private val LATEST_VERSION = "LATEST_VERSION"
         const private val PATH = "PATH"
 
-        fun newInstance(currentVersion: String, latestVersion: String, path: String) = ConfirmUpgradeDialogFragment().apply {
+        fun newInstance(currentVersion: String, latestVersion: String) = ConfirmUpgradeDialogFragment().apply {
             arguments = Bundle().apply {
                 // if you see lint error, refer https://youtrack.jetbrains.com/issue/KT-12015
                 putString(CURRENT_VERSION, currentVersion)
                 putString(LATEST_VERSION, latestVersion)
-                putString(PATH, path)
             }
         }
     }
 
     lateinit private var currentVersion: String
     lateinit private var latestVersion: String
-    lateinit private var path: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (arguments != null) {
             currentVersion = arguments.getString(CURRENT_VERSION)
             latestVersion = arguments.getString(LATEST_VERSION)
-            path = arguments.getString(PATH)
         }
 
     }
@@ -49,7 +46,7 @@ class ConfirmUpgradeDialogFragment : AppCompatDialogFragment() {
     }
 
     interface OnFragmentInteractionListener {
-        fun onConfirmUpgrade(latestVersion: String, path: String);
+        fun onConfirmUpgrade(latestVersion: String)
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -57,7 +54,7 @@ class ConfirmUpgradeDialogFragment : AppCompatDialogFragment() {
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.confirm, {
                     dialog, which ->
-                    listener.onConfirmUpgrade(latestVersion, path)
+                    listener.onConfirmUpgrade(latestVersion)
                 }).create()
     }
 }

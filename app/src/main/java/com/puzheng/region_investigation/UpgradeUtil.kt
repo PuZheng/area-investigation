@@ -21,7 +21,7 @@ class UpgradeUtil private constructor(val context: Context) {
         fun with(context: Context) = UpgradeUtil(context)
     }
 
-    fun download(version: String, path: String, onProgress: (sent: Long, total: Long) -> Unit) = task {
+    fun download(version: String, onProgress: (sent: Long, total: Long) -> Unit) = task {
 
         val cacheDir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
                 ".cache").apply {
@@ -31,12 +31,10 @@ class UpgradeUtil private constructor(val context: Context) {
         }
         val apkFile = File(cacheDir, version + ".apk")
 
-
-
         val response = OkHttpClient().newCall(
                 Request.Builder()
-                        .url(Uri.parse(ConfigStore.with(context).assetsBackend).buildUpon()
-                                .appendEncodedPath(path)
+                        .url(Uri.parse(ConfigStore.with(context).backend).buildUpon()
+                                .appendEncodedPath("app/$version.apk")
                                 .build().toString())
                         .build()).execute()
         if (response.code() == 200) {

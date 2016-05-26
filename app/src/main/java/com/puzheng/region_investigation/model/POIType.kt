@@ -4,7 +4,7 @@ import nl.komponents.kovenant.task
 import org.json.JSONException
 import org.json.JSONObject
 
-data class POIType(val uuid: String, val name: String, val version: String, val fields: List<Field>,
+data class POIType(val uuid: String, val name: String, val timestamp: String, val fields: List<Field>,
                    val path: String) {
     fun extractPOIRawData(poi: POI) = task {
         if (poi.dataFile.exists()) {
