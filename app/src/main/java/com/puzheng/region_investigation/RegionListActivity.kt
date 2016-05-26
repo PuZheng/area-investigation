@@ -42,17 +42,19 @@ class RegionListActivity : AppCompatActivity(),
         RegionListFragment.OnRegionListFragmentInteractionListener,
         ConfirmUpgradeDialogFragment.OnFragmentInteractionListener {
 
-    override fun onConfirmUpgrade(latestVersion: String, path: String) {
+    override fun onConfirmUpgrade(latestVersion: String) {
         arcProgress.apply {
             progress = 0
             bottomText = "升级应用"
         }
         mask.visibility = View.VISIBLE
 
-        UpgradeUtil.with(this).download(latestVersion, path) {
+        UpgradeUtil.with(this).download(latestVersion) {
             downloaded, total ->
-            this@RegionListActivity.runOnUiThread {
-                arcProgress.progress = (downloaded * 100 / total).toInt()
+            if (total != 0L) {
+                this@RegionListActivity.runOnUiThread {
+                    arcProgress.progress = (downloaded * 100 / total).toInt()
+                }
             }
         } successUi {
             apkFile ->
@@ -237,11 +239,13 @@ class RegionListActivity : AppCompatActivity(),
         task {
             val response = OkHttpClient().newCall(
                     Request.Builder()
-                            .url(ConfigStore.with(this).updateBackend + "/app/latest-version")
+                            .url(Uri.parse(ConfigStore.with(this).backend).buildUpon()
+                                    .appendEncodedPath("app/latest-version").build().toString())
                             .build()).execute()
             if (response.isSuccessful) {
                 JSONObject(response.body().string())
             } else {
+                Logger.e(response.message())
                 null
             }
         } successUi {
@@ -253,8 +257,7 @@ class RegionListActivity : AppCompatActivity(),
                     Logger.i("current version: ${BuildConfig.VERSION_NAME} latest version: $latestVersion")
                     if (VersionUtil.compare(BuildConfig.VERSION_NAME, json.getString("version")) == -1) {
                         Logger.v("should update to $latestVersion")
-                        ConfirmUpgradeDialogFragment.newInstance(BuildConfig.VERSION_NAME, latestVersion,
-                                json.getString("path"))
+                        ConfirmUpgradeDialogFragment.newInstance(BuildConfig.VERSION_NAME, latestVersion)
                                 .show(supportFragmentManager, "")
                     }
                 }

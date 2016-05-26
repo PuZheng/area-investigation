@@ -3,6 +3,7 @@ package com.puzheng.region_investigation.store
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Environment
 import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
@@ -369,7 +370,7 @@ class RegionStore private constructor(val context: Context) {
                 .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
         val response = OkHttpClient().newCall(
                 Request.Builder()
-                        .url(ConfigStore.with(context).uploadBackend)
+                        .url(Uri.parse(ConfigStore.with(context).backend).buildUpon().appendEncodedPath("region").build().toString())
                         .post(body)
                         .build()).execute()
         if (!response.isSuccessful) {

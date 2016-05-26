@@ -22,7 +22,9 @@ class UpgradePOITypeService : IntentService("UPGRADE_POI_TYPE_SERVICE") {
                 handler.post({
                     object : AppCompatDialogFragment() {
                         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-                            return AlertDialog.Builder(MyApplication.currentActivity).setMessage("信息点类型模板已经更新")
+                            return AlertDialog.Builder(MyApplication.currentActivity).setMessage("信息点类型(" + toBeUpgraded.map {
+                                it["name"]
+                            }.joinToString(",") + ")模板已经更新")
                                     .setPositiveButton("知道了", null)
                                     .create()
                         }

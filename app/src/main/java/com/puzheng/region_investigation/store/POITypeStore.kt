@@ -35,13 +35,17 @@ class POITypeStore private constructor(val context: Context) {
 
     private fun getPOITypeDir(poiType: POIType) = File(dir, poiType.path)
 
+    private fun makePOITypeUrl(orgCode: String, name: String) = Uri.parse(ConfigStore.with(context).backend).buildUpon()
+                                    .appendEncodedPath("poi-type")
+                                    .appendEncodedPath(orgCode).appendEncodedPath("$name.zip").build().toString()
+
     fun getPOITypeIcon(poiType: POIType) = File(getPOITypeDir(poiType), "ic.png")
 
     fun getPOITypeActiveIcon(poiType: POIType) = File(getPOITypeDir(poiType), "ic_active.png")
 
     fun fakePoiTypes() = task {
         listOf("bus" to "公交站", "exit" to "出入口", "emergency" to "急救站").forEach {
-            File(dir, it.first).apply {
+            File(dir, it.second).apply {
                 mkdirs()
                 File(this, "config.json").apply {
                     if (!exists()) {
@@ -49,7 +53,7 @@ class POITypeStore private constructor(val context: Context) {
                     }
                     writeText(JSONObject().apply {
                         put("uuid", UUID.randomUUID().toString())
-                        put("version", "0.1.0")
+                        put("timestamp", "20160328091313")
                         put("name", it.second)
                         val jsonArray = JSONArray()
                         jsonArray.put(JSONObject().apply field@ {
@@ -99,7 +103,7 @@ class POITypeStore private constructor(val context: Context) {
                         val json = JSONObject(configFile!!.readText())
                         val jsonArray = json.getJSONArray("fields")
                         Logger.v(jsonArray.toString())
-                        POIType(json.getString("uuid"), it.name, json.getString("version"),
+                        POIType(json.getString("uuid"), it.name, json.getString("timestamp"),
                                 (0..jsonArray.length() - 1).map {
                                     val o = jsonArray.getJSONObject(it)
                                     POIType.Field(o.getString("name"),
@@ -141,12 +145,12 @@ class POITypeStore private constructor(val context: Context) {
             }.toTypedArray()
         })
 
+        val orgCode = AccountStore.with(context).account!!.orgCode
         val response = OkHttpClient().newCall(
                 Request.Builder()
-                        .url(Uri.parse(ConfigStore.with(context).updateBackend).buildUpon()
+                        .url(Uri.parse(ConfigStore.with(context).backend).buildUpon()
                                 .appendEncodedPath("poi-type/latest-versions")
-                                .appendQueryParameter("org_code",
-                                        AccountStore.with(context).account!!.orgCode).build().toString())
+                                .appendQueryParameter("org_code", orgCode).build().toString())
                         .build()).execute()
         if (!response.isSuccessful) {
             throw IOException("Unexpected code " + response)
@@ -156,29 +160,25 @@ class POITypeStore private constructor(val context: Context) {
         val toBeUpgraded = (0..jsonArray.length()-1).map {
             val o = jsonArray.getJSONObject(it)
             val name = o.getString("name")
-            val newVersion = o.getString("version")
-            val path = o.getString("path")
-            Logger.v(poiTypeMap[name]!!.version, newVersion)
-            // 如果已经有最新的版本
+            val newTimestamp = o.getString("timestamp")
+            // 如果已经有最新的版本, 就不要升级了
             if (poiTypeMap.containsKey(name) &&
-                    VersionUtil.compare(poiTypeMap[name]!!.version, newVersion) >= 0) {
+                    poiTypeMap[name]!!.timestamp.compareTo(newTimestamp) >= 0) {
                 null
             } else {
-                mapOf("name" to name, "version" to newVersion, "path" to path)
+                mapOf("name" to name, "timestamp" to newTimestamp)
             }
         }.filter {
             it != null
         }.map {
             it!!
         }
-        Logger.v("poi types to upgrade: $toBeUpgraded")
+        Logger.i("poi types to upgrade: $toBeUpgraded")
         toBeUpgraded.forEach {
             val name = it["name"]
-            val path = it["path"]
             val response = OkHttpClient().newCall(
                     Request.Builder()
-                            .url(Uri.parse(ConfigStore.with(context).assetsBackend).buildUpon()
-                                    .appendEncodedPath(path).build().toString())
+                            .url(makePOITypeUrl(orgCode, name!!))
                             .build()).execute()
             if (!response.isSuccessful) {
                 throw IOException("Unexpected code " + response)
