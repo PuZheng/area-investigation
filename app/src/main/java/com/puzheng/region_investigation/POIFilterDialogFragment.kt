@@ -37,7 +37,7 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
                 setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
             }
 
-            poiTypeStore.list and regionStore.getPOIList(region) successUi {
+            poiTypeStore.list and region.poiList successUi {
                 val (poiTypes, pois) = it
                 if (poiTypes == null) {
                     activity.toast(R.string.no_poi_type_meta_info)

@@ -24,6 +24,7 @@ import com.puzheng.region_investigation.store.POITypeStore
 import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.fragment_create_region_step2.*
 import nl.komponents.kovenant.combine.and
+import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
 import java.io.IOException
@@ -211,7 +212,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                 true
             }
             setOnMapClickListener {
-                Logger.v("map clicked")
                 selectedPOIMarker?.selected = false
                 listener?.onPOIMarkerSelected(null)
             }
@@ -232,7 +232,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             setOnMapLongClickListener(null)
             setOnMarkerClickListener(null)
             setOnMapClickListener {
-                Logger.v("map clicked")
                 selectedPOIMarker?.position = it
             }
             setOnMarkerDragListener(null)
@@ -289,29 +288,29 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         })
         map.map.uiSettings.isMyLocationButtonEnabled = true
 
-        RegionStore.with(activity).getPOIList(listener?.region!!) successUi  {
-            it?.filter {
-                //过滤掉没有关联类型的信息点
-                poiTypeMap[it.poiTypeUUID] != null
-            }?.forEach {
-                pois.add(it)
-            }
-        } failUi {
-            activity.toast(it.toString())
-        }
-        poiTypeStore.list.successUi {
-            it?.forEach {
-                poiTypeMap[it.uuid] = it
-            }
-        }
-        // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
         map.map.setOnMapLoadedListener {
-            map.map.isMyLocationEnabled = true
-            map.map.apply {
-                resetCamera()
-                setupOutline()
-                setupPOIs()
-                editMode = EditMode.DEFAULT
+            task {
+                poiTypeStore.listSync?.forEach {
+                    poiTypeMap[it.uuid] = it
+                }
+                Logger.v(poiTypeMap.toString())
+                listener?.region!!.poiListSync?.filter {
+                    poiTypeMap[it.poiTypeUUID] != null
+                }?.forEach {
+                    pois.add(it)
+                }
+            } successUi {
+                // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
+                map.map.isMyLocationEnabled = true
+                map.map.apply {
+                    resetCamera()
+                    setupOutline()
+                    setupPOIs()
+                    editMode = EditMode.DEFAULT
+                }
+            } failUi {
+                it.printStackTrace()
+                activity.toast(it.toString())
             }
         }
     }
@@ -364,7 +363,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
     // thanks to http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
     private fun nearestPoint2SegDistance(p: Point, seg: Pair<Point, Point>): Double {
-        Logger.v(p.toString() + "-" + seg.toString())
         fun squaredDistance(p0: Point, p1: Point) = Math.pow((p0.x - p1.x).toDouble(), 2.0) +
                 Math.pow((p0.y - p1.y).toDouble(), 2.0)
 
@@ -386,7 +384,6 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     private fun findPolylineCloseTo(latLng: LatLng) = outlineSegs.map {
         nearestPoint2SegDistance(latLng.screenLocation, Pair(it.points[0].screenLocation, it.points[1].screenLocation)) to it
     }.filter {
-        Logger.v(it.toString())
         it.first < POLYLINE_CLOSE_LIMIT
     }.minBy {
         it.first

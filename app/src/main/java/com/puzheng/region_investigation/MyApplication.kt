@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.puzheng.region_investigation.store.LogStore
@@ -36,6 +37,7 @@ class MyApplication : Application(), OnPermissionGrantedListener {
         // matters in hand.
         startKovenant()
         MyApplication.context = applicationContext
+        startService(Intent(this, UpgradePOITypeService::class.java))
         eventLogger = Logger.getLogger("com.puzheng.region_investigation.event")
         registerActivityLifecycleCallbacks(object: Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity?) {

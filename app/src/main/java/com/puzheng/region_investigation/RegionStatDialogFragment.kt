@@ -39,7 +39,7 @@ class RegionStatDialogFragment(val region: Region) : AppCompatDialogFragment() {
     private val contentView: View by lazy {
         View.inflate(context, R.layout.region_state_dialog, null).apply {
             findTextViewById(R.id.textViewArea).text = roundOff(region.area / (1000 * 1000), 2).toString()
-            regionStore.getPOIList(region) and poiTypeStore.list successUi {
+            region.poiList and poiTypeStore.list successUi {
                 val (pois, poiTypes) = it
                 findTextViewById(R.id.textViewPOINO).text = if (pois != null) {
                     pois.size.toString()

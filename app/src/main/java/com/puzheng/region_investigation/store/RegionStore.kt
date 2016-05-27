@@ -232,28 +232,6 @@ class RegionStore private constructor(val context: Context) {
 
     }
 
-    fun getPOIList(region: Region) = task {
-        val db = DBHelper(context).readableDatabase
-
-        try {
-            val cursor = db.query(POI.Model.TABLE_NAME, null, "${POI.Model.COL_REGION_ID}=?", arrayOf(region.id.toString()),
-                    null, null, null)
-            var rows: List<POI>? = null
-            if (cursor.moveToFirst()) {
-                rows = mutableListOf()
-                do {
-                    rows.add(cursor.getPOIRow())
-                } while (cursor.moveToNext())
-            }
-            cursor.close()
-            rows
-        } catch (e: Exception) {
-            Logger.e(e.toString())
-            null
-        } finally {
-            db.close()
-        }
-    }
 
     fun touch(id: Long) = task {
         val db = DBHelper(context).writableDatabase

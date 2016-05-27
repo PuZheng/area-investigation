@@ -263,7 +263,6 @@ class RegionListActivity : AppCompatActivity(),
                 }
             }
         }
-        startService(Intent(this, UpgradePOITypeService::class.java))
     }
 
 

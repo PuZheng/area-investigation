@@ -168,15 +168,13 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
                 cursor.close()
                 rows
             } catch (e: Exception) {
-                Logger.e(e.toString())
+                e.printStackTrace()
                 null
-            } finally {
-                db.close()
             }
         }
 
 
-    fun loadPOIList() = task {
+    val poiList = task {
         poiListSync
     }
 
@@ -192,5 +190,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
             }
         }
     }
+
+
 
 }
