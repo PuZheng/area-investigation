@@ -102,7 +102,6 @@ class POITypeStore private constructor(val context: Context) {
                     try {
                         val json = JSONObject(configFile!!.readText())
                         val jsonArray = json.getJSONArray("fields")
-                        Logger.v(jsonArray.toString())
                         POIType(json.getString("uuid"), it.name, json.getString("timestamp"),
                                 (0..jsonArray.length() - 1).map {
                                     val o = jsonArray.getJSONObject(it)

@@ -5,9 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.support.v4.app.DialogFragment
-import android.support.v4.os.EnvironmentCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
@@ -22,7 +20,6 @@ import com.puzheng.region_investigation.model.Account
 import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.store.AccountStore
 import com.puzheng.region_investigation.store.RegionStore
-import com.puzheng.region_investigation.store.VersionUtil
 import kotlinx.android.synthetic.main.activity_region_list.*
 import kotlinx.android.synthetic.main.content_region_list.*
 import nl.komponents.kovenant.task
@@ -30,47 +27,12 @@ import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.alwaysUi
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
 import java.io.File
 import java.math.RoundingMode
 import java.text.DecimalFormat
-import java.util.regex.Pattern
 
 class RegionListActivity : AppCompatActivity(),
-        RegionListFragment.OnRegionListFragmentInteractionListener,
-        ConfirmUpgradeDialogFragment.OnFragmentInteractionListener {
-
-    override fun onConfirmUpgrade(latestVersion: String) {
-        arcProgress.apply {
-            progress = 0
-            bottomText = "升级应用"
-        }
-        mask.visibility = View.VISIBLE
-
-        UpgradeUtil.with(this).download(latestVersion) {
-            downloaded, total ->
-            if (total != 0L) {
-                this@RegionListActivity.runOnUiThread {
-                    arcProgress.progress = (downloaded * 100 / total).toInt()
-                }
-            }
-        } successUi {
-            apkFile ->
-            startActivity(Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK; // without this flag android returned a intent error!
-            })
-        } failUi {
-            it.printStackTrace()
-            toast("下载失败")
-        } alwaysUi {
-            mask.visibility = View.GONE
-        }
-    }
-
-
+        RegionListFragment.OnRegionListFragmentInteractionListener {
 
     private var actionMode: ActionMode? = null
     private val regionStore: RegionStore by lazy {
@@ -236,33 +198,6 @@ class RegionListActivity : AppCompatActivity(),
                 "org name: $orgName",
                 "org code: $orgCode").joinToString())
         AccountStore.with(this).account = Account(username, orgCode, orgName)
-        task {
-            val response = OkHttpClient().newCall(
-                    Request.Builder()
-                            .url(Uri.parse(ConfigStore.with(this).backend).buildUpon()
-                                    .appendEncodedPath("app/latest-version").build().toString())
-                            .build()).execute()
-            if (response.isSuccessful) {
-                JSONObject(response.body().string())
-            } else {
-                Logger.e(response.message())
-                null
-            }
-        } successUi {
-            json ->
-            val versionRegex = Pattern.compile("\\d+\\.\\d+.\\d+$", Pattern.CASE_INSENSITIVE).toRegex()
-            if (json != null) {
-                val latestVersion = json.getString("version")
-                if (latestVersion.matches(versionRegex)) {
-                    Logger.i("current version: ${BuildConfig.VERSION_NAME} latest version: $latestVersion")
-                    if (VersionUtil.compare(BuildConfig.VERSION_NAME, json.getString("version")) == -1) {
-                        Logger.v("should update to $latestVersion")
-                        ConfirmUpgradeDialogFragment.newInstance(BuildConfig.VERSION_NAME, latestVersion)
-                                .show(supportFragmentManager, "")
-                    }
-                }
-            }
-        }
     }
 
 

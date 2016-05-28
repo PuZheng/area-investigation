@@ -38,6 +38,7 @@ class MyApplication : Application(), OnPermissionGrantedListener {
         startKovenant()
         MyApplication.context = applicationContext
         startService(Intent(this, UpgradePOITypeService::class.java))
+        startService(Intent(this, UpgradeService::class.java))
         eventLogger = Logger.getLogger("com.puzheng.region_investigation.event")
         registerActivityLifecycleCallbacks(object: Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity?) {
