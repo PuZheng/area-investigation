@@ -345,10 +345,10 @@ class RegionStore private constructor(val context: Context) {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("username", accountStore.account?.username)
                 .addFormDataPart("orgCode", accountStore.account?.orgCode)
-                .addFormDataPart("zip", zipFile.name, progressingRequestBody).build()
+                .addFormDataPart("file", zipFile.name, progressingRequestBody).build()
         val response = OkHttpClient().newCall(
                 Request.Builder()
-                        .url(Uri.parse(ConfigStore.with(context).backend).buildUpon().appendEncodedPath("region").build().toString())
+                        .url(Uri.parse(ConfigStore.with(context).backend).buildUpon().appendEncodedPath("region/object").build().toString())
                         .post(body)
                         .build()).execute()
         if (!response.isSuccessful) {
