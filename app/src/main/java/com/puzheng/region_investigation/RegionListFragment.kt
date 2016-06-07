@@ -86,7 +86,7 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
                 (binding.args as Args).itemNo.set(it.size)
                 list.adapter = RegionRecyclerViewAdapter(it, listener!!, multiSelector)
                 list.layoutManager = (list.adapter as RegionRecyclerViewAdapter).LayoutManager(activity, 2)
-            } else if (BuildConfig.DEBUG) {
+            } else if (BuildConfig.DEBUG && ConfigStore.with(activity).fakeData) {
                 (activity as AppCompatActivity).assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
                     onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,

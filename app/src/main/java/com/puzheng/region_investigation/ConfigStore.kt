@@ -28,7 +28,7 @@ class ConfigStore private constructor(context: Context) {
                 sb.append(line)
             }
             val jsonObject = JSONObject(sb.toString())
-            Config(jsonObject.getString("backend"))
+            Config(jsonObject.getString("backend"), jsonObject.getBoolean("fakeData"))
         } catch (e: IOException) {
             e.printStackTrace()
             null
@@ -39,6 +39,7 @@ class ConfigStore private constructor(context: Context) {
     }
 
     val backend = config?.backend
+    val fakeData = config?.fakeData ?: false
 
-    private class Config(val backend: String)
+    private class Config(val backend: String, val fakeData: Boolean)
 }
