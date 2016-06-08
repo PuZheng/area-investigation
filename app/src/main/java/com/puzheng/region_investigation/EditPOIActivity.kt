@@ -287,7 +287,6 @@ class EditPOIActivity : AppCompatActivity() {
                                     }
                                     is VideoFieldResolver -> {
                                         val resolver = it
-                                        Logger.v(resolver.path)
                                         File(poi!!.dir, it.name).let {
                                             if (it.exists()) {
                                                 it.listFiles { file ->
