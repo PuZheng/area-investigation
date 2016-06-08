@@ -264,13 +264,14 @@ class RegionStore private constructor(val context: Context) {
                 closeEntry()
                 region.poiListSync?.forEach {
                     poi ->
-                    addDir(poi.dir, "pois")
+                    addDir(poi.dir, "pois/" + poi.id)
                 }
                 close()
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
     }
 
     private fun ZipOutputStream.addDir(dir: File, prefix: String = "") {
