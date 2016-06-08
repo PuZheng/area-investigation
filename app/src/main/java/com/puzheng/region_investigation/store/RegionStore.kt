@@ -174,15 +174,11 @@ class RegionStore private constructor(val context: Context) {
     fun updateName(region: Region, name: String) = task {
         val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        try {
-            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
-                put(Region.Model.COL_NAME, name)
-                put(Region.Model.COL_UPDATED, format.format(Date()))
-            },
-                    "${BaseColumns._ID}=${region.id}", null)
-        } finally {
-            db.close()
-        }
+        db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+            put(Region.Model.COL_NAME, name)
+            put(Region.Model.COL_UPDATED, format.format(Date()))
+        },
+                "${BaseColumns._ID}=${region.id}", null)
         MyApplication.eventLogger.log(Level.INFO, "修改重点区域`${region.name}`", JSONObject().apply {
             put("type", EventType.UPDATE_REGION)
             put("id", region.id)
@@ -236,25 +232,17 @@ class RegionStore private constructor(val context: Context) {
     fun touch(id: Long) = task {
         val db = DBHelper(context).writableDatabase
         val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        try {
-            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
-                put(Region.Model.COL_UPDATED, format.format(Date()))
-            },
-                    "${BaseColumns._ID}=$id", null)
-        } finally {
-            db.close()
-        }
+        db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+            put(Region.Model.COL_UPDATED, format.format(Date()))
+        },
+                "${BaseColumns._ID}=$id", null)
     }
 
     fun uniqueName(name: String) = task {
         val db = DBHelper(context).readableDatabase
-        try {
-            val cursor = db.query(Region.Model.TABLE_NAME, null, "${Region.Model.COL_NAME}=?", arrayOf(name), null, null,
-                    null)
-            cursor.count == 0
-        } finally {
-            db.close()
-        }
+        val cursor = db.query(Region.Model.TABLE_NAME, null, "${Region.Model.COL_NAME}=?", arrayOf(name), null, null,
+                null)
+        cursor.count == 0
     }
 
     val zipDir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),

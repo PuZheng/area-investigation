@@ -168,7 +168,6 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             intent.getParcelableExtra<Region>(RegionListActivity.TAG_REGION)
         }
         setContentView(R.layout.activity_edit_region)
-        Logger.init("EditRegionActivity")
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         fab.setOnClickListener {
@@ -373,6 +372,10 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                                 dismiss()
                             }).show()
                         }
+                    }
+                    regionStore.touch(region.id!!) successUi {
+                        region.updated = Date()
+                        updateActionBar()
                     }
                 }
             }

@@ -26,11 +26,7 @@ class POIStore private constructor(val context: Context) {
 
     fun create(poi: POI) = task {
         val db = DBHelper(context).writableDatabase
-        try {
-            db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(poi))
-        } finally {
-            db.close()
-        }
+        db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(poi))
     } then {
         MyApplication.eventLogger.log(Level.INFO, "创建信息点", JSONObject().apply {
             put("type", EventType.CREATE_POI)
@@ -42,11 +38,7 @@ class POIStore private constructor(val context: Context) {
 
     fun remove(poi: POI) = task {
         val db = DBHelper(context).writableDatabase
-        try {
-            db.delete(POI.Model.TABLE_NAME, "${BaseColumns._ID}=?", arrayOf(poi.id.toString()))
-        } finally {
-            db.close()
-        }
+        db.delete(POI.Model.TABLE_NAME, "${BaseColumns._ID}=?", arrayOf(poi.id.toString()))
 
         MyApplication.eventLogger.log(Level.INFO, "删除信息点", JSONObject().apply {
             put("type", EventType.DELETE_POI)
@@ -57,24 +49,20 @@ class POIStore private constructor(val context: Context) {
 
     fun update(poi: POI, value: Map<String, Any?>) = task {
         val db = DBHelper(context).writableDatabase
-        try {
-            db.update(POI.Model.TABLE_NAME, ContentValues().apply {
-                value.forEach {
-                    val (k, v) = it
-                    // TODO 这里只处理了经纬度
-                    when (k) {
-                        POI.Model.COL_LAT_LNG ->
-                            (v as LatLng).let {
-                                put(k, "${it.latitude},${it.longitude}")
-                            }
-                        else -> {
+        db.update(POI.Model.TABLE_NAME, ContentValues().apply {
+            value.forEach {
+                val (k, v) = it
+                // TODO 这里只处理了经纬度
+                when (k) {
+                    POI.Model.COL_LAT_LNG ->
+                        (v as LatLng).let {
+                            put(k, "${it.latitude},${it.longitude}")
                         }
+                    else -> {
                     }
                 }
-            }, "${BaseColumns._ID}=?", arrayOf(poi.id.toString()))
-        } finally {
-            db.close()
-        }
+            }
+        }, "${BaseColumns._ID}=?", arrayOf(poi.id.toString()))
         MyApplication.eventLogger.log(Level.INFO, "修改信息点", JSONObject().apply {
             put("type", EventType.UPDATE_POI)
             put("id", poi.id)
