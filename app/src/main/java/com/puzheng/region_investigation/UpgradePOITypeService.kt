@@ -2,7 +2,9 @@ package com.puzheng.region_investigation
 
 import android.app.Dialog
 import android.app.IntentService
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,6 +17,11 @@ import nl.komponents.kovenant.ui.successUi
 
 class UpgradePOITypeService : IntentService("UPGRADE_POI_TYPE_SERVICE") {
     override fun onHandleIntent(intent: Intent) {
+        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val info = manager.activeNetworkInfo
+        if (info == null || !info.isAvailable) {
+            return
+        }
         POITypeStore.with(MyApplication.context).upgrade() successUi {
             toBeUpgraded ->
             if (toBeUpgraded.isNotEmpty()) {

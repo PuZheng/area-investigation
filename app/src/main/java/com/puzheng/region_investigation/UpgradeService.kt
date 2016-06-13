@@ -1,10 +1,10 @@
 package com.puzheng.region_investigation
 
 import android.app.IntentService
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.store.VersionUtil
 import okhttp3.OkHttpClient
@@ -15,6 +15,11 @@ import java.util.regex.Pattern
 
 class UpgradeService : IntentService("UPGRADE_SERVICE") {
     override fun onHandleIntent(intent: Intent?) {
+        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val info = manager.activeNetworkInfo
+        if (info == null || !info.isAvailable) {
+            return
+        }
         try {
             val response = OkHttpClient().newCall(
                     Request.Builder()
