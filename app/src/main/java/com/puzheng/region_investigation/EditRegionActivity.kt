@@ -177,7 +177,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                         POITypeChooseDialog(it, { addPOI(it) })
                                 .show(supportFragmentManager, "")
                     } else {
-                        toast(R.string.no_poi_type_meta_info)
+                        toast("没有信息点类型信息, 请将信息点配置文件拷贝到" + POITypeStore.with(this).dir.humanizePath)
                     }
                 }
             }
@@ -359,7 +359,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             })).successUi {
                 val poi = POI(
                         null,
-                        poiType.uuid,
+                        poiType.name,
                         region.id!!,
                         LatLng(it.latitude, it.longitude),
                         Date())

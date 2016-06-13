@@ -50,11 +50,11 @@ class RegionStatDialogFragment(val region: Region) : AppCompatDialogFragment() {
                     activity.toast("找不到信息点配置信息")
                 } else {
                     val poiTypeMap = mapOf(*poiTypes.map {
-                        it.uuid to it
+                        it.name to it
                     }.toTypedArray())
                     var type2POINo = mutableMapOf<String, Int>()
                     pois?.forEach {
-                        type2POINo.put(it.poiTypeUUID, type2POINo.getOrElse(it.poiTypeUUID, { 0 }) + 1)
+                        type2POINo.put(it.poiTypeName, type2POINo.getOrElse(it.poiTypeName, { 0 }) + 1)
                     }
                     type2POINo.entries.map {
                         poiTypeMap[it.key] to it.value

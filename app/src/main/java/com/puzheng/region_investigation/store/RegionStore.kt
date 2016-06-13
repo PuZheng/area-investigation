@@ -95,7 +95,7 @@ class RegionStore private constructor(val context: Context) {
             fakeRegionImage(regionId)
             for (i in 1..2 + Random().nextInt(100)) {
                 db.insert(POI.Model.TABLE_NAME, null, POI.Model.makeValues(POI(null,
-                        poiTypes!![random.nextInt(poiTypes.size)].uuid, regionId, randomHZLatLng, Date())))
+                        poiTypes!![random.nextInt(poiTypes.size)].name, regionId, randomHZLatLng, Date())))
             }
         }
         db.close()

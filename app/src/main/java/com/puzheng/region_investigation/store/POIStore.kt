@@ -10,7 +10,6 @@ import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.model.POI
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.then
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.logging.Level

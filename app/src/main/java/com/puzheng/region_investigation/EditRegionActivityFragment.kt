@@ -194,7 +194,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         }
         poiMarkers.forEach {
             val poi = it.`object` as POI
-            it.isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
+            it.isVisible = !hiddenPOITypes.any { poi.poiTypeName == it.name }
         }
         selectedPOIMarker?.selected = false
         listener?.onPOIMarkerSelected(null)
@@ -226,7 +226,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         }
         poiMarkers.forEach {
             val poi = it.`object` as POI
-            it.isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
+            it.isVisible = !hiddenPOITypes.any { poi.poiTypeName == it.name }
         }
         map.map.apply {
             setOnMapLongClickListener(null)
@@ -243,7 +243,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
             field = set
             poiMarkers.forEach {
                 val poi = it.`object` as POI
-                it.isVisible = !hiddenPOITypes.any { poi.poiTypeUUID == it.uuid }
+                it.isVisible = !hiddenPOITypes.any { poi.poiTypeName == it.name }
             }
         }
     private val horizontalBoundaryLimit: Int by lazy {
@@ -291,11 +291,11 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         map.map.setOnMapLoadedListener {
             task {
                 poiTypeStore.listSync?.forEach {
-                    poiTypeMap[it.uuid] = it
+                    poiTypeMap[it.name] = it
                 }
                 Logger.v(poiTypeMap.toString())
                 listener?.region!!.poiListSync?.filter {
-                    poiTypeMap[it.poiTypeUUID] != null
+                    poiTypeMap[it.poiTypeName] != null
                 }?.forEach {
                     pois.add(it)
                 }
@@ -458,39 +458,39 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
 
 
     private fun getIconBitmap(poi: POI): Bitmap? {
-        val poiType = poiTypeMap[poi.poiTypeUUID] ?: return defaultIconBitmap
+        val poiType = poiTypeMap[poi.poiTypeName] ?: return defaultIconBitmap
         val bitmap = try {
             activity.loadBitmap(poiTypeStore.getPOITypeIcon(poiType))
         } catch(e: IOException) {
             null
         } ?: return defaultIconBitmap
-        if (!poiTypeIconMap.containsKey(poiType.uuid)) {
-            poiTypeIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
+        if (!poiTypeIconMap.containsKey(poiType.name)) {
+            poiTypeIconMap[poiType.name] = Bitmap.createScaledBitmap(
                     bitmap,
                     (24 * pixelsPerDp).toInt(),
                     (24 * pixelsPerDp).toInt(),
                     false
             )
         }
-        return poiTypeIconMap[poiType.uuid]!!
+        return poiTypeIconMap[poiType.name]!!
     }
 
     private fun getActiveIconBitmap(poi: POI): Bitmap? {
-        val poiType = poiTypeMap[poi.poiTypeUUID] ?: return defaultActiveIconBitmap
+        val poiType = poiTypeMap[poi.poiTypeName] ?: return defaultActiveIconBitmap
         val bitmap = try {
             activity.loadBitmap(poiTypeStore.getPOITypeActiveIcon(poiType))
         } catch (e: IOException) {
             null
         } ?: return defaultActiveIconBitmap
-        if (!poiTypeActiveIconMap.containsKey(poiType.uuid)) {
-            poiTypeActiveIconMap[poiType.uuid] = Bitmap.createScaledBitmap(
+        if (!poiTypeActiveIconMap.containsKey(poiType.name)) {
+            poiTypeActiveIconMap[poiType.name] = Bitmap.createScaledBitmap(
                     bitmap,
                     (28 * pixelsPerDp).toInt(),
                     (28 * pixelsPerDp).toInt(),
                     false
             )
         }
-        return poiTypeActiveIconMap[poiType.uuid]!!
+        return poiTypeActiveIconMap[poiType.name]!!
     }
 
     /**
@@ -508,7 +508,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         return map.map.addMarker(makeMarkerOption(poi)!!).apply {
             poiMarkers.add(this)
             `object` = poi
-            val isHidden = hiddenPOITypes.any { it.uuid == poi.poiTypeUUID }
+            val isHidden = hiddenPOITypes.any { it.name == poi.poiTypeName }
             if (isHidden) {
                 isVisible = false
             } else {

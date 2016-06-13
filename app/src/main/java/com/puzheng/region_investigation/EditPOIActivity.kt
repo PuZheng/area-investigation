@@ -72,7 +72,7 @@ class EditPOIActivity : AppCompatActivity() {
             // 伪造一个信息点用于调试
             permissionHandlers[REQUEST_READ_EXTERNAL_STORAGE] = {
                 val poiType = poiTypeStore.list.get()!![0]
-                poi = POI(1L, poiType.uuid, 1L, randomHZLatLng,
+                poi = POI(1L, poiType.name, 1L, randomHZLatLng,
                         SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-03-09 12:32:23"))
                 setupView()
             }
@@ -91,7 +91,7 @@ class EditPOIActivity : AppCompatActivity() {
         findView<TextView>(R.id.textViewCreated).text = if (poi == null) "" else
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi!!.created)
         findView<TextView>(R.id.textViewPOIId).text = poi?.id.toString()
-        poiTypeStore.get(poi!!.poiTypeUUID) then {
+        poiTypeStore.get(poi!!.poiTypeName) then {
             poiType = it!!
             poiType.extractPOIRawData(poi!!) then {
                 poiData = it

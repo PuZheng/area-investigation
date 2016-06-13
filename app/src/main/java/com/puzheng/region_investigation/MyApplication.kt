@@ -38,8 +38,6 @@ class MyApplication : Application(), OnPermissionGrantedListener {
         startKovenant()
         MyApplication.context = applicationContext
         Thread.setDefaultUncaughtExceptionHandler(MyUncaughtExceptionHandler(MyApplication.context))
-        startService(Intent(this, UpgradePOITypeService::class.java))
-        startService(Intent(this, UpgradeService::class.java))
         eventLogger = Logger.getLogger("com.puzheng.region_investigation.event")
         registerActivityLifecycleCallbacks(object: Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity?) {
@@ -65,6 +63,8 @@ class MyApplication : Application(), OnPermissionGrantedListener {
                             REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG) successUi {
                         onPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                 REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG)
+                        startService(Intent(this@MyApplication, UpgradePOITypeService::class.java))
+                        startService(Intent(this@MyApplication, UpgradeService::class.java))
                     }
                 }
             }

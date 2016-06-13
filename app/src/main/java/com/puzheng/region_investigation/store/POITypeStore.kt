@@ -30,7 +30,11 @@ class POITypeStore private constructor(val context: Context) {
     }
 
     val dir: File by lazy {
-        File(Environment.getExternalStoragePublicDirectory(context.packageName), "poi_types")
+        File(Environment.getExternalStoragePublicDirectory(context.packageName), "poi_types").apply {
+            if (!exists()) {
+                mkdirs()
+            }
+        }
     }
 
     private fun getPOITypeDir(poiType: POIType) = File(dir, poiType.path)
@@ -52,7 +56,6 @@ class POITypeStore private constructor(val context: Context) {
                         createNewFile()
                     }
                     writeText(JSONObject().apply {
-                        put("uuid", UUID.randomUUID().toString())
                         put("timestamp", "20160328091313")
                         put("name", it.second)
                         val jsonArray = JSONArray()
@@ -102,7 +105,7 @@ class POITypeStore private constructor(val context: Context) {
                     try {
                         val json = JSONObject(configFile!!.readText())
                         val jsonArray = json.getJSONArray("fields")
-                        POIType(json.getString("uuid"), it.name, json.getString("timestamp"),
+                        POIType(it.name, json.getString("timestamp"),
                                 (0..jsonArray.length() - 1).map {
                                     val o = jsonArray.getJSONObject(it)
                                     POIType.Field(o.getString("name"),
@@ -131,8 +134,8 @@ class POITypeStore private constructor(val context: Context) {
             listSync
         }
 
-    fun get(uuid: String) = list then {
-        it?.find { it.uuid == uuid }
+    fun get(name: String) = list then {
+        it?.find { it.name == name }
     }
 
     fun upgrade() = task {

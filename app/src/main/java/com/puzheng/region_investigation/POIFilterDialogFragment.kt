@@ -40,15 +40,15 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
             poiTypeStore.list and region.poiList successUi {
                 val (poiTypes, pois) = it
                 if (poiTypes == null) {
-                    activity.toast(R.string.no_poi_type_meta_info)
+                    activity.toast("没有信息点类型信息, 请将信息点配置文件拷贝到" + POITypeStore.with(activity).dir.humanizePath)
                 } else if (pois != null) {
                     // 过滤掉所有当前区域没有的信息点类型
                     setOf(*pois.map {
-                        it.poiTypeUUID
+                        it.poiTypeName
                     }.toTypedArray()).let {
-                        poiTypeUUIDSet ->
+                        poiTypeNameSet ->
                         adapter = MyBaseAdapger(poiTypes.filter {
-                            poiTypeUUIDSet.contains(it.uuid)
+                            poiTypeNameSet.contains(it.name)
                         })
                     }
 
@@ -88,13 +88,13 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
                         vh.checkBox.setOnCheckedChangeListener { compoundButton, b ->
                             if (b) {
                                 hiddenPOITypes = hiddenPOITypes.filter {
-                                    it.uuid != item.uuid
+                                    it.name != item.name
                                 }.toSet()
                             } else {
                                 hiddenPOITypes = hiddenPOITypes.plus(item)
                             }
                         }
-                        vh.checkBox.isChecked = !hiddenPOITypes.any { it.uuid == item.uuid }
+                        vh.checkBox.isChecked = !hiddenPOITypes.any { it.name == item.name }
                     }
                 }
 

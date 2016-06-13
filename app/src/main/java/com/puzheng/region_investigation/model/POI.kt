@@ -18,7 +18,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.logging.Level
 
-data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val latLng: LatLng, val created: Date,
+data class POI(val id: Long?, val poiTypeName: String, val regionId: Long, val latLng: LatLng, val created: Date,
                val updated: Date?=null) : Parcelable {
 
     val dir: File by lazy {
@@ -55,7 +55,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
             val TABLE_NAME = "poi"
             val COL_LAT_LNG = "lat_lng"
             val COL_REGION_ID = "region_id"
-            val COL_POI_TYPE_UUID = "poi_type_uuid"
+            val COL_POI_TYPE_NAME = "poi_type_name"
             val COL_CREATED = "created"
             val COL_UPDATED = "updated"
 
@@ -64,7 +64,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
                 get() = """
                     CREATE TABLE $TABLE_NAME (
                         ${BaseColumns._ID}  INTEGER PRIMARY KEY AUTOINCREMENT,
-                        $COL_POI_TYPE_UUID TEXT NOT NULL,
+                        $COL_POI_TYPE_NAME TEXT NOT NULL,
                         $COL_LAT_LNG TEXT NOT NULL,
                         $COL_CREATED TEXT NOT NULL,
                         $COL_UPDATED TEXT,
@@ -79,7 +79,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
                     put(POI.Model.COL_LAT_LNG, "${it.latitude},${it.longitude}")
                 }
                 put(COL_REGION_ID, poi.regionId)
-                put(COL_POI_TYPE_UUID, poi.poiTypeUUID)
+                put(COL_POI_TYPE_NAME, poi.poiTypeName)
                 put(COL_CREATED, format.format(poi.created))
                 put(COL_UPDATED, if (poi.updated != null) format.format(poi.updated) else null)
             }
@@ -95,7 +95,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
 
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeSerializable(id)
-        dest?.writeString(poiTypeUUID)
+        dest?.writeString(poiTypeName)
         dest?.writeLong(regionId)
         dest?.writeParcelable(latLng, 0)
         dest?.writeSerializable(created)
@@ -123,7 +123,7 @@ data class POI(val id: Long?, val poiTypeUUID: String, val regionId: Long, val l
         jsonObject.apply {
             put("id", id)
             put("poiType", JSONObject().apply {
-                put("uuid", poiTypeUUID)
+                put("name", poiTypeName)
             })
             put("regionId", regionId)
             put("latLng", JSONObject().apply {

@@ -30,13 +30,15 @@ import nl.komponents.kovenant.ui.successUi
  */
 class RegionListFragment : Fragment(), OnPermissionGrantedListener {
     override fun onPermissionGranted(permission: String, requestCode: Int) {
-        val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
-        poiTypeStore.fakePoiTypes().success {
-            // must "get" task in main thread
-            regionStore.fakeRegion().successUi {
-                pb.dismiss()
-                Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
-                setupRegions()
+        if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_TO_FAKE) {
+            val pb = ProgressDialog.show(activity, "", "第一次启动，正在创建测试数据", false, false)
+            poiTypeStore.fakePoiTypes().success {
+                // must "get" task in main thread
+                regionStore.fakeRegion().successUi {
+                    pb.dismiss()
+                    Toast.makeText(activity, "测试数据创建成功", Toast.LENGTH_SHORT).show()
+                    setupRegions()
+                }
             }
         }
     }
@@ -51,7 +53,7 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
     val multiSelector = MultiSelector()
 
     companion object {
-        val REQUEST_WRITE_EXTERNAL_STORAGE = 100
+        val REQUEST_WRITE_EXTERNAL_STORAGE_TO_FAKE = 100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,9 +90,9 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
                 list.layoutManager = (list.adapter as RegionRecyclerViewAdapter).LayoutManager(activity, 2)
             } else if (BuildConfig.DEBUG && ConfigStore.with(activity).fakeData) {
                 (activity as AppCompatActivity).assertPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        REQUEST_WRITE_EXTERNAL_STORAGE).successUi {
+                        REQUEST_WRITE_EXTERNAL_STORAGE_TO_FAKE).successUi {
                     onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            REQUEST_WRITE_EXTERNAL_STORAGE)
+                            REQUEST_WRITE_EXTERNAL_STORAGE_TO_FAKE)
                 }
             }
         } alwaysUi {

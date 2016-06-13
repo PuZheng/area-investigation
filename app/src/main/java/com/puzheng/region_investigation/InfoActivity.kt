@@ -14,15 +14,14 @@ import java.io.File
 class InfoActivity : AppCompatActivity() {
 
 
-    private fun humanizePath(file: File) = File("存储卡", file.relativeTo(Environment.getExternalStoragePublicDirectory("")).path).path
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_info)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        findView<TextView>(R.id.textViewPOITypeDir).text = humanizePath(POITypeStore.with(this).dir)
-        findView<TextView>(R.id.textViewPOIDir).text = humanizePath(POIStore.dir)
-        findView<TextView>(R.id.textViewLogDir).text = humanizePath(LogStore.dir)
+        findView<TextView>(R.id.textViewPOITypeDir).text = POITypeStore.with(this).dir.humanizePath
+        findView<TextView>(R.id.textViewPOIDir).text = POIStore.dir.humanizePath
+        findView<TextView>(R.id.textViewLogDir).text = LogStore.dir.humanizePath
         findView<TextView>(R.id.textViewBackend).text = ConfigStore.with(this).backend
         AccountStore.with(this).account.let {
             findView<TextView>(R.id.textViewOrgName).text = it?.orgName
