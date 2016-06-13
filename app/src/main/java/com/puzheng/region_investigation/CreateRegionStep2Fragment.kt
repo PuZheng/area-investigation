@@ -1,6 +1,7 @@
 package com.puzheng.region_investigation
 
 import android.Manifest
+import android.app.Dialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
@@ -9,15 +10,20 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.MotionEventCompat
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import com.amap.api.location.AMapLocation
+import com.amap.api.location.AMapLocationClient
+import com.amap.api.location.AMapLocationClientOption
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.LocationSource
 import com.amap.api.maps.model.*
+import com.orhanobut.logger.Logger
 import kotlinx.android.synthetic.main.fragment_create_region_step2.*
 import nl.komponents.kovenant.ui.failUi
 import nl.komponents.kovenant.ui.successUi
@@ -182,6 +188,32 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
                         latitude = lastLocation.latitude
                         longitude = lastLocation.latitude
                     }))
+                } else {
+                    object: AppCompatDialogFragment() {
+                        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                            var ret = AlertDialog.Builder(context)
+                                    .setMessage("无法获取您当前位置，可能您没有打开GPS或无线网络!").setPositiveButton("知道了", null).create()
+                            // 重新开始不停定位, 直到定位成功
+                            val locationClient = AMapLocationClient(context)
+                            locationClient.setLocationListener({
+                                if (it?.errorCode == 0) {
+                                    Logger.e(it.toStr())
+                                    onLocationChangeListener?.onLocationChanged(it)
+                                    locationClient.stopLocation()
+                                } else {
+                                    Logger.e("定位失败, ${it.errorCode}: ${it.errorInfo}");
+                                }
+                            })
+                            //初始化定位参数
+                            val locationOption = AMapLocationClientOption()
+                            //设置定位模式为高精度模式，Battery_Saving为低功耗模式，Device_Sensors是仅设备模式
+                            locationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy;
+                            locationClient.setLocationOption(locationOption)
+                            //启动定位
+                            locationClient.startLocation()
+                            return ret;
+                        }
+                    }.show(activity.supportFragmentManager, "")
                 }
             }
         }
