@@ -38,7 +38,6 @@ class MyApplication : Application(), OnPermissionGrantedListener {
         startKovenant()
         MyApplication.context = applicationContext
         Thread.setDefaultUncaughtExceptionHandler(MyUncaughtExceptionHandler(MyApplication.context))
-        var a = 1/0;
         startService(Intent(this, UpgradePOITypeService::class.java))
         startService(Intent(this, UpgradeService::class.java))
         eventLogger = Logger.getLogger("com.puzheng.region_investigation.event")

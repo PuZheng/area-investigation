@@ -421,10 +421,14 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun saveOutline(afterSaving: () -> Unit) {
-        ConfirmSaveRegionOutlineDialog(hotCopyRegion, {
-            listener?.region = hotCopyRegion
-            afterSaving()
-        }).show(activity.supportFragmentManager, "")
+        if (listener?.region?.outline != hotCopyRegion.outline) {
+            ConfirmSaveRegionOutlineDialog(hotCopyRegion, {
+                listener?.region = hotCopyRegion
+                afterSaving()
+            }).show(activity.supportFragmentManager, "")
+        } else {
+            activity.toast("边界没有发生变化, 不用保存!");
+        }
     }
 
     fun savePOILocation() {
