@@ -18,8 +18,14 @@ class POIStore private constructor(val context: Context) {
 
     companion object {
         fun with(context: Context) = POIStore(context)
-        val dir: File by lazy {
-            File(MyApplication.context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "pois")
+    }
+
+    val dir: File by lazy {
+
+        File(Environment.getExternalStoragePublicDirectory(context.packageName), "pois").apply {
+            if (!exists()) {
+                mkdirs()
+            }
         }
     }
 

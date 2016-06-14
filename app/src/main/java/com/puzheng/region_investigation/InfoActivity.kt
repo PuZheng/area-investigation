@@ -20,7 +20,7 @@ class InfoActivity : AppCompatActivity() {
         setContentView(R.layout.activity_info)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         findView<TextView>(R.id.textViewPOITypeDir).text = POITypeStore.with(this).dir.humanizePath
-        findView<TextView>(R.id.textViewPOIDir).text = POIStore.dir.humanizePath
+        findView<TextView>(R.id.textViewPOIDir).text = POIStore.with(this).dir.humanizePath
         findView<TextView>(R.id.textViewLogDir).text = LogStore.dir.humanizePath
         findView<TextView>(R.id.textViewBackend).text = ConfigStore.with(this).backend
         AccountStore.with(this).account.let {
