@@ -173,7 +173,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
         fab.setOnClickListener {
             permissionRequestHandlerMap[REQUEST_WRITE_EXTERNAL_STORAGE_FOR_NEW_POI] = {
                 POITypeStore.with(this).list successUi {
-                    if (it != null) {
+                    if (it != null && it.isNotEmpty()) {
                         POITypeChooseDialog(it, { addPOI(it) })
                                 .show(supportFragmentManager, "")
                     } else {

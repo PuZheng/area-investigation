@@ -23,15 +23,20 @@ class UpgradePOITypeService : IntentService("UPGRADE_POI_TYPE_SERVICE") {
             return
         }
         POITypeStore.with(MyApplication.context).upgrade() successUi {
-            toBeUpgraded ->
-            if (toBeUpgraded.isNotEmpty()) {
+            val toBeUpgraded = it.first
+            val toBeDeleted = it.second
+            if (toBeUpgraded.isNotEmpty() || toBeDeleted.isNotEmpty()) {
                 val handler = Handler(Looper.getMainLooper())
                 handler.post({
                     object : AppCompatDialogFragment() {
                         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-                            return AlertDialog.Builder(MyApplication.currentActivity).setMessage("信息点类型(" + toBeUpgraded.map {
+                            val msg = (if (toBeUpgraded.isNotEmpty()) {
+                                "信息点类型(" + toBeUpgraded.map {
                                 it["name"]
-                            }.joinToString(",") + ")模板已经更新")
+                                }.joinToString(",") + ")模板已经更新"
+                            } else "") + (if (toBeDeleted.isNotEmpty()) {
+                                "信息点类型(" + toBeDeleted.map { it.name }.joinToString(",") + ")模板已经删除" } else "")
+                            return AlertDialog.Builder(MyApplication.currentActivity).setMessage(msg)
                                     .setPositiveButton("知道了", null)
                                     .create()
                         }

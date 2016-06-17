@@ -187,8 +187,23 @@ class POITypeStore private constructor(val context: Context) {
             }
             response.body().byteStream().copyTo(File(dir, "$name.zip"))
         }
+        // 删除掉所有不在列表中信息点模板
+        val toBeDeleted = {
+            set: Set<String> ->
+            dir.listFiles {
+                it: File ->
+                it.isDirectory && it.name !in set
+            }
+        }(setOf(*toBeUpgraded.map { it["name"]!! }.toTypedArray()))
+        dir.listFiles {
+            it: File ->
+            it.isDirectory
+        }.forEach {
+            Logger.i("poi type ${it.name} will be deleted")
+            it.deleteRecursively()
+        }
         tryUnzipSync()
-        toBeUpgraded
+        toBeUpgraded to toBeDeleted
     }
 }
 

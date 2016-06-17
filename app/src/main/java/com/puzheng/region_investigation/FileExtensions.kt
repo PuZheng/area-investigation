@@ -8,3 +8,4 @@ import java.io.File
  */
 val File.humanizePath: String
         get() = File("存储卡", this.relativeTo(Environment.getExternalStoragePublicDirectory("")).path).path
+
