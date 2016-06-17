@@ -82,8 +82,8 @@ class RegionListActivity : AppCompatActivity(),
                                 progress = 0
                                 bottomText = getString(R.string.generate_zip)
                             }
-                            mask.visibility = View.VISIBLE
                             assertNetwork() successUi {
+                                mask.visibility = View.VISIBLE
                                 val selectRegions = regionListFragment.selectedRegions
                                 task {
                                     selectRegions.withIndex().forEach {
