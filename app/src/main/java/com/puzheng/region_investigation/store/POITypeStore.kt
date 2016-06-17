@@ -159,21 +159,19 @@ class POITypeStore private constructor(val context: Context) {
         }
         val root = JSONObject(response.body().string())
         val jsonArray = root.getJSONArray("data")
-        val toBeUpgraded = (0..jsonArray.length()-1).map {
+        // 先获取服务器上所有的版本列表
+        val remoteVersions = (0..jsonArray.length()-1).map {
             val o = jsonArray.getJSONObject(it)
             val name = o.getString("name")
             val newTimestamp = o.getString("timestamp")
-            // 如果已经有最新的版本, 就不要升级了
-            if (poiTypeMap.containsKey(name) &&
-                    poiTypeMap[name]!!.timestamp.compareTo(newTimestamp) >= 0) {
-                null
-            } else {
-                mapOf("name" to name, "timestamp" to newTimestamp)
-            }
-        }.filter {
-            it != null
-        }.map {
-            it!!
+            mapOf("name" to name, "timestamp" to newTimestamp)
+        }
+        Logger.i("remote versions: $remoteVersions")
+        // 找出需要升级的
+        val toBeUpgraded = remoteVersions.filter {
+            val name = it["name"]!!
+            val timestamp = it["timestamp"]!!
+            name !in poiTypeMap || poiTypeMap[name]!!.timestamp.compareTo(timestamp) < 0
         }
         Logger.i("poi types to upgrade: $toBeUpgraded")
         toBeUpgraded.forEach {
@@ -187,18 +185,15 @@ class POITypeStore private constructor(val context: Context) {
             }
             response.body().byteStream().copyTo(File(dir, "$name.zip"))
         }
-        // 删除掉所有不在列表中信息点模板
+        // 删除掉所有服务器上没有的信息点模板
         val toBeDeleted = {
             set: Set<String> ->
             dir.listFiles {
                 it: File ->
                 it.isDirectory && it.name !in set
             }
-        }(setOf(*toBeUpgraded.map { it["name"]!! }.toTypedArray()))
-        dir.listFiles {
-            it: File ->
-            it.isDirectory
-        }.forEach {
+        }(setOf(*remoteVersions.map { it["name"]!! }.toTypedArray()))
+        toBeDeleted.forEach {
             Logger.i("poi type ${it.name} will be deleted")
             it.deleteRecursively()
         }
