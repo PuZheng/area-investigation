@@ -121,7 +121,7 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
                         MotionEvent.ACTION_MOVE -> {
                             activeMarker?.position = it.latLng
                             // 一定要构成多边形, 注意，这里为什么一定要是3,而不是2？因为实际上，因为实际存储中，
-                            // 边界的点总是比边数多一
+                            // 顶点总是比边数多一
                             // 比如三角形是由4个点组成的，只不过最后一个点和出发点重合而已。
                             if (markers.size > 3) {
                                 if (isApproachingToStartMarker(it.screenLocation, lastScreenLocation)) {

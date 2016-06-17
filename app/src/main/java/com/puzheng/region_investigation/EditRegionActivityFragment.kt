@@ -410,8 +410,9 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun deleteVertex(vertex: LatLng) {
-        if (hotCopyRegion.outline.size <= 3) {
-            activity.toast(R.string.outline_needs_3_points)
+        // 注意，实际的存储中顶点数，一定是边数+1
+        if (hotCopyRegion.outline.size <= 4) {
+            activity.toast(R.string.outline_needs_be_polygon)
             return
         }
         hotCopyRegion.outline = hotCopyRegion.outline.filter {
