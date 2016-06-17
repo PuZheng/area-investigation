@@ -28,6 +28,7 @@ class UpgradeService : IntentService("UPGRADE_SERVICE") {
                             .build()).execute()
             if (!response.isSuccessful) {
                 Logger.e(response.message())
+                return
             }
             val versionRegex = Pattern.compile("\\d+\\.\\d+.\\d+$", Pattern.CASE_INSENSITIVE).toRegex()
             val root = JSONObject(response.body().string())
@@ -43,7 +44,7 @@ class UpgradeService : IntentService("UPGRADE_SERVICE") {
                     }
                 }
             }
-        } catch (e: java.net.ConnectException) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
