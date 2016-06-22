@@ -48,7 +48,7 @@ class RegionListActivity : AppCompatActivity(),
     }
 
     private val regionListFragment: RegionListFragment by lazy {
-        findFragmentById<RegionListFragment>(R.id.fragmentRegionList)
+        supportFragmentManager.findFragmentById(R.id.fragmentRegionList) as RegionListFragment
     }
 
     override fun onLongClickItem(region: Region): Boolean {

@@ -38,7 +38,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
 
     private val view: View by lazy {
         View.inflate(MyApplication.context, R.layout.poi_field_images, null).apply {
-            findView<TextView>(R.id.textViewFieldName).text = name
+            (findViewById(R.id.textViewFieldName) as TextView).text = name
         }
     }
 
@@ -48,7 +48,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
     var images = mutableListOf<String>()
 
     private val recyclerView: RecyclerView by lazy {
-        view.findView<RecyclerView>(R.id.recyclerView)
+        view.findViewById(R.id.recyclerView) as RecyclerView
     }
 
     override fun bind(value: Any?): View {
@@ -107,7 +107,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
 
     private inner class AddImageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         init {
-            view.findView<ImageButton>(R.id.imageButton).setOnClickListener {
+            (view.findViewById(R.id.imageButton) as ImageButton).setOnClickListener {
                 onClickAddImage(this@ImagesFieldResolver)
             }
         }
@@ -117,7 +117,7 @@ class ImagesFieldResolver(override val name: String, val poi: POI,
         lateinit var imageButton: ImageButton
 
         init {
-            imageButton = view.findView(R.id.imageButton)
+            imageButton = view.findViewById(R.id.imageButton) as ImageButton
         }
     }
 

@@ -38,11 +38,11 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
     }
 
     private val imageView: ImageView by lazy {
-        view.findView<ImageView>(R.id.imageView)
+        view.findViewById(R.id.imageView) as ImageView
     }
 
     private val imageButton: ImageButton by lazy {
-        view.findView<ImageButton>(R.id.imageButton)
+        view.findViewById(R.id.imageButton) as ImageButton
     }
 
     override fun populate(jsonObject: JSONObject, poi: POI) {
@@ -51,8 +51,7 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
 
     private val view: View by lazy {
         View.inflate(context, R.layout.poi_field_video, null).apply {
-            findView<TextView>(R.id.textViewFieldName).text = name
-
+            (findViewById(R.id.textViewFieldName) as TextView).text = name
         }
     }
 

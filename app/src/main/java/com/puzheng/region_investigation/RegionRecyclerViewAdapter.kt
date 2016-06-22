@@ -2,6 +2,7 @@ package com.puzheng.region_investigation
 
 import android.content.Context
 import android.graphics.Color
+import android.os.Build
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -130,19 +131,26 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
 
 
     private fun RegionViewHolder.markAsDirty() {
-        imageView.background = ContextCompat.getDrawable(imageView.context, R.drawable.dirty_region_image)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            imageView.background = ContextCompat.getDrawable(imageView.context, R.drawable.dirty_region_image)
+        }
         textView.text = "*" + textView.text
         textView.setTextColor(Color.RED)
     }
 }
 
-private class RegionViewHolder(val view: View, val multiSelector: MultiSelector, val listener: OnRegionListFragmentInteractionListener) :
+private class RegionViewHolder(val view: View, val multiSelector: MultiSelector,
+                               val listener: OnRegionListFragmentInteractionListener) :
         SwappingHolder(view, multiSelector) {
     val textView: TextView
     val imageView: ImageView
     var item: Region? = null
 
     init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            selectionModeStateListAnimator = null
+            defaultModeStateListAnimator = null
+        }
         textView = view.findViewById(R.id.content) as TextView
         imageView = view.findViewById(R.id.imageView) as ImageView
         view.setOnClickListener {

@@ -50,7 +50,7 @@ class EditPOIActivity : AppCompatActivity() {
         POITypeStore.with(this)
     }
     private val container: LinearLayout by lazy {
-        findView<LinearLayout>(R.id.container)
+        findViewById(R.id.container) as LinearLayout
     }
 
 
@@ -60,7 +60,7 @@ class EditPOIActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Logger.init("EditPOIActivity")
         setContentView(R.layout.activity_edit_poi)
-        setSupportActionBar(findView<Toolbar>(R.id.toolbar))
+        setSupportActionBar(findViewById(R.id.toolbar) as Toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         poi = intent.getParcelableExtra<POI>(TAG_POI)
@@ -88,9 +88,9 @@ class EditPOIActivity : AppCompatActivity() {
     lateinit private var poiType: POIType
 
     private fun setupView() {
-        findView<TextView>(R.id.textViewCreated).text = if (poi == null) "" else
+        (findViewById(R.id.textViewCreated) as TextView).text = if (poi == null) "" else
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(poi!!.created)
-        findView<TextView>(R.id.textViewPOIId).text = poi?.id.toString()
+        (findViewById(R.id.textViewPOIId) as TextView).text = poi?.id.toString()
         poiTypeStore.get(poi!!.poiTypeName) then {
             poiType = it!!
             poiType.extractPOIRawData(poi!!) then {
@@ -98,13 +98,9 @@ class EditPOIActivity : AppCompatActivity() {
             } failUi {
                 toast(it.toString())
             } successUi {
-                findView<TextView>(R.id.textViewPOIType).text = poiType.name
+                (findViewById(R.id.textViewPOIType) as TextView).text = poiType.name
                 fieldResolvers = poiType.fields.map {
-                    resolve(it)?.apply {
-                        if (this == null) {
-                            toast("无法识别的字段, $it")
-                        }
-                    }
+                    resolve(it)
                 }.filter {
                     it != null
                 }.map {
@@ -203,10 +199,10 @@ class EditPOIActivity : AppCompatActivity() {
                         override fun onCreateDialog(savedInstanceState: Bundle?) =
                                 AlertDialog.Builder(context)
                                         .setView(layoutInflater.inflate(R.layout.view_video_dialog, null).apply {
-                                            val videoView = findView<VideoView>(R.id.videoView)
-                                            val playButton = findView<ImageButton>(R.id.imageButton).apply {
+                                            val videoView = findViewById(R.id.videoView) as VideoView
+                                            val playButton = (findViewById(R.id.imageButton) as ImageButton).apply {
                                                 setOnClickListener {
-                                                    this@apply.visibility = View.GONE
+                                                    this.visibility = View.GONE
                                                     videoView.start()
                                                 }
                                             }

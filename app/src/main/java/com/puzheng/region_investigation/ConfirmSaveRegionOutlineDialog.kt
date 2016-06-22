@@ -48,7 +48,7 @@ class ConfirmSaveRegionOutlineDialog(val region: Region, val afterSaved: () -> U
 
     override fun onCreateDialog(savedInstanceState: Bundle?): AlertDialog {
         val contentView = activity.layoutInflater.inflate(R.layout.dialog_confirm_save_region_outline, null, false)
-        map = contentView.findView(R.id.map)
+        map = contentView.findViewById(R.id.map) as MapView
         map.onCreate(savedInstanceState)
         // 必须在地图加载完毕之后才可以缩放，否则会产生缩放不正确的情况
         map.map.setOnMapLoadedListener {

@@ -59,7 +59,7 @@ class MyApplication : Application(), OnPermissionGrantedListener {
             override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
                 MyApplication.currentActivity = activity as AppCompatActivity
                 if (eventLogger.handlers.isEmpty()) {
-                    (activity as AppCompatActivity).assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    activity.assertPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG) successUi {
                         onPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                 REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG)

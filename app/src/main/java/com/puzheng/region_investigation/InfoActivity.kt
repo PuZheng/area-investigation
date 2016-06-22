@@ -19,14 +19,15 @@ class InfoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_info)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        findView<TextView>(R.id.textViewPOITypeDir).text = POITypeStore.with(this).dir.humanizePath
-        findView<TextView>(R.id.textViewPOIDir).text = POIStore.with(this).dir.humanizePath
-        findView<TextView>(R.id.textViewLogDir).text = LogStore.dir.humanizePath
-        findView<TextView>(R.id.textViewBackend).text = ConfigStore.with(this).backend
+        fun findTextViewById(id: Int) = findViewById(id) as TextView
+        findTextViewById(R.id.textViewPOITypeDir).text = POITypeStore.with(this).dir.humanizePath
+        findTextViewById(R.id.textViewPOIDir).text = POIStore.with(this).dir.humanizePath
+        findTextViewById(R.id.textViewLogDir).text = LogStore.dir.humanizePath
+        findTextViewById(R.id.textViewBackend).text = ConfigStore.with(this).backend
         AccountStore.with(this).account.let {
-            findView<TextView>(R.id.textViewOrgName).text = it?.orgName
-            findView<TextView>(R.id.textViewOrgCode).text = it?.orgCode
-            findView<TextView>(R.id.textViewUsername).text = it?.username
+            findTextViewById(R.id.textViewOrgName).text = it?.orgName
+            findTextViewById(R.id.textViewOrgCode).text = it?.orgCode
+            findTextViewById(R.id.textViewUsername).text = it?.username
         }
     }
 }

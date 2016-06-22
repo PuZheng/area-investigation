@@ -64,7 +64,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
     val fragmentEditRegion: EditRegionActivityFragment by lazy {
-        findFragmentById<EditRegionActivityFragment>(R.id.fragment_edit_region)
+        supportFragmentManager.findFragmentById(R.id.fragment_edit_region) as EditRegionActivityFragment
     }
 
     private val regionStore: RegionStore by lazy {
@@ -186,18 +186,18 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             }
         }
         updateActionBar()
-        design_bottom_sheet.findView<ImageButton>(R.id.trash).setOnClickListener {
+        (design_bottom_sheet.findViewById(R.id.trash) as ImageButton).setOnClickListener {
             fragmentEditRegion.removeSelectedPOIMarker()
             updateActionBar()
             onPOIMarkerSelected(null)
         }
-        design_bottom_sheet.findView<ImageButton>(R.id.edit).setOnClickListener {
+        (design_bottom_sheet.findViewById(R.id.edit) as ImageButton).setOnClickListener {
             startActivityForResult(Intent(this, EditPOIActivity::class.java).apply {
                 Logger.v(fragmentEditRegion.selectedPOI.toString())
                 putExtra(EditPOIActivity.TAG_POI, fragmentEditRegion.selectedPOI)
             }, EDIT_POI)
         }
-        design_bottom_sheet.findView<ImageButton>(R.id.relocate).setOnClickListener {
+        (design_bottom_sheet.findViewById(R.id.relocate) as ImageButton).setOnClickListener {
 
             poiRelocateActionMode = startSupportActionMode(object : ActionMode.Callback {
                 override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
@@ -260,7 +260,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             editNameActionMode = startSupportActionMode(object : ActionMode.Callback {
                 override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                     mode?.customView = layoutInflater.inflate(R.layout.app_bar_edit_region_name, null, false).apply {
-                        findView<EditText>(R.id.region_name).let {
+                        (findViewById(R.id.region_name) as EditText).let {
                             regionName ->
                             regionName.setText(region.name)
                             regionName.requestFocus()
@@ -298,8 +298,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                     when (item?.itemId) {
                         R.id.action_ok -> {
-                            if (mode!!.customView.findView<EditText>(R.id.
-                                    region_name).error == null) {
+                            if ((mode!!.customView.findViewById(R.id. region_name) as EditText).error == null) {
                                 editNameActionMode!!.finish()
                                 regionStore.updateName(region, region_name.text.toString()) successUi {
                                     toast(R.string.edit_region_name_success)

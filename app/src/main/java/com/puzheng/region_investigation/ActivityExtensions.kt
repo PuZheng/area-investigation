@@ -61,10 +61,6 @@ fun AppCompatActivity.assertPermission(permission: String, requestCode: Int, rat
     }
 }
 
-fun <T : Fragment?> AppCompatActivity.findFragmentById(id: Int) = supportFragmentManager.findFragmentById(id) as T
-
-fun <T : View?> Activity.findView(id: Int) = findViewById(id) as T
-
 fun AppCompatActivity.assertNetwork() = promiseOnUi {
     val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     val info = manager.activeNetworkInfo

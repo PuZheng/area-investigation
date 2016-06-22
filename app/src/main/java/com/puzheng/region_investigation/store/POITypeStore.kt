@@ -176,14 +176,15 @@ class POITypeStore private constructor(val context: Context) {
         Logger.i("poi types to upgrade: $toBeUpgraded")
         toBeUpgraded.forEach {
             val name = it["name"]
-            val response = OkHttpClient().newCall(
+            OkHttpClient().newCall(
                     Request.Builder()
                             .url(makePOITypeUrl(orgCode, name!!))
-                            .build()).execute()
-            if (!response.isSuccessful) {
-                throw IOException("Unexpected code " + response)
+                            .build()).execute().let {
+                if (!it.isSuccessful) {
+                    throw IOException("Unexpected code " + response)
+                }
+                it.body().byteStream().copyTo(File(dir, "$name.zip"))
             }
-            response.body().byteStream().copyTo(File(dir, "$name.zip"))
         }
         // 删除掉所有服务器上没有的信息点模板
         val toBeDeleted = {

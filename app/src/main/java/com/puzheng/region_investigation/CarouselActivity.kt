@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.Toolbar
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.ViewGroup
@@ -48,7 +49,7 @@ class CarouselActivity : AppCompatActivity() {
         Logger.init("CarouselActivity")
         setContentView(R.layout.activity_carousel)
 
-        setSupportActionBar(findView(R.id.toolbar))
+        setSupportActionBar(findViewById(R.id.toolbar) as Toolbar?)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         supportActionBar!!.setDisplayShowTitleEnabled(false)
         pos = intent.getIntExtra(TAG_POS, 0)
@@ -57,11 +58,11 @@ class CarouselActivity : AppCompatActivity() {
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         // Set up the ViewPager with the sections adapter.
-        viewPager = findView(R.id.container)
+        viewPager = findViewById(R.id.container) as ViewPager
         viewPager.adapter = SectionsPagerAdapter(supportFragmentManager)
         viewPager.currentItem = pos
 
-        findView<FloatingActionButton>(R.id.fab).setOnClickListener {
+        (findViewById(R.id.fab) as FloatingActionButton).setOnClickListener {
             Picasso.with(this).invalidate(images[viewPager.currentItem])
             images = images.filterIndexed { i, s -> i != viewPager.currentItem }
             if (images.isEmpty()) {
@@ -104,7 +105,8 @@ class CarouselActivity : AppCompatActivity() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                                   savedInstanceState: Bundle?) =
                 inflater!!.inflate(R.layout.fragment_carousel, container, false).apply {
-                    picasso.load(File(arguments.getString(ARG_IMAGE_PATH))).fit().centerInside().into(findView<ImageView>(R.id.imageView))
+                    picasso.load(File(arguments.getString(ARG_IMAGE_PATH))).fit().centerInside()
+                            .into(findViewById(R.id.imageView) as ImageView)
                 }
 
         companion object {

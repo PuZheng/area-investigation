@@ -17,7 +17,7 @@ open class StringFieldResolver(override val name: String, val context: Context) 
     open protected val layoutId = R.layout.poi_field_string
 
     private val editText: EditText by lazy {
-        view.findView<EditText>(R.id.editText)
+        view.findViewById(R.id.editText) as EditText
     }
 
     override fun populate(jsonObject: JSONObject, poi: POI) {
