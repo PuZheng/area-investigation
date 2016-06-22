@@ -108,9 +108,10 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
                             activePolyline.color = ContextCompat.getColor(activity, R.color.colorAccent)
                             startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
                             if (isRegionClosed) {
+                                // 注意，去掉最后一个点， 因为和第一个点重合
                                 listener?.onDrawDone(markers.map {
                                     it.position
-                                })
+                                }.subList(1, markers.size))
                                 stopDraw()
                             }
                         }
@@ -120,9 +121,8 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
                         }
                         MotionEvent.ACTION_MOVE -> {
                             activeMarker?.position = it.latLng
-                            // 一定要构成多边形, 注意，这里为什么一定要是3,而不是2？因为实际上，因为实际存储中，
-                            // 顶点总是比边数多一
-                            // 比如三角形是由4个点组成的，只不过最后一个点和出发点重合而已。
+                            // 一定要构成多边形, 注意，这里为什么一定要是3,而不是2？因为我们要求
+                            // 最后一个点和第一个点重合， 也就是说如果是三角形，实际上有4个marker
                             if (markers.size > 3) {
                                 if (isApproachingToStartMarker(it.screenLocation, lastScreenLocation)) {
                                     startMarker?.setIcon(BitmapDescriptorFactory.fromBitmap(closingMarkerBitmap))

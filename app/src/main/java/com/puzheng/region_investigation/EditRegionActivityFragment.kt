@@ -410,20 +410,12 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun deleteVertex(vertex: LatLng) {
-        // 注意，实际的存储中顶点数，一定是边数+1
-        if (hotCopyRegion.outline.size <= 4) {
+        if (hotCopyRegion.outline.size <= 3) {
             activity.toast(R.string.outline_needs_be_polygon)
             return
         }
-        // 这里有个很tricky的处理逻辑， 如果删除的是出发点，那么首尾顶点都要删除，
-        // 而由于第二个点现在成为新的出发点，所以要在最后补上一个新的出发点
-        if (hotCopyRegion.outline[0] == vertex) {
-            Logger.e("出发点被删除")
-            hotCopyRegion.outline = hotCopyRegion.outline.subList(1, hotCopyRegion.outline.size - 1) + hotCopyRegion.outline[1]
-        } else {
-            hotCopyRegion.outline = hotCopyRegion.outline.filter {
-                it != vertex
-            }
+        hotCopyRegion.outline = hotCopyRegion.outline.filter {
+            it != vertex
         }
         map.map.setupOutline()
     }
