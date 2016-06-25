@@ -24,6 +24,7 @@ class InfoActivity : AppCompatActivity() {
         findTextViewById(R.id.textViewPOIDir).text = POIStore.with(this).dir.humanizePath
         findTextViewById(R.id.textViewLogDir).text = LogStore.dir.humanizePath
         findTextViewById(R.id.textViewBackend).text = ConfigStore.with(this).backend
+        findTextViewById(R.id.textViewOfflineMapData).text = "存储卡/autonavi/data/vmap"
         AccountStore.with(this).account.let {
             findTextViewById(R.id.textViewOrgName).text = it?.orgName
             findTextViewById(R.id.textViewOrgCode).text = it?.orgCode
