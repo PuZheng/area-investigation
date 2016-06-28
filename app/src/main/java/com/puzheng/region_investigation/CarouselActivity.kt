@@ -63,7 +63,7 @@ class CarouselActivity : AppCompatActivity() {
         viewPager.currentItem = pos
 
         (findViewById(R.id.fab) as FloatingActionButton).setOnClickListener {
-            Picasso.with(this).invalidate(images[viewPager.currentItem])
+            //Picasso.with(this).invalidate(images[viewPager.currentItem])
             images = images.filterIndexed { i, s -> i != viewPager.currentItem }
             if (images.isEmpty()) {
                 setResult(RESULT_OK, Intent().apply {
@@ -105,7 +105,7 @@ class CarouselActivity : AppCompatActivity() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                                   savedInstanceState: Bundle?) =
                 inflater!!.inflate(R.layout.fragment_carousel, container, false).apply {
-                    picasso.load(File(arguments.getString(ARG_IMAGE_PATH))).fit().centerInside()
+                    picasso.load(File(arguments.getString(ARG_IMAGE_PATH))).skipMemoryCache().fit().centerInside()
                             .into(findViewById(R.id.imageView) as ImageView)
                 }
 

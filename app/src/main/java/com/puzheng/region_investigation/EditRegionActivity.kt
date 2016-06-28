@@ -124,8 +124,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 R.id.action_submit -> {
                     fragmentEditRegion.saveOutline({
                         // 注意， 一定要告诉Picasso清除图片缓存
-                        Picasso.with(this@EditRegionActivity).invalidate(
-                                RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
+//                        Picasso.with(this@EditRegionActivity).invalidate(
+//                                RegionStore.with(this@EditRegionActivity).getCoverImageFile(region))
                         regionStore.get(region.id!!) successUi {
                             region = it!!
                             updateActionBar()

@@ -22,13 +22,14 @@ class VideoFieldResolver(override val name: String, context: Context, val poi: P
 
     private val picasso: Picasso by lazy {
         Picasso.Builder(context).addRequestHandler(object : RequestHandler() {
+
             override fun canHandleRequest(data: Request?) =
                     ("file" == data?.uri?.scheme).apply {
                         Logger.v(data?.uri?.scheme)
                     }
 
 
-            override fun load(request: Request?, networkPolicy: Int) =
+            override fun load(request: Request?) =
                     Result(ThumbnailUtils.createVideoThumbnail(request?.uri?.path,
                             MediaStore.Images.Thumbnails.MINI_KIND), Picasso.LoadedFrom.DISK).apply {
                         Logger.v(request?.uri?.path)

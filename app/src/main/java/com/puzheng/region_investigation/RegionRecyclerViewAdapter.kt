@@ -92,7 +92,7 @@ class RegionRecyclerViewAdapter(private var regions: List<Region?>?,
             holder.imageView.background = null
             val context = holder.textView.context
             val coverFile = RegionStore.with(context).getCoverImageFile(region)
-            picasso.load(coverFile).into(holder.imageView)
+            picasso.load(coverFile).skipMemoryCache().into(holder.imageView)
             if (region.isDirty) {
                 holder.markAsDirty()
             }
