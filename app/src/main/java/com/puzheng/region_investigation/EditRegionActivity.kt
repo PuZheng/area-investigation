@@ -24,6 +24,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
 import com.amap.api.location.AMapLocation
+import com.amap.api.maps.MapsInitializer
 import com.amap.api.maps.model.LatLng
 import com.amap.api.maps.model.Marker
 import com.orhanobut.logger.Logger
@@ -162,6 +163,8 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MapsInitializer.sdcardDir = ConfigStore.with(this).offlineMapDataDir.path
+        Logger.i(MapsInitializer.sdcardDir)
         region = if (savedInstanceState != null) {
             savedInstanceState.getParcelable(RegionListActivity.TAG_REGION)!!
         } else {

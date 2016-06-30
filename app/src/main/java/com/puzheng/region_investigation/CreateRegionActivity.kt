@@ -19,6 +19,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import com.amap.api.maps.MapsInitializer
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.databinding.ActivityCreateRegionBinding
@@ -86,7 +87,9 @@ class CreateRegionActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MapsInitializer.sdcardDir = ConfigStore.with(this).offlineMapDataDir.path
         Logger.init("CreateRegionActivitiy")
+        Logger.i(MapsInitializer.sdcardDir)
         val x: ViewDataBinding = DataBindingUtil.setContentView(this, R.layout.activity_create_region)
         binding = x as ActivityCreateRegionBinding
         setSupportActionBar(toolbar)

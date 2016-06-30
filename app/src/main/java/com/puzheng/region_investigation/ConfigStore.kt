@@ -1,12 +1,14 @@
 package com.puzheng.region_investigation
 
 import android.content.Context
+import android.os.Environment
 import com.orhanobut.logger.Logger
 
 import org.json.JSONException
 import org.json.JSONObject
 
 import java.io.BufferedReader
+import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
 
@@ -28,7 +30,7 @@ class ConfigStore private constructor(context: Context) {
                 sb.append(line)
             }
             val jsonObject = JSONObject(sb.toString())
-            Config(jsonObject.getString("backend"), jsonObject.getBoolean("fakeData"))
+            Config(jsonObject.getString("backend"), jsonObject.getBoolean("fakeData"), jsonObject.getString("offlineMapDir"))
         } catch (e: IOException) {
             e.printStackTrace()
             null
@@ -41,5 +43,11 @@ class ConfigStore private constructor(context: Context) {
     val backend = config?.backend
     val fakeData = config?.fakeData ?: false
 
-    private class Config(val backend: String, val fakeData: Boolean)
+    val offlineMapDataDir = File(Environment.getExternalStoragePublicDirectory(""), config?.offlineMapDir ?: "autonavi/").apply {
+        if (!exists()) {
+            mkdirs()
+        }
+    }
+
+    private class Config(val backend: String, val fakeData: Boolean, val offlineMapDir: String)
 }

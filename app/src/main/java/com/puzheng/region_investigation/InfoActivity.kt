@@ -24,7 +24,8 @@ class InfoActivity : AppCompatActivity() {
         findTextViewById(R.id.textViewPOIDir).text = POIStore.with(this).dir.humanizePath
         findTextViewById(R.id.textViewLogDir).text = LogStore.dir.humanizePath
         findTextViewById(R.id.textViewBackend).text = ConfigStore.with(this).backend
-        findTextViewById(R.id.textViewOfflineMapData).text = "存储卡/autonavi/data/vmap"
+        // 注意，高德地图的离线包存储位置，一定是在MapsInitializer.sdkCard + "data/vmap"下
+        findTextViewById(R.id.textViewOfflineMapData).text = File(ConfigStore.with(this).offlineMapDataDir, "data/vmap").humanizePath
         AccountStore.with(this).account.let {
             findTextViewById(R.id.textViewOrgName).text = it?.orgName
             findTextViewById(R.id.textViewOrgCode).text = it?.orgCode
