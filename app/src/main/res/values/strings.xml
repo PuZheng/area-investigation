@@ -24,7 +24,7 @@
     <string name="action_ok">OK</string>
     <string name="edit_region_name_success">修改名称成功</string>
     <string name="action_delete">删除</string>
-    <string name="outline_needs_be_polygon">区域必须保证是一个多变形!</string>
+    <string name="outline_needs_be_polygon">区域必须保证是一个多边形!</string>
     <string name="outline_saved">区域边界已保存</string>
     <string name="confirm_save_region_outline">您确认要保存新的区域边界?</string>
     <string name="pick_poi_type">请选择信息点类型</string>
