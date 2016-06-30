@@ -6,10 +6,12 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
+import android.support.v4.text.TextUtilsCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.AppCompatDialogFragment
 import android.support.v7.view.ActionMode
+import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -189,7 +191,11 @@ class RegionListActivity : AppCompatActivity(),
         var orgCode = intent.getStringExtra("ORG_CODE")
         var orgName = intent.getStringExtra("ORG_NAME")
 
-        if (BuildConfig.DEBUG && username == null) {
+        if (!TextUtils.isEmpty(username) && !TextUtils.isEmpty(orgCode) && !TextUtils.isEmpty(orgName)) {
+            AccountStore.with(this).account = Account(username, orgCode, orgName)
+        }
+
+        if (BuildConfig.DEBUG && AccountStore.with(this).account == null) {
             username = "fooUser"
             orgCode = "fooOrgCode"
             orgName = "fooOrgName"
@@ -197,7 +203,6 @@ class RegionListActivity : AppCompatActivity(),
         Logger.i(listOf("username: $username",
                 "org name: $orgName",
                 "org code: $orgCode").joinToString())
-        AccountStore.with(this).account = Account(username, orgCode, orgName)
     }
 
 
