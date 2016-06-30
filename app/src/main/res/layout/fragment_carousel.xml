@@ -5,6 +5,8 @@
     android:layout_height="match_parent"
     android:paddingTop="?attr/actionBarSize"
     android:paddingBottom="?attr/actionBarSize"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp"
     android:background="@color/colorCarouselBackground"
     tools:context="com.puzheng.region_investigation.CarouselActivity$PlaceholderFragment">
 
