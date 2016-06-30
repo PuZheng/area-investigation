@@ -188,7 +188,7 @@ class CreateRegionStep2Fragment : Fragment(), OnPermissionGrantedListener {
                 if (lastLocation != null) {
                     onLocationChangeListener?.onLocationChanged(AMapLocation(Location("").apply {
                         latitude = lastLocation.latitude
-                        longitude = lastLocation.latitude
+                        longitude = lastLocation.longitude
                     }))
                 } else {
                     object: AppCompatDialogFragment() {

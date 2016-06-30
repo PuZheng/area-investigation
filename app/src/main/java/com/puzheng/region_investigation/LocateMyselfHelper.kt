@@ -32,7 +32,7 @@ class LocateMyselfHelper(val context: Context, val onLocationChangeListener: Loc
             Logger.e("无法获取上次的坐标")
             null
         } else {
-            Logger.e("无法定位，使用最近的坐标")
+            Logger.e("无法定位，使用最近的坐标: $lat, $lng")
             LatLng(lat, lng)
         }
     }
@@ -48,7 +48,7 @@ class LocateMyselfHelper(val context: Context, val onLocationChangeListener: Loc
                 onLocationChangeListener.onLocationChanged(it)
                 sharedPref.edit().apply {
                     putFloat(LAT, it.latitude.toFloat())
-                    putFloat(LNG, it.latitude.toFloat())
+                    putFloat(LNG, it.longitude.toFloat())
                     commit()
                 }
                 d.resolve(it)
