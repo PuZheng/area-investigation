@@ -394,8 +394,6 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     permissionRequestHandlerMap[requestCode]?.invoke()
-                } else {
-                    toast("why not fake some poi types?")
                 }
             EditRegionActivityFragment.REQUEST_ACCESS_COARSE_LOCATION ->
                 if (grantResults.isNotEmpty()
