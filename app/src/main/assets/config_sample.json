@@ -1,4 +1,6 @@
 {
+  "releaseAPIKey": "",
   "apiKey": "",
-  "releaseAPIKey": ""
+  "backend": "",
+  "fakeData": true
 }

@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatDialogFragment
+import android.view.ContextMenu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -12,9 +13,8 @@ import android.widget.TextView
 import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.store.POITypeStore
-import com.puzheng.region_investigation.store.RegionStore
 import com.squareup.picasso.Picasso
-import nl.komponents.kovenant.combine.and
+import nl.komponents.kovenant.task
 import nl.komponents.kovenant.ui.successUi
 
 /**
@@ -32,16 +32,16 @@ class RegionStatDialogFragment(val region: Region) : AppCompatDialogFragment() {
         POITypeStore.with(context)
     }
 
-    private val regionStore: RegionStore by lazy {
-        RegionStore.with(context)
-    }
 
-    private val contentView: View by lazy {
-        View.inflate(context, R.layout.region_state_dialog, null).apply {
-            findTextViewById(R.id.textViewArea).text = roundOff(region.area / (1000 * 1000), 2).toString()
-            region.poiList and poiTypeStore.list successUi {
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val contentView = View.inflate(context, R.layout.region_state_dialog, null)
+        return AlertDialog.Builder(context).setTitle(R.string.region_stat_title).setView(contentView).create().apply {
+            contentView.findTextViewById(R.id.textViewArea).text = roundOff(region.area / (1000 * 1000), 2).toString()
+            task {
+               region.poiListSync to poiTypeStore.listSync
+            } successUi {
                 val (pois, poiTypes) = it
-                findTextViewById(R.id.textViewPOINO).text = if (pois != null) {
+                contentView.findTextViewById(R.id.textViewPOINO).text = if (pois != null) {
                     pois.size.toString()
                 } else {
                     "0"
@@ -59,7 +59,7 @@ class RegionStatDialogFragment(val region: Region) : AppCompatDialogFragment() {
                     type2POINo.entries.map {
                         poiTypeMap[it.key] to it.value
                     }.let {
-                        findListViewById(R.id.listView).adapter = MyBaseAdaper(it)
+                        contentView.findListViewById(R.id.listView).adapter = MyBaseAdaper(it)
                     }
                 }
             }
@@ -67,8 +67,6 @@ class RegionStatDialogFragment(val region: Region) : AppCompatDialogFragment() {
     }
 
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-            AlertDialog.Builder(context).setTitle(R.string.region_stat_title).setView(contentView).create()
 
     class ViewHolder(val textViewName: TextView, val imageViewIcon: ImageView, val textViewPOINO: TextView)
 

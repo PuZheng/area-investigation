@@ -86,7 +86,6 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
                                 AMapUtils.calculateLineDistance(start, LatLng(start.latitude, it.longitude)).toDouble()
                 )
             } + listOf(Pair(0.0, 0.0))
-            Logger.v(t.toString())
             return Math.abs(((0..t.size - 2).map {
                 t[it].first * t[it + 1].second
             }.sum() - (0..t.size - 2).map {
@@ -181,13 +180,9 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     fun setSyncedSync() {
         dbHelper.withWritableDb {
             db ->
-            try {
-                db.update(Region.Model.TABLE_NAME, ContentValues().apply {
-                    put(Region.Model.COL_SYNCED, format.format(Date()))
-                }, "${BaseColumns._ID}=?", arrayOf(id.toString()))
-            } finally {
-                db.close()
-            }
+            db.update(Region.Model.TABLE_NAME, ContentValues().apply {
+                put(Region.Model.COL_SYNCED, format.format(Date()))
+            }, "${BaseColumns._ID}=?", arrayOf(id.toString()))
         }
     }
 
