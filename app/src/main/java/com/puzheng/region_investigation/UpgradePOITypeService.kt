@@ -45,7 +45,7 @@ class UpgradePOITypeService : IntentService("UPGRADE_POI_TYPE_SERVICE") {
             }
         } failUi {
             it.printStackTrace()
-            toast("更新信息点模板失败!")
+//            toast("更新信息点模板失败!")
         }
     }
 }

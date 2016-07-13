@@ -6,7 +6,9 @@
 * apiKey - 高德地图api key
 * offlineMapDir - 离线地图存储地址，注意一定是存储卡的相对位置, 如果不想冒险，就保持为"autonavi/"，这个是高德官方应用的离线地图位置
 * fakeDate - 是否伪造数据，不是开发者，就不要打开这个flag
-
+* defaultUsername - 默认用户名
+* defaultOrgCode - 默认机构代码
+* defaultOrgName - 默认机构名称
 # 如何启动本应用
 
 ```kotlin

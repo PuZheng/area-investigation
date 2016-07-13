@@ -53,7 +53,7 @@ class RegionListFragment : Fragment(), OnPermissionGrantedListener {
     val multiSelector = MultiSelector()
 
     companion object {
-        val REQUEST_WRITE_EXTERNAL_STORAGE_TO_FAKE = 100
+        val REQUEST_WRITE_EXTERNAL_STORAGE_TO_FAKE = uniqueId()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

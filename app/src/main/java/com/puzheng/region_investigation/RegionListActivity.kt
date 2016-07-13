@@ -1,10 +1,14 @@
 package com.puzheng.region_investigation
 
+import android.Manifest
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.databinding.tool.reflection.SdkUtil
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.support.v4.app.DialogFragment
 import android.support.v4.text.TextUtilsCompat
 import android.support.v7.app.AlertDialog
@@ -180,6 +184,22 @@ class RegionListActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!ConfigStore.with(applicationContext).configFile.exists()) {
+            object: AppCompatDialogFragment() {
+                override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                    return AlertDialog
+                            .Builder(this@RegionListActivity)
+                            .setMessage("请先拷贝config.json到目录" +
+                                    File(Environment.getExternalStoragePublicDirectory(context.packageName), "").humanizePath)
+                            .setPositiveButton("知道了", {
+                                dialog, which ->
+                                finish()
+                            })
+                            .create()
+                }
+            }.show(supportFragmentManager, "");
+            return
+        }
         Logger.init("RegionListActivity")
         setContentView(R.layout.activity_region_list)
         setSupportActionBar(toolbar)
@@ -195,14 +215,24 @@ class RegionListActivity : AppCompatActivity(),
             AccountStore.with(this).account = Account(username, orgCode, orgName)
         }
 
-        if (BuildConfig.DEBUG && AccountStore.with(this).account == null) {
-            username = "fooUser"
-            orgCode = "fooOrgCode"
-            orgName = "fooOrgName"
+        if (AccountStore.with(this).account == null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                assertPermission(Manifest.permission.READ_EXTERNAL_STORAGE, REQUEST_READ_CONFIG_FILE).successUi {
+                    setupAccount()
+                }
+            } else {
+                setupAccount()
+            }
         }
-        Logger.i(listOf("username: $username",
-                "org name: $orgName",
-                "org code: $orgCode").joinToString())
+    }
+
+    private fun setupAccount() {
+        ConfigStore.with(this).let {
+            val username = it.defaultUsername
+            val orgCode = it.defaultOrgCode
+            val orgName = it.defaultOrgName
+            AccountStore.with(this).account = Account(username, orgCode, orgName)
+        }
     }
 
 
@@ -228,14 +258,21 @@ class RegionListActivity : AppCompatActivity(),
             MyApplication.REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG ->
                 if (grantResults.isNotEmpty()
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    (fragmentRegionList as RegionListFragment).onPermissionGranted(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    (fragmentRegionList as RegionListFragment).onPermissionGranted(
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             requestCode)
+                }
+            REQUEST_READ_CONFIG_FILE ->
+                if (grantResults.isNotEmpty()
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    setupAccount()
                 }
         }
     }
 
     companion object {
         val TAG_REGION = "REGION"
+        val REQUEST_READ_CONFIG_FILE = uniqueId()
     }
 }
 

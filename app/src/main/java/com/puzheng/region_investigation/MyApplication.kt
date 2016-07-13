@@ -14,9 +14,10 @@ import nl.komponents.kovenant.ui.successUi
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.logging.*
+import java.util.logging.FileHandler
 import java.util.logging.Formatter
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 
 class MyApplication : Application(), OnPermissionGrantedListener {
 
@@ -88,7 +89,7 @@ class MyApplication : Application(), OnPermissionGrantedListener {
         lateinit var context: Context
         lateinit var eventLogger: Logger
         lateinit var currentActivity: AppCompatActivity
-        val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG = AtomicInteger().andDecrement
+        val REQUEST_WRITE_EXTERNAL_STORAGE_FOR_LOG = uniqueId()
     }
 }
 
