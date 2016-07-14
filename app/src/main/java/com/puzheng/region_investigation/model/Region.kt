@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-data class Region(val id: Long?, var name: String, var outline: List<LatLng>, val created: Date,
+data class Region(val id: Long?, var name: String, var extras: Map<String, String>, var outline: List<LatLng>, val created: Date,
                   var updated: Date? = null, var synced: Date? = null) : Parcelable {
 
     class Model : BaseColumns {
@@ -25,6 +25,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         companion object {
             val TABLE_NAME = "region"
             val COL_NAME = "name"
+            val COL_EXTRAS = "extras"
             val COL_OUTLINE = "outline"
             val COL_CREATED = "created"
             val COL_UPDATED = "updated"
@@ -35,6 +36,7 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
                     CREATE TABLE $TABLE_NAME (
                         ${BaseColumns._ID}  INTEGER PRIMARY KEY AUTOINCREMENT,
                         $COL_NAME TEXT NOT NULL UNIQUE,
+                        $COL_EXTRAS TEXT,
                         $COL_OUTLINE TEXT NOT NULL,
                         $COL_CREATED TEXT NOT NULL,
                         $COL_UPDATED TEXT,
@@ -45,6 +47,12 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
             fun makeValues(region: Region) = ContentValues().apply {
                 val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
                 put(COL_NAME, region.name)
+                val jo = JSONObject().apply {
+                    for ((key, value) in region.extras) {
+                        put(key, value)
+                    }
+                }
+                put(COL_EXTRAS, jo.toString())
                 put(COL_OUTLINE, encodeOutline(region.outline))
                 put(COL_CREATED, format.format(region.created))
                 put(COL_UPDATED, if (region.updated != null) format.format(region.updated) else null)
@@ -63,6 +71,14 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     constructor(source: Parcel) : this(
             source.readSerializable() as Long?,
             source.readString(),
+            {
+               jo: JSONObject ->
+                val map = mutableMapOf<String, String>()
+                for (key in jo.keys()) {
+                    map.put(key, jo.getString(key))
+                }
+                map
+            }(JSONObject(source.readString())),
             decodeOutline(source.readString()),
             source.readSerializable() as Date,
             source.readSerializable() as Date?,
@@ -100,6 +116,11 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
     override fun writeToParcel(dest: Parcel?, flags: Int) {
         dest?.writeSerializable(id)
         dest?.writeString(name)
+        val jo = JSONObject()
+        for ((key, value) in extras) {
+            jo.put(key, value)
+        }
+        dest?.writeString(jo.toString())
         dest?.writeString(encodeOutline(outline))
         dest?.writeSerializable(created)
         dest?.writeSerializable(updated)
@@ -134,6 +155,11 @@ data class Region(val id: Long?, var name: String, var outline: List<LatLng>, va
         jsonObject.apply {
             put("id", id)
             put("name", name)
+            put("extras", JSONObject().apply {
+                for ((key, value) in extras) {
+                    put(key, value)
+                }
+            })
             put("outline", encodeOutline(outline))
             put("created", format.format(created))
             put("updated", if (updated != null) format.format(updated) else null)

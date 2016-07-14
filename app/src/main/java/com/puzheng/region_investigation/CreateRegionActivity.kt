@@ -35,7 +35,9 @@ class CreateRegionActivity : AppCompatActivity(),
 
     override fun onDrawDone(latLngList: List<LatLng>) {
         drawingActionMode?.finish()
-        ConfirmCreateRegionDialog(createRegionStep1Fragment.name.text.toString(), latLngList).show(supportFragmentManager, "")
+        ConfirmCreateRegionDialog.newInstance(createRegionStep1Fragment.name.text.toString(),
+                createRegionStep1Fragment.extras,
+                latLngList).show(supportFragmentManager, "")
     }
 
     override fun afterTextChanged(s: Editable?, editText: EditText) {

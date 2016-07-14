@@ -9,10 +9,26 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.TextView
 import kotlinx.android.synthetic.main.fragment_create_region_step1.*
 
 
 class CreateRegionStep1Fragment : Fragment() {
+
+    fun findTextViewById(id: Int) = view!!.findViewById(id) as TextView
+
+    val extras: Map<String, String>
+        get() = mutableMapOf<String, String>().apply {
+            put("说明", findTextViewById(R.id.brief).text.toString())
+            put("联系方式", findTextViewById(R.id.contact).text.toString())
+            put("所属派出所", findTextViewById(R.id.policeStation).text.toString())
+            put("派出所联系电话", findTextViewById(R.id.policeStationPhoneNumber).text.toString())
+            put("所属居委会", findTextViewById(R.id.neighborhoodCommittee).text.toString())
+            put("居委会联系电话", findTextViewById(R.id.neighborhoodCommitteePhoneNumber).text.toString())
+            put("工作关系姓名", findTextViewById(R.id.contactPersonName).text.toString())
+            put("工作关系电话", findTextViewById(R.id.contactPersonPhoneNumber).text.toString())
+            put("工作关系说明", findTextViewById(R.id.contactPersonBrief).text.toString())
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +44,7 @@ class CreateRegionStep1Fragment : Fragment() {
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        name.addTextChangedListener(object: TextWatcher {
+        name.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 mListener?.afterTextChanged(s, name)
             }

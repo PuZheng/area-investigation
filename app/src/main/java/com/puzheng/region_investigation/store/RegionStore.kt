@@ -60,6 +60,7 @@ class RegionStore private constructor(val context: Context) {
         val db = DBHelper(context).writableDatabase
 
         fun makeRegion(id: Long, created: String, updated: String? = null, synced: String? = null) = Region(id, "region$id",
+                mapOf<String, String>(),
                 // 任何三个点总能组成一个三角形
                 listOf(randomHZLatLng, randomHZLatLng, randomHZLatLng),
                 format.parse(created),

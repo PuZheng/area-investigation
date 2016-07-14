@@ -1,13 +1,16 @@
 package com.puzheng.region_investigation
 
 import android.Manifest
+import android.app.Dialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.app.AppCompatDialogFragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -519,17 +522,24 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
     }
 
     fun removeSelectedPOIMarker() {
-        ConfirmRemovePOIDialogFragment({
-            val poi = selectedPOIMarker?.`object` as POI
-            POIStore.with(activity).remove(poi) and RegionStore.with(activity).touch(poi.regionId) successUi {
-                activity.toast(R.string.poi_deleted)
-                pois.remove(poi)
-                val marker = poiMarkers.find { (it.`object` as POI) == poi }
-                marker?.remove()
-                poiMarkers.remove(marker)
-                listener?.onPOIRemoved(poi)
+        object: AppCompatDialogFragment() {
+            override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+                return AlertDialog.Builder(activity).setTitle(R.string.confirm_remove_poi)
+                        .setPositiveButton(R.string.confirm, {
+                            dialog, which ->
+                            val poi = selectedPOIMarker?.`object` as POI
+                            POIStore.with(activity).remove(poi) and RegionStore.with(activity).touch(poi.regionId) successUi {
+                                activity.toast(R.string.poi_deleted)
+                                pois.remove(poi)
+                                val marker = poiMarkers.find { (it.`object` as POI) == poi }
+                                marker?.remove()
+                                poiMarkers.remove(marker)
+                                listener?.onPOIRemoved(poi)
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, null).create()
             }
-        }).show(activity.supportFragmentManager, "")
+        }.show(activity.supportFragmentManager, "")
     }
 
     private fun AMap.resetCamera() {

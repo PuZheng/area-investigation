@@ -17,9 +17,33 @@ import com.puzheng.region_investigation.store.RegionStore
 import kotlinx.android.synthetic.main.dialog_create_region_successfully.view.*
 import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.successUi
+import org.json.JSONObject
 import java.util.*
 
-class ConfirmCreateRegionDialog(val name: String, val latLngList: List<LatLng>) : AppCompatDialogFragment() {
+class ConfirmCreateRegionDialog() : AppCompatDialogFragment() {
+
+    companion object {
+        private const val ARG_NAME = "ARG_NAME"
+        private const val ARG_EXTRAGS = "ARG_EXTRAGS"
+        private const val ARG_OUTLINE = "ARG_OUTLINE"
+
+        fun newInstance(name: String, extras: Map<String, String>, latLngList: List<LatLng>): ConfirmCreateRegionDialog {
+            val d = ConfirmCreateRegionDialog()
+            d.arguments = Bundle()
+            d.arguments.putString(ARG_NAME, name)
+            val jo = JSONObject().apply {
+                for ((key, value) in extras) {
+                    put(key, value)
+                }
+            }
+            d.arguments.putString(ARG_EXTRAGS, jo.toString())
+            d.arguments.putString(ARG_OUTLINE, latLngList.map {
+                "${it.latitude},${it.longitude}"
+            }.joinToString(";"))
+            return d
+        }
+    }
+
     private val markerBitmap: Bitmap by lazy {
         Bitmap.createScaledBitmap(
                 activity.loadBitmap(R.drawable.marker),
@@ -29,14 +53,42 @@ class ConfirmCreateRegionDialog(val name: String, val latLngList: List<LatLng>) 
         )
     }
 
+    private lateinit var name: String
+    private lateinit var outline: List<LatLng>
+    private lateinit var extras: Map<String, String>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        name = arguments.getString(ARG_NAME)
+        extras = {
+           it: String ->
+            val m = mutableMapOf<String, String>()
+            val jo = JSONObject(it)
+            for (key in jo.keys()) {
+                m.put(key, jo.getString(key))
+            }
+            m
+        }(arguments.getString(ARG_EXTRAGS))
+        outline = {
+            it: String ->
+            it.split(";").map {
+                it.split(",").subList(0, 2).map { it.toDouble() }.let {
+                    val lat = it[0]
+                    val lng = it[1]
+                    LatLng(lat, lng)
+                }
+            }
+        }(arguments.getString(ARG_OUTLINE))
+    }
+
     override fun onStart() {
         super.onStart()
         (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener({
-            map.map.getMapScreenShot(object: AMap.OnMapScreenShotListener {
+            map.map.getMapScreenShot(object : AMap.OnMapScreenShotListener {
                 override fun onMapScreenShot(p0: Bitmap?) {
                     Logger.v("${it.width}, ${it.height}")
                     val regionStore = RegionStore.with(context)
-                    regionStore.create(Region(null, name, latLngList, Date()), p0) successUi {
+                    regionStore.create(Region(null, name, extras, outline, Date()), p0) successUi {
                         Toast.makeText(context, R.string.create_region_successfully, Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     } then {
@@ -68,14 +120,14 @@ class ConfirmCreateRegionDialog(val name: String, val latLngList: List<LatLng>) 
                 moveCamera(
                         CameraUpdateFactory.newLatLngBounds(
                                 LatLngBounds.Builder().apply {
-                                    latLngList.forEach { include(it) }
+                                    outline.forEach { include(it) }
                                 }.build(), (8 * pixelsPerDp).toInt()))
                 addPolygon(PolygonOptions()
-                        .add(*latLngList.toTypedArray())
+                        .add(*outline.toTypedArray())
                         .fillColor(ContextCompat.getColor(activity, R.color.colorOutlinePolygon))
                         .strokeWidth((1 * pixelsPerDp).toFloat())
                         .strokeColor(ContextCompat.getColor(activity, R.color.colorOutlinePolyline)))
-                latLngList.forEach {
+                outline.forEach {
                     addMarker(MarkerOptions()
                             .icon(BitmapDescriptorFactory.fromBitmap(markerBitmap))
                             .position(it)

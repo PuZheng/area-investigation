@@ -5,6 +5,7 @@ import android.provider.BaseColumns
 import com.amap.api.maps.model.LatLng
 import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.model.POI
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,6 +29,17 @@ fun Cursor.getDate(colName: String, format: SimpleDateFormat = SimpleDateFormat(
 }
 
 fun Cursor.getRegionRow() = Region(getLong(BaseColumns._ID)!!, getString(Region.Model.COL_NAME)!!,
+        {
+            it: String? ->
+            val m = mutableMapOf<String, String>()
+            if (it != null) {
+                val jo = JSONObject(it)
+                for (key in jo.keys()) {
+                    m.put(key, jo.getString(key))
+                }
+            }
+            m
+        }(getString(Region.Model.COL_EXTRAS)),
         Region.decodeOutline(getString(Region.Model.COL_OUTLINE)!!),
         getDate(Region.Model.COL_CREATED)!!, getDate(Region.Model.COL_UPDATED),
         getDate(Region.Model.COL_SYNCED))
