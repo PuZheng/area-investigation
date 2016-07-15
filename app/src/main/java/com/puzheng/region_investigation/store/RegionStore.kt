@@ -322,7 +322,13 @@ class RegionStore private constructor(val context: Context) {
                 when (it.type) {
                     POIType.FieldType.STRING,
                     POIType.FieldType.TEXT ->
-                        fields.add(CSVUtil.quote(jo.getString(it.name)))
+                        fields.add(CSVUtil.quote(
+                                try {
+                                    jo.getString(it.name)
+                                } catch (e: JSONException) {
+                                    ""
+                                }
+                        ))
                     POIType.FieldType.IMAGES -> {
                         val fileNames = mutableListOf<String>()
                         try {
@@ -442,7 +448,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     fun uploadSync(region: Region, onProgress: (sent: Long) -> Unit) {
-        val zipFile = File(zipDir, "${region.id}.zip")
+        val zipFile = File(zipDir, "${region.name}.zip")
         var sent = 0L
         val accountStore = AccountStore.with(context)
         val progressingRequestBody = object : RequestBody() {

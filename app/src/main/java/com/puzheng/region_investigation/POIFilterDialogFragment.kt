@@ -8,21 +8,44 @@ import android.support.v7.app.AppCompatDialogFragment
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.model.Region
 import com.puzheng.region_investigation.store.POITypeStore
 import com.puzheng.region_investigation.store.RegionStore
 import com.squareup.picasso.Picasso
 import nl.komponents.kovenant.combine.and
+import nl.komponents.kovenant.task
+import nl.komponents.kovenant.then
 import nl.komponents.kovenant.ui.successUi
 
 /**
  * 过滤信息点对话框
  */
-class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POIType>) : AppCompatDialogFragment() {
+class POIFilterDialogFragment : AppCompatDialogFragment() {
 
-    private val regionStore: RegionStore by lazy {
-        RegionStore.with(context)
+    companion object {
+        const val ARG_REGION = "ARG_REGION"
+        const val ARG_HIDDEN_POI_TYPES = "ARG_HIDDEN_POI_TYPES"
+
+        fun newInstance(region: Region, hiddenPOITypes: List<POIType>): POIFilterDialogFragment {
+            val d = POIFilterDialogFragment()
+            d.arguments = Bundle()
+            d.arguments.putParcelable(ARG_REGION, region)
+            d.arguments.putParcelableArray(ARG_HIDDEN_POI_TYPES, hiddenPOITypes.toTypedArray())
+            return d
+        }
+    }
+
+    private lateinit var region: Region
+    private lateinit var hiddenPOITypes: List<POIType>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        region = arguments.getParcelable(ARG_REGION)
+        hiddenPOITypes = listOf(*arguments.getParcelableArray(ARG_HIDDEN_POI_TYPES)).map {
+            it as POIType
+        }
     }
 
     private val poiTypeStore: POITypeStore by lazy {
@@ -36,34 +59,35 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
                 val horizontalPadding = (32 * activity.pixelsPerDp).toInt()
                 setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
             }
-
-            poiTypeStore.list and region.poiList successUi {
-                val (poiTypes, pois) = it
-                if (poiTypes == null) {
-                    activity.toast("没有信息点类型信息, 请将信息点配置文件拷贝到" + POITypeStore.with(activity).dir.humanizePath)
-                } else if (pois != null) {
-                    // 过滤掉所有当前区域没有的信息点类型
-                    setOf(*pois.map {
-                        it.poiTypeName
-                    }.toTypedArray()).let {
-                        poiTypeNameSet ->
-                        adapter = MyBaseAdapger(poiTypes.filter {
-                            poiTypeNameSet.contains(it.name)
-                        })
-                    }
-
-                }
-            }
         }
-
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return AlertDialog.Builder(activity).setTitle(R.string.poi_filter_dialog_title).setView(contentView)
+        val d = AlertDialog.Builder(activity).setTitle(R.string.poi_filter_dialog_title).setView(contentView)
                 .setPositiveButton(R.string.confirm, {
                     dialog, which ->
                     listener?.onFilterPOI(hiddenPOITypes)
                 }).setNegativeButton(R.string.cancel, null).create()
+        task {
+            poiTypeStore.listSync to region.poiListSync
+        } successUi {
+            val (poiTypes, pois)  = it
+            if (poiTypes == null) {
+                activity.toast("没有信息点类型信息, 请将信息点配置文件拷贝到" + POITypeStore.with(activity).dir.humanizePath)
+            } else if (pois != null) {
+                // 过滤掉所有当前区域没有的信息点类型
+                setOf(*pois.map {
+                    it.poiTypeName
+                }.toTypedArray()).let {
+                    poiTypeNameSet ->
+                    (contentView as ListView).adapter = MyBaseAdapger(poiTypes.filter {
+                        poiTypeNameSet.contains(it.name)
+                    })
+                }
+
+            }
+        }
+        return d
     }
 
     private class ViewHolder(val textView: TextView, val imageView: ImageView, val checkBox: CheckBox)
@@ -89,7 +113,7 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
                             if (b) {
                                 hiddenPOITypes = hiddenPOITypes.filter {
                                     it.name != item.name
-                                }.toSet()
+                                }
                             } else {
                                 hiddenPOITypes = hiddenPOITypes.plus(item)
                             }
@@ -106,7 +130,7 @@ class POIFilterDialogFragment(val region: Region, var hiddenPOITypes: Set<POITyp
     }
 
     interface OnFragmentInteractionListener {
-        fun onFilterPOI(hiddenPOITypes: Set<POIType>)
+        fun onFilterPOI(hiddenPOITypes: List<POIType>)
     }
 
     private var listener: OnFragmentInteractionListener? = null

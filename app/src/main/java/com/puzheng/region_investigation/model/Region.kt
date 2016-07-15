@@ -12,9 +12,11 @@ import com.puzheng.region_investigation.DBHelper
 import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.getPOIRow
 import com.puzheng.region_investigation.store.AccountStore
+import com.puzheng.region_investigation.store.RegionStore
 import nl.komponents.kovenant.task
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -254,6 +256,7 @@ data class Region(val id: Long?, var name: String, var extras: Map<String, Strin
         sb.append(listOf("更新时间", "").joinToString(fieldSep) + lineSep)
         return sb.toString()
     }
+    val zipFile = File(RegionStore.with(MyApplication.context).zipDir, "$name.zip")
 
 
 }

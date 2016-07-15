@@ -94,7 +94,7 @@ class RegionListActivity : AppCompatActivity(),
                                 task {
                                     selectRegions.withIndex().forEach {
                                         val (index, region) = it
-                                        Logger.v("zip region ${region.id}")
+                                        Logger.v("zip region ${region.name}")
                                         regionStore.generateZipSync(region)
                                         this@RegionListActivity.runOnUiThread {
                                             arcProgress.progress = (index + 1) * 100 / selectRegions.size
@@ -102,7 +102,7 @@ class RegionListActivity : AppCompatActivity(),
                                     }
                                 } successUi {
                                     val total = selectRegions.map {
-                                        File(regionStore.zipDir, "${it.id}.zip").length()
+                                        it.zipFile.length()
                                     }.sum()
                                     val df = DecimalFormat("#.#");
                                     df.roundingMode = RoundingMode.CEILING;
@@ -115,7 +115,7 @@ class RegionListActivity : AppCompatActivity(),
                                     total.toLong()
                                 } then {
                                     val total = selectRegions.map {
-                                        File(regionStore.zipDir, "${it.id}.zip").length()
+                                        it.zipFile.length()
                                     }.sum()
                                     Logger.v("total bytes: $total")
                                     var sent = 0L
@@ -126,7 +126,7 @@ class RegionListActivity : AppCompatActivity(),
                                                     arcProgress.progress = ((it + sent) * 100 / total).toInt()
                                                 }
                                             }
-                                            sent += File(regionStore.zipDir, "${it.id}.zip").length()
+                                            sent += it.zipFile.length()
                                             it.setSyncedSync()
                                         }
                                     } catch (e: Exception) {

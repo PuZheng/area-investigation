@@ -241,7 +241,7 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
         }
     }
 
-    var hiddenPOITypes: Set<POIType> = setOf()
+    var hiddenPOITypes: List<POIType> = listOf()
         set(set) {
             field = set
             poiMarkers.forEach {
@@ -529,7 +529,8 @@ class EditRegionActivityFragment : Fragment(), OnPermissionGrantedListener {
                             dialog, which ->
                             val poi = selectedPOIMarker?.`object` as POI
                             POIStore.with(activity).remove(poi) and RegionStore.with(activity).touch(poi.regionId) successUi {
-                                activity.toast(R.string.poi_deleted)
+                                // 因为此时确认对话框已经关闭，getActivity为空，所以要找到父级fragment的activity
+                                this@EditRegionActivityFragment.activity.toast(R.string.poi_deleted)
                                 pois.remove(poi)
                                 val marker = poiMarkers.find { (it.`object` as POI) == poi }
                                 marker?.remove()

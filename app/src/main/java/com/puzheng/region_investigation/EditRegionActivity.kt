@@ -73,7 +73,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
     }
 
 
-    override fun onFilterPOI(hiddenPOITypes: Set<POIType>) {
+    override fun onFilterPOI(hiddenPOITypes: List<POIType>) {
         fragmentEditRegion.hiddenPOITypes = hiddenPOITypes
         invalidateOptionsMenu()
     }
@@ -333,7 +333,7 @@ class EditRegionActivity : AppCompatActivity(), EditRegionActivityFragment.OnFra
             true
         }
         R.id.action_filter -> {
-            POIFilterDialogFragment(region,
+            POIFilterDialogFragment.newInstance(region,
                     fragmentEditRegion.hiddenPOITypes).show(supportFragmentManager, "")
             true
         }
