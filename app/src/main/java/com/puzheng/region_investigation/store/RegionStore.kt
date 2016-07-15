@@ -6,10 +6,12 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Environment
 import android.provider.BaseColumns
+import android.text.TextUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
 import com.puzheng.region_investigation.*
 import com.puzheng.region_investigation.model.POI
+import com.puzheng.region_investigation.model.POIType
 import com.puzheng.region_investigation.model.Region
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.task
@@ -17,6 +19,7 @@ import nl.komponents.kovenant.then
 import okhttp3.*
 import okio.BufferedSink
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
@@ -99,7 +102,6 @@ class RegionStore private constructor(val context: Context) {
                         poiTypes!![random.nextInt(poiTypes.size)].name, regionId, randomHZLatLng, Date())))
             }
         }
-        db.close()
     }
 
     fun removeRegions(regions: List<Region>) = task {
@@ -125,22 +127,18 @@ class RegionStore private constructor(val context: Context) {
 
     fun create(region: Region, bitmap: Bitmap? = null) = task {
         val db = DBHelper(context).writableDatabase
-        try {
-            val id = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
-            if (bitmap != null) {
+        val id = db.insert(Region.Model.TABLE_NAME, null, Region.Model.makeValues(region))
+        if (bitmap != null) {
 
-                val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/regions", "$id.png"))
-                val stream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                val inputStream = ByteArrayInputStream(stream.toByteArray())
-                inputStream.transferTo(outputStream)
-                outputStream.close()
-                inputStream.close()
-            }
-            id
-        } finally {
-            db.close()
+            val outputStream: FileOutputStream = FileOutputStream(context.openWritableFile("/regions", "$id.png"))
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            val inputStream = ByteArrayInputStream(stream.toByteArray())
+            inputStream.transferTo(outputStream)
+            outputStream.close()
+            inputStream.close()
         }
+        id
     } then {
         MyApplication.eventLogger.log(Level.INFO, "创建重点区域`${region.name}`", JSONObject().apply {
             put("type", EventType.CREATE_REGION)
@@ -213,8 +211,8 @@ class RegionStore private constructor(val context: Context) {
                 outputStream.close()
                 inputStream.close()
             }
-        } finally {
-            db.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         MyApplication.eventLogger.log(Level.INFO, "修改重点区域`${region.name}`", JSONObject().apply {
             put("type", EventType.UPDATE_REGION)
@@ -260,19 +258,155 @@ class RegionStore private constructor(val context: Context) {
             }
             val zipFile = File(zipDir, "${region.id}.zip")
             ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
-                putNextEntry(ZipEntry("region.json"))
+                putNextEntry(ZipEntry("json/region.json"))
                 write(jsonObject.toString().toByteArray())
                 closeEntry()
-                region.poiListSync?.forEach {
+                val pois = region.poiListSync
+                pois?.forEach {
                     poi ->
-                    addDir(poi.dir, "pois/" + poi.id)
+                    addDir(poi.dir, "json/pois/" + poi.id)
                 }
+
+                putNextEntry(ZipEntry("csv/region.csv"))
+                write(region.csvString.toByteArray())
+                closeEntry()
+
+                // 按各个信息点分类生成csv
+                val poiTypeMap = POITypeStore.with(context).listSync.let {
+                    if (it != null) {
+                        mapOf(*it.map {
+                            it.name to it
+                        }.toTypedArray())
+                    } else {
+                        mapOf<String, POIType>()
+                    }
+                }
+                pois?.groupBy { it.poiTypeName }?.forEach {
+                    val typeName = it.key
+                    val poiType = poiTypeMap[typeName]
+                    if (poiType != null) {
+                        addPoiTypeCSV(this, poiType, it.value)
+                    }
+
+                }
+
                 close()
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
+    }
+
+    // 生成某类型的信息点CSV文件
+    fun addPoiTypeCSV(zos: ZipOutputStream, poiType: POIType, pois: List<POI>) {
+        // 将需要打包的图片和视频记录下来， 生成csv文件后，加入zip包
+        val assets = mutableListOf<Pair<String, File>>()
+        zos.putNextEntry(ZipEntry("csv/${poiType.name}.csv"))
+        // headers
+        zos.write((poiType.fields.map { it.name } +
+                listOf("经度", "纬度", "采集人", "采集时间", "更新时间",
+                        "采集单位名称", "采集单位编码", "录入人"))
+                .joinToString(",").toByteArray())
+        zos.write("\n".toByteArray())
+        // each row
+        pois.forEach {
+            poi ->
+            val jo = if (poi.dataFile.exists()) {
+                JSONObject(poi.dataFile.readText())
+            } else {
+                JSONObject()
+            }
+            val fields = mutableListOf<String>()
+            poiType.fields.forEach {
+                when (it.type) {
+                    POIType.FieldType.STRING,
+                    POIType.FieldType.TEXT ->
+                        fields.add(CSVUtil.quote(jo.getString(it.name)))
+                    POIType.FieldType.IMAGES -> {
+                        val fileNames = mutableListOf<String>()
+                        try {
+                            val ja = jo.getJSONArray(it.name)
+                            if (ja != null && ja.length() > 0) {
+                                var i = 0
+                                while (i < ja.length()) {
+                                    val path = ja.getString(i)
+                                    val suffix = path.split(".").last()
+                                    val fileName = "${uniqueId()}.$suffix"
+                                    fileNames.add(fileName)
+                                    assets.add(fileName to File(poi.dir, path))
+                                    ++i
+                                }
+                            }
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
+                        }
+                        fields.add(CSVUtil.quote(fileNames.joinToString(";")))
+                    }
+                    POIType.FieldType.VIDEO -> {
+                        try {
+                            val path = jo.getString(it.name)
+                            if (!TextUtils.isEmpty(path)) {
+                                val suffix = path.split(".").last()
+                                val fileName = "${uniqueId()}.$suffix"
+                                assets.add(fileName to File(poi.dir, path))
+                                fields.add(CSVUtil.quote(fileName))
+                            } else {
+                                fields.add("")
+                            }
+                        } catch (e: JSONException) {
+                            fields.add("")
+                        }
+                    }
+
+                }
+            }
+            // 经度
+            fields.add(poi.latLng.longitude.toString())
+            // 纬度
+            fields.add(poi.latLng.latitude.toString())
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            AccountStore.with(context).account.let {
+                // 采集人
+                fields.add(CSVUtil.quote(it!!.username))
+                // 采集时间
+                fields.add(CSVUtil.quote(sdf.format(poi.created)))
+                // 更新时间
+                fields.add(CSVUtil.quote(if (poi.updated != null) {
+                    sdf.format(poi.updated)
+                } else {
+                    ""
+                }))
+                // 采集单位名称
+                fields.add(CSVUtil.quote(it.orgName))
+                // 采集单位编码
+                fields.add(CSVUtil.quote(it.orgCode))
+                // 录入人
+                fields.add("")
+            }
+            zos.write((fields.joinToString(CSVUtil.fieldSep) + CSVUtil.lineSep).toByteArray())
+        }
+        zos.closeEntry()
+        val buf = ByteArray(4096)
+        assets.forEach {
+            zos.putNextEntry(ZipEntry("csv/${it.first}"))
+            try {
+                BufferedInputStream(FileInputStream(it.second)).let {
+                    src ->
+                    while (true) {
+                        val count = src.read(buf, 0, buf.size)
+                        if (count == -1) {
+                            break
+                        }
+                        zos.write(buf, 0, count)
+                    }
+                    src.close()
+                }
+            } catch(e: Exception) {
+                e.printStackTrace()
+            }
+            zos.closeEntry()
+        }
     }
 
     private fun ZipOutputStream.addDir(dir: File, prefix: String = "") {

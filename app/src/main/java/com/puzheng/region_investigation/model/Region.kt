@@ -7,9 +7,11 @@ import android.provider.BaseColumns
 import com.amap.api.maps.AMapUtils
 import com.amap.api.maps.model.LatLng
 import com.orhanobut.logger.Logger
+import com.puzheng.region_investigation.CSVUtil
 import com.puzheng.region_investigation.DBHelper
 import com.puzheng.region_investigation.MyApplication
 import com.puzheng.region_investigation.getPOIRow
+import com.puzheng.region_investigation.store.AccountStore
 import nl.komponents.kovenant.task
 import org.json.JSONArray
 import org.json.JSONObject
@@ -212,6 +214,46 @@ data class Region(val id: Long?, var name: String, var extras: Map<String, Strin
         }
     }
 
+
+    val csvString: String
+    get() {
+        val sb = StringBuilder()
+        val fieldSep = CSVUtil.fieldSep
+        val lineSep = CSVUtil.lineSep
+        sb.append(listOf("项", "值").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("编号", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("分类", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("名称", CSVUtil.quote(name)).joinToString(fieldSep) + lineSep)
+        sb.append(listOf("地址", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("省", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("市", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("区", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("经度", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("纬度", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf(
+                "重点区域边界",
+                CSVUtil.quote(outline.map { "${it.longitude},${it.latitude}" }.joinToString(";"))
+        ).joinToString(fieldSep) + lineSep)
+        sb.append(listOf("说明", extras["说明"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("联系方式", extras["联系方式"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("所属派出所", extras["所属派出所"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("派出所联系电话", extras["派出所联系电话"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("所属居委会", extras["所属居委会"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("居委会联系电话", extras["居委会联系电话"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("工作关系姓名", extras["工作关系姓名"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("工作关系电话", extras["工作关系电话"] ?: "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("工作关系说明", extras["工作关系说明"] ?: "").joinToString(fieldSep) + lineSep)
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        AccountStore.with(MyApplication.context).account.let {
+            sb.append(listOf("采集人", CSVUtil.quote(it!!.username)).joinToString(fieldSep) + lineSep)
+            sb.append(listOf("采集时间", CSVUtil.quote(sdf.format(created))).joinToString(fieldSep) + lineSep)
+            sb.append(listOf("采集单位名称", CSVUtil.quote(it.orgName)).joinToString(fieldSep) + lineSep)
+            sb.append(listOf("采集单位编码", CSVUtil.quote(it.orgCode)).joinToString(fieldSep) + lineSep)
+        }
+        sb.append(listOf("录入人", "").joinToString(fieldSep) + lineSep)
+        sb.append(listOf("更新时间", "").joinToString(fieldSep) + lineSep)
+        return sb.toString()
+    }
 
 
 }
