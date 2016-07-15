@@ -33,8 +33,12 @@ open class StringFieldResolver(override val name: String, val context: Context) 
     private var text: String? = null
 
     override fun bind(value: Any?): View {
-        text = value as String?
-        editText.setText(value)
+        val text = try {
+            value as String?
+        } catch (e: ClassCastException) {
+            ""
+        }
+        editText.setText(text)
         return view
     }
 }

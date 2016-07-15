@@ -245,7 +245,7 @@ class RegionStore private constructor(val context: Context) {
     }
 
     val zipDir = File(Environment.getExternalStoragePublicDirectory(MyApplication.context.packageName),
-            ".cache").apply {
+            "cache").apply {
         if (!exists()) {
             mkdirs()
         }
@@ -256,7 +256,7 @@ class RegionStore private constructor(val context: Context) {
             val jsonObject = JSONObject().apply {
                 region.jsonizeSync(this)
             }
-            val zipFile = File(zipDir, "${region.id}.zip")
+            val zipFile = File(zipDir, "${region.name}.zip")
             ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).apply {
                 putNextEntry(ZipEntry("json/region.json"))
                 write(jsonObject.toString().toByteArray())
